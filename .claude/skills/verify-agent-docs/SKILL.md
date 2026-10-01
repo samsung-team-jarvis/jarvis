@@ -21,20 +21,8 @@ description: AGENTS.md, CLAUDE.md, docs, skills, recipes, templates를 추가·�
 find docs recipes templates .claude/skills -name '*.md' | sort
 grep -o '([^)]*\.md)' docs/index.md | sort
 
-# 상대 링크 대상 존재 확인 (각 md 파일 기준 경로로 해석)
-python3 - <<'PY'
-import re, pathlib
-bad = []
-for md in pathlib.Path('.').rglob('*.md'):
-    if any(p in md.parts for p in ('.git', 'node_modules', '.venv')):
-        continue
-    for link in re.findall(r'\]\(([^)#\s]+)', md.read_text(encoding='utf-8')):
-        if link.startswith(('http', 'mailto:')):
-            continue
-        if not (md.parent / link).exists():
-            bad.append(f'{md}: {link}')
-print('\n'.join(bad) or 'OK: 깨진 링크 없음')
-PY
+# 상대 링크 대상 존재 확인 (CI의 Docs links job과 같은 스크립트)
+python3 scripts/check_doc_links.py
 
 # Codex skill 링크
 ls -l .agents/skills
