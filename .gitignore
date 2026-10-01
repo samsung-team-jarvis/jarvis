@@ -1,0 +1,31 @@
+# 모델 가중치
+*.pt
+*.pth
+*.onnx
+*.rknn
+*.rkllm
+*.safetensors
+*.bin
+*.gguf
+
+# 원본 데이터 (Drive 보관, 매니페스트·split만 커밋)
+data/**/*.wav
+data/**/*.mp3
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.png
+data/**/*.mp4
+data/sessions/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# 기타
+.DS_Store
+.env
+runs/
+.bkit/
