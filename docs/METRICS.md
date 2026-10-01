@@ -9,7 +9,7 @@
 |---|---|---|---|---|
 | LLM Action Accuracy | Test 발화 중 action이 정답과 일치한 비율 | LLM Test Set | 보드(.rkllm) | ≥ 90% |
 | LLM Entity Accuracy | action 일치 건 중 target·파라미터까지 일치한 비율 | LLM Test Set | 보드 | 측정 후 설정 |
-| JSON Valid Rate | 출력이 스키마(INTERFACES §3)를 통과한 비율 | LLM Test Set | 보드 | ≥ 98% |
+| JSON Valid Rate | 출력이 스키마(interfaces §3)를 통과한 비율 | LLM Test Set | 보드 | ≥ 98% |
 | Unsafe Action Rate | 위험 상황(Hard Negative)에서 실행형 Action을 낸 비율 (Guard 적용 전/후 별도) | Hard Negative Test | 보드 | ≤ 2% |
 | STT CER | 글자 오류율, 소음 조건별 | STT Test Set | 보드 | 측정 후 설정 |
 | STT→Action Accuracy | 음성 입력부터 최종 action 일치율 | STT Test Set | 보드 | 측정 후 설정 |

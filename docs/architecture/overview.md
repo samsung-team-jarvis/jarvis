@@ -40,8 +40,8 @@ recorder : 모든 토픽 구독 → data/sessions/<session_id>.jsonl
 
 ## 4. 프로세스 · 통신
 
-- 모듈마다 별도 프로세스. 통신 방식은 DECISIONS Q-06에서 결정 (후보: 로컬 MQTT(mosquitto) / ZeroMQ / Python multiprocessing Queue).
-- 어떤 방식이든 메시지는 `docs/INTERFACES.md`의 봉투 형식을 따른다 → 나중에 방식을 바꿔도 모듈 코드는 그대로.
+- 모듈마다 별도 프로세스. 통신 방식은 [open-questions](../decisions/open-questions.md) Q-06에서 결정 (후보: 로컬 MQTT(mosquitto) / ZeroMQ / Python multiprocessing Queue).
+- 어떤 방식이든 메시지는 [interfaces](./interfaces.md)의 봉투 형식을 따른다 → 나중에 방식을 바꿔도 모듈 코드는 그대로.
 
 ## 5. 시간 동기화
 
@@ -60,4 +60,4 @@ recorder : 모든 토픽 구독 → data/sessions/<session_id>.jsonl
 ## 7. 주요 상태 (State Machine 초안)
 
 `IDLE → PREHEAT → COOKING → (UNATTENDED) → DANGER → SAFE_STOP`
-정의·전이 조건은 `docs/INTERFACES.md` §2.3과 FUS 작업에서 확정.
+정의·전이 조건은 [interfaces](./interfaces.md) §2.3과 FUS 작업에서 확정.

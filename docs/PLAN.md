@@ -6,7 +6,8 @@
 ## 사용법
 
 - 항목 형식: `- [ ] ID 작업 — 완료 기준 | 선행: ID | 담당: 미정`
-- 작업 시작 시 `담당`에 이름을 적고, 완료 시 `[x]` 체크 + 근거(커밋 해시, `docs/METRICS.md` 항목 등)를 덧붙인다.
+- 작업 시작 = GitHub 이슈 생성 (제목 `[ID] 작업 요약`, 본문에 완료 기준 복사). 이후 흐름은 [Git Convention](./conventions/git.md).
+- 작업 시작 시 `담당`에 이름과 이슈 번호를 적고, 완료 시 `[x]` 체크 + 근거(PR 번호, `docs/METRICS.md` 항목 등)를 덧붙인다.
 - 진행 중이 아니게 된 작업은 담당을 다시 `미정`으로 돌린다.
 - 새 작업이 생기면 해당 워크스트림 끝에 다음 번호로 추가한다. 번호는 재사용하지 않는다.
 
@@ -27,18 +28,18 @@
 
 ## Phase 0 — 착수 준비 (결정·환경·규격)
 
-**Gate 0:** `docs/DECISIONS.md`의 Q-01~Q-05가 답변됨 · 버전 표 고정 · `docs/INTERFACES.md` v0.1 팀 합의 · 부품 주문 완료
+**Gate 0:** `docs/decisions/open-questions.md`의 Q-01~Q-05가 답변됨 · `docs/conventions/versions.md` 고정 · `docs/architecture/interfaces.md` v0.1 팀 합의 · 부품 주문 완료
 
 - [ ] INFRA-01 GitHub 저장소 생성, 팀원 초대, `main` 보호, 이 harness(CLAUDE.md·docs) 푸시 — 4명 모두 clone 성공 | 선행: - | 담당: 미정
 - [ ] INFRA-02 `.gitignore`(가중치·원본 데이터 제외), 브랜치·커밋 규칙 공유 — CLAUDE.md 협업 규칙에 모두 동의 | 선행: INFRA-01 | 담당: 미정
-- [ ] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/DECISIONS.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 미정
-- [ ] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 DECISIONS에 기록 | 선행: DOC-01 | 담당: 미정
-- [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 DECISIONS에 기록 | 선행: - | 담당: 미정
-- [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/INTERFACES.md`) — 4명 합의 표시 | 선행: - | 담당: 미정
-- [ ] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — INTERFACES §3 확정 | 선행: FUS-01 | 담당: 미정
-- [ ] HW-01 BLE GATT·패킷 규격 v0.1 확정 — INTERFACES §4 확정 | 선행: FUS-01 | 담당: 미정
+- [ ] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 미정
+- [ ] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 미정
+- [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 미정
+- [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 미정
+- [ ] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 미정
+- [ ] HW-01 BLE GATT·패킷 규격 v0.1 확정 — interfaces §4 확정 | 선행: FUS-01 | 담당: 미정
 - [ ] HW-02 부품 목록(BOM) 확정·주문 — 아래 BOM 표 기준, 수량·구매처 기록 | 선행: - | 담당: 미정
-- [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — DECISIONS Q-01 답변 | 선행: - | 담당: 미정
+- [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 미정
 
 ### BOM (초안)
 
@@ -61,7 +62,7 @@
 **Gate 1:** 아래 5개가 각각 단독으로 시연 가능 — ① 보드에서 기본 YOLOv8 RKNN 예제 실행 ② 보드에서 RKLLM 기본 모델 대화 ③ SenseVoice 한국어 받아쓰기 ④ ESP32 BLE 에코 + LED 제어 ⑤ 버스로 가짜 메시지 송수신
 
 - [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 미정
-- [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN·RKLLM 툴/런타임 버전 조합 결정 → DECISIONS 버전 표 고정 | 선행: BOARD-02 | 담당: 미정
+- [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN·RKLLM 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 미정
 - [ ] BOARD-04 `rknn_model_zoo` YOLOv8 예제를 보드에서 실행 (기본 모델) — 이미지 1장 추론 결과 확인 | 선행: BOARD-03 | 담당: 미정
 - [ ] BOARD-05 RKLLM 공식 데모를 지원 모델 1개로 보드에서 실행 — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 미정
 - [ ] BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북 — 변환 1회 성공 | 선행: BOARD-03 | 담당: 미정
@@ -100,7 +101,7 @@
 ### 데이터
 - [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 미정
 - [ ] STT-06 CER·RTF·STT→Action 정확도 측정 스크립트 (`jiwer`) | 선행: STT-05 | 담당: 미정
-- [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — INTERFACES §2 반영 | 선행: VIS-01 | 담당: 미정
+- [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 미정
 - [ ] VIS-03 모형 주방 촬영 1차 (세션별 조명·각도·배치 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-07 | 담당: 미정
 - [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 미정
 - [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함) | 선행: LLM-01 | 담당: 미정
@@ -112,7 +113,7 @@
 
 ### Baseline 측정 (모두 보드 기준)
 - [ ] STT-07 SenseVoice 기본 설정 Baseline (CER by 소음 조건, RTF) | 선행: STT-06 | 담당: 미정
-- [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 근거 DECISIONS 기록 | 선행: STT-06 | 담당: 미정
+- [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 미정
 - [ ] STT-09 마이크 비교 (핀마이크 vs 웹캠 내장) CER | 선행: STT-06 | 담당: 미정
 - [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 | 담당: 미정
 - [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 미정
