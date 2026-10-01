@@ -1,0 +1,26 @@
+name: Pull Request Labeler
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, edited]
+
+jobs:
+  labeler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: srvaroa/labeler@v1.13.0
+        with:
+          config_path: .github/labeler.yml
+          fail_on_error: true
+          use_local_config: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

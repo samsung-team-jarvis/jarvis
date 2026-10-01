@@ -1,0 +1,70 @@
+version: 1
+labels:
+  # 작업 종류 (PR 제목 [PREFIX] 또는 브랜치 prefix/)
+  - label: 'FEAT'
+    title: '(?i)^\[?(feat|feature)\]?([(:\s]|$)'
+  - label: 'FEAT'
+    branch: '(?i)^(feat|feature)/'
+
+  - label: 'FIX'
+    title: '(?i)^\[?(fix|hotfix|bugfix)\]?([(:\s]|$)'
+  - label: 'FIX'
+    branch: '(?i)^(fix|hotfix|bugfix)/'
+
+  - label: 'EXP'
+    title: '(?i)^\[?exp\]?([(:\s]|$)'
+  - label: 'EXP'
+    branch: '(?i)^exp/'
+
+  - label: 'DOCS'
+    title: '(?i)^\[?docs?\]?([(:\s]|$)'
+  - label: 'DOCS'
+    branch: '(?i)^docs?/'
+
+  - label: 'CHORE'
+    title: '(?i)^\[?(chore|ci|config)\]?([(:\s]|$)'
+  - label: 'CHORE'
+    branch: '(?i)^(chore|ci|config)/'
+
+  - label: 'REFACTOR'
+    title: '(?i)^\[?refactor\]?([(:\s]|$)'
+  - label: 'REFACTOR'
+    branch: '(?i)^refactor/'
+
+  - label: 'TEST'
+    title: '(?i)^\[?test\]?([(:\s]|$)'
+  - label: 'TEST'
+    branch: '(?i)^test/'
+
+  - label: 'REMOVE'
+    title: '(?i)^\[?(remove|delete)\]?([(:\s]|$)'
+  - label: 'REMOVE'
+    branch: '(?i)^(remove|delete)/'
+
+  - label: 'RENAME'
+    title: '(?i)^\[?(rename|move)\]?([(:\s]|$)'
+  - label: 'RENAME'
+    branch: '(?i)^(rename|move)/'
+
+  - label: 'STYLE'
+    title: '(?i)^\[?(style|format)\]?([(:\s]|$)'
+  - label: 'STYLE'
+    branch: '(?i)^(style|format)/'
+
+  # 워크스트림 (브랜치 scope: prefix/{scope}/...)
+  - label: 'STT'
+    branch: '(?i)^[a-z]+/audio/'
+  - label: 'VIS'
+    branch: '(?i)^[a-z]+/vision/'
+  - label: 'LLM'
+    branch: '(?i)^[a-z]+/llm/'
+  - label: 'FUS'
+    branch: '(?i)^[a-z]+/(fusion|guard)/'
+  - label: 'HW'
+    branch: '(?i)^[a-z]+/(ble|firmware)/'
+  - label: 'INFRA'
+    branch: '(?i)^[a-z]+/(common|recorder|bench|root|github)/'
+
+  # 작성자 (팀원 GitHub 아이디가 정해지면 추가)
+  - label: '현종'
+    authors: ['Navi-Up']
