@@ -1,0 +1,35 @@
+# 설치: pip install pre-commit && pre-commit install
+# 최신 버전으로 갱신: pre-commit autoupdate
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: ['--markdown-linebreak-ext=md']
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: ['--fix']
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: forbid-model-and-raw-data
+        name: 모델 가중치·원본 데이터 커밋 금지
+        entry: 모델 가중치·원본 데이터는 Drive에 두고 매니페스트만 커밋하세요
+        language: fail
+        files: '\.(pt|pth|onnx|rknn|rkllm|safetensors|gguf|wav|mp3|mp4)$'
+      - id: check-doc-links
+        name: 문서 상대 링크 검사
+        entry: python3 scripts/check_doc_links.py
+        language: system
+        pass_filenames: false
+        files: '\.md$'

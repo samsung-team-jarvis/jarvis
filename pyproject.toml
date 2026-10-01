@@ -1,0 +1,14 @@
+[project]
+name = "jarvis"
+version = "0.0.0"
+description = "온디바이스 스마트 주방 어시스턴트 JARVIS"
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+# 문서 속 예시 코드 블록은 포맷·린트 대상에서 제외
+extend-exclude = ["*.md", "**/*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
