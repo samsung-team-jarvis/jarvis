@@ -66,6 +66,8 @@ python -m services.recorder            # 다른 터미널: 모든 메시지를 d
 python -m services.audio_svc --input data/stt/cmds.wav --realtime   # 마이크 대신 wav를 실제 속도로
 ```
 
+음성 → 명령까지 이어 보려면 다른 터미널에서 `python -m services.llm_svc`를 같이 띄운다 ([llm_svc](../../services/llm_svc/README.md)).
+
 ## 보드 접속
 
 보드 세팅 절차는 [recipes/board-setup.md](../../recipes/board-setup.md). 접속 정보(IP, 계정)는 repo에 커밋하지 않고 팀 메신저·개인 `~/.ssh/config`에 둔다.
