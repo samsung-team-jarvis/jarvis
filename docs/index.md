@@ -56,6 +56,7 @@
 - [YOLO → RKNN 변환](../recipes/yolo-to-rknn.md)
 - [LLM → RKLLM 변환](../recipes/llm-to-rkllm.md)
 - [STT 평가](../recipes/stt-eval.md)
+- [STT 테스트 세트 녹음 (팀원용)](../recipes/stt-recording.md)
 - [새 서비스 추가](../recipes/add-service.md)
 
 ## Services

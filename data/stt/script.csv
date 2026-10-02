@@ -1,0 +1,41 @@
+script_id,category,text,action_label
+s01,turn_on,자비스 후드 켜줘,<jarvis_1>(target=hood)<jarvis_end>
+s02,turn_on,자비스 1번 화구 켜줘,<jarvis_1>(target=burner_1)<jarvis_end>
+s03,turn_on,자비스 환풍기 좀 틀어줘,<jarvis_1>(target=hood)<jarvis_end>
+s04,turn_on,자비스야 2번 불 켜줘,<jarvis_1>(target=burner_2)<jarvis_end>
+s05,turn_off,자비스 후드 꺼줘,<jarvis_2>(target=hood)<jarvis_end>
+s06,turn_off,자비스 2번 화구 꺼줘,<jarvis_2>(target=burner_2)<jarvis_end>
+s07,turn_off,"자비스, 첫 번째 불 꺼줘",<jarvis_2>(target=burner_1)<jarvis_end>
+s08,turn_off,자비스 전부 다 꺼줘,<jarvis_2>(target=all)<jarvis_end>
+s09,set_level,자비스 후드 세게 해줘,"<jarvis_3>(target=hood, level=3)<jarvis_end>"
+s10,set_level,자비스 1번 화구 약하게,"<jarvis_3>(target=burner_1, level=1)<jarvis_end>"
+s11,set_level,자비스 2번 불 중간으로 해줘,"<jarvis_3>(target=burner_2, level=2)<jarvis_end>"
+s12,set_level,자비스야 후드 2단으로,"<jarvis_3>(target=hood, level=2)<jarvis_end>"
+s13,set_level,"자비스, 후드 약하게","<jarvis_3>(target=hood, level=1)<jarvis_end>"
+s14,set_level,자비스 2번 화구 세게,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>"
+s15,set_timer,자비스 타이머 3분 맞춰줘,<jarvis_4>(min=3)<jarvis_end>
+s16,set_timer,자비스 타이머 5분,<jarvis_4>(min=5)<jarvis_end>
+s17,set_timer,자비스 10분 뒤에 1번 화구 꺼줘,"<jarvis_4>(target=burner_1, min=10)<jarvis_end>"
+s18,set_timer,자비스 타이머 1분 30초,"<jarvis_4>(min=1, sec=30)<jarvis_end>"
+s19,set_timer,자비스 2분 뒤에 후드 꺼줘,"<jarvis_4>(target=hood, min=2)<jarvis_end>"
+s20,cancel_timer,자비스 타이머 취소해줘,<jarvis_5>()<jarvis_end>
+s21,cancel_timer,자비스야 타이머 꺼줘,<jarvis_5>()<jarvis_end>
+s22,check_status,자비스 1번 화구 켜져 있어,<jarvis_6>(target=burner_1)<jarvis_end>
+s23,check_status,자비스 지금 상태 알려줘,<jarvis_6>()<jarvis_end>
+s24,check_risk,자비스 지금 위험해,<jarvis_7>()<jarvis_end>
+s25,check_risk,자비스 안전한지 확인해줘,<jarvis_7>()<jarvis_end>
+s26,emergency,자비스 긴급 정지,<jarvis_8>()<jarvis_end>
+s27,emergency,자비스 멈춰,<jarvis_8>()<jarvis_end>
+s28,emergency,자비스 그만,<jarvis_8>()<jarvis_end>
+s29,ask,자비스 불 켜줘,<jarvis_1>(target=?)<jarvis_end>
+s30,ask,자비스 타이머 맞춰줘,<jarvis_4>(min=?)<jarvis_end>
+s31,ask,자비스,<jarvis_9>()<jarvis_end>
+s32,ask,자비스야,<jarvis_9>()<jarvis_end>
+s33,unsupported,자비스 오늘 날씨 어때,<jarvis_10>()<jarvis_end>
+s34,unsupported,자비스 노래 틀어줘,<jarvis_10>()<jarvis_end>
+s35,no_wake,후드 켜줘,
+s36,no_wake,저기 자비스 후드 켜줘,
+s37,no_wake,오늘 저녁 뭐 먹지,
+s38,no_wake,이거 좀 더 볶아야겠다,
+s39,no_wake,기름이 너무 튀네,
+s40,no_wake,불 조절 좀 해야겠다,

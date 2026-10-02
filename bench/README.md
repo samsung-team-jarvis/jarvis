@@ -35,3 +35,11 @@ STT 매니페스트로 CER·RTF·호출어 인식·STT→Action 정확도를 소
 ```bash
 python -m bench.stt_eval data/stt/manifest.csv --split test --csv out.csv
 ```
+
+## record_stt.py — STT 테스트 세트 녹음 (STT-05)
+
+대본 문장을 하나씩 보여 주고 Enter로 녹음 → wav + 매니페스트. 팀원용 절차는 [STT 테스트 세트 녹음](../recipes/stt-recording.md).
+
+```bash
+python -m bench.record_stt --speaker spk02 --noise quiet --mic pin
+```
