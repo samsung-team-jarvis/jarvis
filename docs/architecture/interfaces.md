@@ -50,6 +50,8 @@
 
 ## 3. Function Call 스키마 (LLM 출력)
 
+> 버스(`llm/function_call`)와 Safety Guard가 보는 형식은 아래 JSON이다. **LLM이 직접 생성하는 문자열은 SUDA식 함수 토큰 형식**(예: `<jarvis_1>(target=hood, level=3)<jarvis_end>`)이고, `llm_svc`가 파싱해 이 JSON으로 바꾼다 ([Q-10](../decisions/open-questions.md), 문법은 LLM-01에서 확정).
+
 ```json
 {
   "action": "SET_LEVEL",
@@ -103,3 +105,4 @@
 | 날짜 | 버전 | 변경 | 작성 |
 |---|---|---|---|
 | 2026-10-01 | v0.1 | 최초 초안 (5주차 발표자료 기반) | - |
+| 2026-10-02 | v0.1 | §3에 LLM 생성 형식(SUDA식 함수 토큰)과 버스 JSON의 관계 명시 — 필드 변경 없음 (#25) | 이현종 |

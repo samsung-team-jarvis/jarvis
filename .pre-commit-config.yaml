@@ -27,10 +27,10 @@ repos:
   - repo: local
     hooks:
       - id: forbid-model-and-raw-data
-        name: 모델 가중치·원본 데이터 커밋 금지
-        entry: 모델 가중치·원본 데이터는 Drive에 두고 매니페스트만 커밋하세요
+        name: 모델 가중치·원본 데이터·외부 자료 커밋 금지
+        entry: 모델 가중치·원본 데이터·학교 자료(pdf·xlsx 등)는 Drive에 두고 매니페스트·출처만 커밋하세요
         language: fail
-        files: '\.(pt|pth|onnx|rknn|rkllm|safetensors|gguf|wav|mp3|mp4)$'
+        files: '\.(pt|pth|onnx|rknn|rkllm|safetensors|gguf|wav|mp3|mp4|pdf|xlsx|pptx|docx)$'
       - id: check-doc-links
         name: 문서 상대 링크 검사
         entry: python3 scripts/check_doc_links.py

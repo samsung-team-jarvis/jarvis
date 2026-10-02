@@ -1,6 +1,8 @@
 # Recipe: STT 평가 (CER · RTF · STT→Action)
 
-> 2026-10-02 공식 저장소로 API·지원 언어를 확인했다 (아래 출처). 실제 실행 결과(STT-01, STT-05~07)는 아직 없다.
+> 2026-10-02 공식 저장소와 학교 특강2 p.34~38([school-materials](../docs/school-materials.md))로 API·지원 언어·기본 파라미터를 확인했다. 실제 실행 결과(STT-01, STT-05~07)는 아직 없다.
+>
+> 학교 보드 배포 이미지에는 `~/voice/models`에 **silero_vad.onnx, sherpa-onnx SenseVoice(int8), 한국어 VITS TTS**가 미리 들어 있다. 같은 모델을 Mac에서도 받아 쓴다.
 
 ## 개념 3줄
 
@@ -42,6 +44,15 @@ print(stream.result.text)
 ```
 
 `language="ko"`(고정)와 `"auto"`(자동 감지)를 둘 다 측정해 보고 결정한다.
+
+### VAD 기본 파라미터 (특강 p.36 예시값 — 주방 소음에서 STT-11로 조정)
+
+| 파라미터 | 시작값 | 의미 |
+|---|---|---|
+| `threshold` | 0.5 | 음성 확률 임계값 |
+| `min_silence_duration` | 0.5 s | 이만큼 조용하면 발화 끝 (반응성 vs 끊김) |
+| `min_speech_duration` | 0.25 s | 이보다 짧은 소리는 무시 |
+| `num_threads` (STT) | 4 | 보드 CPU 8코어 중 STT 4, TTS 2 (특강 p.34) |
 
 ## 2. 녹음 규칙
 

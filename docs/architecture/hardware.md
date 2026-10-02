@@ -1,6 +1,6 @@
 # Hardware Reference
 
-부품 선택 근거. 2026-10-02 제조사 페이지·데이터시트로 확인했다 (아래 출처). 실제 보드는 아직 미수령 ([open-questions](../decisions/open-questions.md) Q-01).
+부품 선택 근거. 2026-10-02 제조사 페이지·데이터시트로 확인했다 (아래 출처). 실제 보드는 아직 미수령이며, 학교 특강 기준 **Orange Pi 5 Plus · 16GB · 배포 이미지**가 기준이다 ([open-questions](../decisions/open-questions.md) Q-01, [school-materials](../school-materials.md)).
 
 ## 메인 보드: Orange Pi 5 vs 5 Plus
 
