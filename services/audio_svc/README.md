@@ -1,10 +1,11 @@
 # audio_svc — 음성 입력 (VAD · STT · 호출어)
 
-마이크(또는 wav 파일) 음성을 발화 단위로 잘라 받아쓰고 `stt/text`로 발행한다. (PLAN STT-01, STT-03, STT-04)
+마이크(또는 wav 파일) 음성을 발화 단위로 잘라 받아쓰고 `stt/text`로 발행한다. 명령 결과·위험 경고는 음성으로 읽어 준다. (PLAN STT-01, STT-03, STT-04, STT-12)
 
 ```text
 마이크 / wav ──100 ms 청크──▶ Silero VAD ──발화 구간──▶ SenseVoice ──▶ stt/text 발행
                                                                     + system/heartbeat 1초마다
+guard/decision · fusion/state(위험) ──▶ 응답 문장 ──▶ 한국어 VITS ──▶ 스피커 (재생 중 마이크 입력은 무음)
 ```
 
 - **VAD (Voice Activity Detection)**: 소리 중에서 사람이 말하는 구간만 골라낸다. 말이 끝나고 `min_silence`(0.5 s)만큼 조용해져야 "발화 끝"으로 판단한다.
@@ -21,12 +22,15 @@ curl -LO https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sher
 tar xjf sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2 && rm *.tar.bz2
 # VAD: Silero VAD (약 630KB)
 curl -LO https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx
+# TTS: 한국어 VITS (KSS, low) + espeak-ng-data. 압축 약 67MB
+curl -LO https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-mimic3-ko_KO-kss_low.tar.bz2
+tar xjf vits-mimic3-ko_KO-kss_low.tar.bz2 && rm *.tar.bz2
 cd ..
 ```
 
 다른 위치(보드의 `~/voice/models/...`)에 있으면 `--model-dir`·`--vad-model` 또는 환경변수 `JARVIS_STT_MODEL_DIR`·`JARVIS_VAD_MODEL`로 지정한다. STT 폴더에는 `model.int8.onnx`와 `tokens.txt`만 있으면 된다.
 
-> 배포 이미지에 든 SenseVoice가 `2024-07-17`판인지 `2025-09-09`판인지, VAD 파일이 같은지는 보드를 받은 뒤 파일 크기·sha256으로 확인한다 (확인 필요, STT-02).
+> 배포 이미지에 든 SenseVoice가 `2024-07-17`판인지 `2025-09-09`판인지, VAD 파일이 같은지, 한국어 VITS가 이 모델(`vits-mimic3-ko_KO-kss_low`)인지는 보드를 받은 뒤 파일 크기·sha256으로 확인한다 (확인 필요, STT-02). TTS 폴더 경로는 `--tts-model-dir` 또는 `JARVIS_TTS_MODEL_DIR`.
 
 보드(Ubuntu)에서 마이크를 쓰려면 PortAudio가 필요하다: `sudo apt install -y libportaudio2`.
 
@@ -119,3 +123,27 @@ split_wake("오늘 저녁 뭐 먹지?")       # None (호출 아님)
 | 자비스야 후드 켜줘 | 자비 스야 후드 켜 줘. | 파일 단독 (띄어쓰기 무시로 호출 처리됨) |
 
 STT-05 사람 녹음에서 같은 변형이 반복되면 `WAKE_WORDS`에 추가한다 (Q-08). 늘릴수록 일반 대화를 호출로 잘못 받을 위험도 커지므로, 추가 전후의 오호출을 같이 확인한다.
+
+## 음성 응답 (TTS)
+
+`audio_svc`가 `guard/decision`과 `fusion/state`를 구독해 정해진 문장(`responses.py`)을 한국어 VITS(`tts.py`, CPU 2스레드)로 읽는다. 합성·재생은 별도 스레드(`speaker.py`)에서 하고, **재생하는 동안과 끝난 뒤 0.3초는 마이크 입력을 무음으로 바꿔** 스피커 소리를 다시 명령으로 받지 않게 한다 (건너뛰지 않고 무음으로 넣어 발화 끝 시각 계산은 유지).
+
+| 입력 | 문장 예 |
+|---|---|
+| ALLOW `TURN_ON hood` | 후드를 켰습니다. |
+| ALLOW `SET_TIMER 210 s, burner_1` | 3분 30초 뒤에 1번 화구를 끕니다. |
+| ALLOW `ASK_CLARIFY TURN_ON / target` | 어느 장치를 켤까요? |
+| REJECT `TURN_ON burner_1` + reason | 지금은 1번 화구를 제어할 수 없어요. {reason} |
+| ASK (Guard가 확인 요청) | 정말 1번 화구를 제어할까요? |
+| `fusion/state` risk가 warn·danger로 **올라갈 때만** | 주의하세요… / 위험 상황이에요. 불을 확인해 주세요. |
+
+```bash
+python -m services.audio_svc --no-play --tts-out data/tts     # 소리 없이 응답을 wav로만 (확인용)
+python -m services.audio_svc --no-tts                         # 음성 응답 끄기
+python -m services.audio_svc.speak "후드를 켰습니다." --out a.wav --no-play   # 문장 하나만
+```
+
+- TTS 모델이 없으면 경고만 내고 응답 없이 STT는 계속 동작한다.
+- `CHECK_STATUS`·`CHECK_RISK`는 장치 상태·위험도를 아직 읽을 곳이 없어 "준비 중" 문장을 읽는다 (FUS-08 이후).
+- 숫자는 아라비아 숫자로 쓴다 ("3분" — 한글 수보다 정확히 읽음). `?`·`!`는 이 모델이 읽지 못해 마침표로 바꾼다.
+- **품질 (Mac 확인, 2026-10-02)**: 문장 하나 합성 0.1~0.2초. 같은 문장도 합성마다 발음이 조금씩 다르다(VITS 무작위성). 합성 음성을 SenseVoice로 다시 받아쓴 CER 평균 0.15~0.17 (응답 문장 6개×5회, `noise_scale` 0~0.667·`length_scale` 1.0~1.15 사이 차이는 작음) — 사람이 듣는 명료도 측정은 아니다. 품질 개선이 필요하면 학교 제공 모델과 비교한다.
