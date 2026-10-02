@@ -23,7 +23,7 @@
 |---|---|---|
 | 커밋할 때 | 커밋 메시지 형식, Co-Authored-By 금지 | pre-commit `commit-msg` 훅 |
 | push할 때 | 브랜치 이름 형식, main 직접 push 차단 | pre-commit `pre-push` 훅 |
-| PR | 브랜치 이름, PR 제목, 본문 `Closes #N`, PR의 모든 커밋 메시지 | CI `Conventions` job |
+| PR | 브랜치 이름, PR 제목, 본문 `Closes #N`·AI 서명 줄 금지, PR의 모든 커밋 메시지 | CI `Conventions` job |
 | 머지 | CI 통과 + 리뷰 승인 1명 | 브랜치 보호 |
 | AI 도구 사용 시 | force push, `--no-verify`, main push, 관리자 머지 명령 거부 | `scripts/agent_guard.py` hook ([도구별 설정](../agent/tools.md)) |
 
@@ -129,4 +129,5 @@ fix(ble): #40 ACK 타임아웃 시 재시도 누락 수정
 - 모델 가중치(`*.pt`, `*.onnx`, `*.rknn`, `*.rkllm` 등)와 원본 데이터(wav, jpg, mp4) 커밋
 - `.env`, 토큰, 개인 설정 커밋
 - 커밋 메시지에 Co-Authored-By 등 AI 도구 서명 푸터 추가
+- PR 본문에 "Generated with Claude Code" 같은 AI 도구 서명 줄 추가
 - `main` force push

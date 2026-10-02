@@ -77,4 +77,4 @@ pre-commit run --all-files                      # 설치한 경우
 - `AGENTS.md`·`CLAUDE.md`에 긴 규칙 원문, 진행 상황, 작업 로그를 넣지 않는다.
 - `docs/*` 내용을 복붙해 중복 source of truth를 만들지 않는다.
 - `main`에 직접 push하지 않는다.
-- 커밋에 Co-Authored-By 등 AI 서명 푸터를 넣지 않는다.
+- 커밋에 Co-Authored-By 등 AI 서명 푸터를, PR 본문에 "Generated with ..." 서명 줄을 넣지 않는다.
