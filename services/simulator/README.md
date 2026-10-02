@@ -47,7 +47,7 @@ vision:                        # 없으면 비전 메시지를 보내지 않음
     - [0, [pot, burner_on, person]]
     - [30, [pot, burner_on]]   # 사람이 사라짐
 
-stt:                           # [시각, "발화"] — "자비스"로 시작하면 wake=true
+stt:                           # [시각, "발화"] — "자비스"로 시작하면 wake=true (audio_svc와 같은 판정)
   - [20, "자비스 후드 세게 틀어줘"]
 ```
 
