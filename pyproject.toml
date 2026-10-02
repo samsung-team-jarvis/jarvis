@@ -12,3 +12,7 @@ extend-exclude = ["*.md", "**/*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# 노트북: 셸 명령(!pip ...)의 긴 URL, 셀 중간 import, import 확인용 셀은 허용
+"*.ipynb" = ["E501", "E402", "F401"]

@@ -34,3 +34,6 @@ runs/
 .claude/settings.local.json
 .env.*
 !.env.example
+
+# 변환 결과물
+training/convert/out/
