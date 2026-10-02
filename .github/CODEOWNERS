@@ -1,3 +1,0 @@
-# PR이 열리면 작성자를 제외한 아래 팀원에게 리뷰 요청이 자동으로 간다.
-# 머지에는 승인 1개가 필요하다 (브랜치 보호). 팀원 아이디는 docs/onboarding.md와 맞춘다.
-* @SJH0428 @Navi-Up @spaceImage @pleine1279
