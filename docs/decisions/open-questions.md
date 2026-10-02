@@ -16,7 +16,7 @@
 | Q-07 | LLM 후보 | LLM-06 Baseline 비교: **Llama-3.2-1B-Instruct**(학교 특강 예시 모델 — 도커·서버·예제 지원이 가장 확실), **Qwen3.5-2B**(특강의 한국어 비교 모델), **Qwen3-0.6B**(가장 빠름, RK3588 공식 벤치마크 32.2 tok/s 참고값). 선택 기준: 보드 Action Accuracy·형식 Valid Rate, tok/s ≥ 10, 메모리, E2E 지연. 결과로 decision log 작성 | ✅ (최종 모델은 LLM-06 측정으로) |
 | Q-08 | 호출어 | v0: **STT 결과가 "자비스"로 시작할 때만** 명령으로 처리. 흔한 오인식 변형("자비스야", "쟈비스" 등)은 STT-05 녹음에서 확인해 허용 목록에 추가. 전용 호출어 모델은 오작동이 측정으로 확인될 때만 검토 | ✅ |
 | Q-09 | 비전 라벨링 도구 | **Roboflow 무료 플랜** 기본 (웹 GUI, 세트 분할, YOLOv8 zip export가 `train_yolo.ipynb` 입력 형식과 같음 → 코딩 없이 가능). 무료 플랜의 조건(데이터셋 공개 여부·이미지 수 한도)은 가입 시 확인 필요 — 공개 조건이면 **사람 얼굴이 찍히지 않게** 촬영한다. 조건이 맞지 않으면 무료·로컬인 Label Studio 또는 CVAT로 대체 | ✅ (조건 확인은 VIS-04 시작 시) |
-| Q-10 | LLM 출력 형식 | **SUDA식 함수 토큰 형식**으로 출력시키고 `llm_svc`가 파싱해 interfaces §3의 Function Call(JSON)로 바꿔 버스에 발행한다. 예: `<jarvis_1>(target=hood, level=3)<jarvis_end>` (정확한 문법은 LLM-01에서 확정). 이유: JSON보다 출력 토큰이 적어 생성 지연이 줄고(소형 모델 tok/s가 낮음), 끝 토큰으로 생성 종료·캘리브레이션 절단(`calib_stop_at`)이 확실하다. 버스·Safety Guard가 보는 형식(JSON)은 바뀌지 않는다 | ✅ (문법은 LLM-01) |
+| Q-10 | LLM 출력 형식 | **SUDA식 함수 토큰 형식**으로 출력시키고 `llm_svc`가 파싱해 interfaces §3의 Function Call(JSON)로 바꿔 버스에 발행한다. 예: `<jarvis_3>(target=hood, level=3)<jarvis_end>` (문법은 LLM-01에서 확정 → [interfaces](../architecture/interfaces.md) §3.2, [decision](./2026-10-02-function-call-schema.md)). 이유: JSON보다 출력 토큰이 적어 생성 지연이 줄고(소형 모델 tok/s가 낮음), 끝 토큰으로 생성 종료·캘리브레이션 절단(`calib_stop_at`)이 확실하다. 버스·Safety Guard가 보는 형식(JSON)은 바뀌지 않는다 | ✅ (문법 확정 #39) |
 
 ## 문서 불일치 정리 (DOC-02)
 

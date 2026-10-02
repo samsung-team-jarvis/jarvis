@@ -45,8 +45,8 @@
 - [x] INFRA-13 대용량 파일 공유: 직접 전달 + 산출물 등록부(`docs/artifacts.md`, `scripts/artifact_info.py`), 노트북 Drive 의존 제거 — 저장소에 Drive 경로 없음 | 선행: - | 담당: 이현종 (#27)
 - [x] DOC-12 학교 제공 자료(마음AI 특강2·SUDA 데이터 시트) 반영 — 문서가 학교 환경·방식과 충돌하지 않음 | 선행: - | 담당: 이현종 (#25)
 - [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 신지호
-- [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환
-- [ ] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 이현종
+- [x] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환 (#39 — 2026-10-02 결정권자 확정·팀 통보, 상황 인식 구현 중 변경 가능)
+- [x] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 이현종 (#39, `common/function_call.py`)
 - [ ] HW-01 BLE GATT·패킷 규격 v0.1 확정 — interfaces §4 확정 | 선행: FUS-01 | 담당: 최석진
 - [ ] HW-02 부품 목록(BOM) 확정·주문 — 아래 BOM 표 기준, 수량·구매처 기록 | 선행: - | 담당: 최석진
 - [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 신지호
