@@ -46,3 +46,14 @@ def test_wake_only_asks_back() -> None:
     bus.publish(stt("자비스.", wake=True))
 
     assert got[0].payload["call"] == {"action": "ASK_CLARIFY", "for_action": None, "missing": []}
+
+
+def test_stt_fixes_applied_before_parsing() -> None:
+    bus, got = MemoryBus(), []
+    bus.subscribe("llm/function_call", got.append)
+    LlmService(bus, "s_llm").start()
+
+    bus.publish(stt("자비스 타임머 취소해줘.", wake=True))
+
+    assert got[0].payload["call"] == {"action": "CANCEL_TIMER"}
+    assert got[0].payload["raw_text"] == "타이머 취소해줘."  # 파서가 본 문장 (원문은 stt/text에)
