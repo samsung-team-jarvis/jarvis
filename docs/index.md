@@ -6,6 +6,7 @@
 ## Start Here
 
 - [팀원 온보딩 체크리스트](./onboarding.md)
+- [비용 목록 (구매 필요 · 무료 · 유료 주의)](./budget.md)
 
 ## Plan & Metrics
 
@@ -34,7 +35,7 @@
 ## Decisions
 
 - [Decision Log Guide](./decisions/index.md)
-- [결정 대기 질문](./decisions/open-questions.md)
+- [결정 사항 (Q-01~09, 문서 불일치)](./decisions/open-questions.md)
 
 ## Agent Harness
 

@@ -54,7 +54,7 @@ AI 도구에 작업을 시킬 때는 **작업 ID로 지시**하면 규칙대로 
 
 ## 5. 완료 보고
 
-- [ ] [결정 대기 질문](./decisions/open-questions.md) 중 본인이 답할 수 있는 것에 답하기 — 특히 Q-03(본인 PC: x86/ARM, GPU 유무)
+- [ ] [결정 사항](./decisions/open-questions.md)과 [비용 목록](./budget.md) 읽기 — 💰 표시 항목은 구매·결제 전에 팀에 먼저 말한다
 - [ ] [온보딩 이슈 #7](https://github.com/samsung-team-jarvis/jarvis/issues/7)에 본인 항목 체크 + 댓글 (형식은 이슈 본문 참고)
 
 ## 팀원 GitHub 아이디

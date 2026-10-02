@@ -32,15 +32,15 @@
 
 ## Phase 0 — 착수 준비 (결정·환경·규격)
 
-**Gate 0:** `docs/decisions/open-questions.md`의 Q-01~Q-05가 답변됨 · `docs/conventions/versions.md` 고정 · `docs/architecture/interfaces.md` v0.1 팀 합의 · 부품 주문 완료
+**Gate 0:** `docs/decisions/open-questions.md`의 질문이 모두 확정 또는 정보 대기(사유 명시) · `docs/conventions/versions.md` 고정 · `docs/architecture/interfaces.md` v0.1 팀 합의 · 부품 주문 완료
 
 - [ ] INFRA-01 GitHub 저장소 생성, 팀원 초대, `main` 보호, 이 harness(CLAUDE.md·docs) 푸시 — 4명 모두 clone 성공 | 선행: - | 담당: 이현종 (#7, 팀원 온보딩 진행 중)
 - [ ] INFRA-02 `.gitignore`(가중치·원본 데이터 제외), 브랜치·커밋 규칙 공유 — CLAUDE.md 협업 규칙에 모두 동의 | 선행: INFRA-01 | 담당: 공동
 - [x] INFRA-10 컨벤션 자동 검사 (커밋·브랜치·PR 형식 훅과 CI, AI 도구 guard hook, 브랜치 보호 필수 체크) — 틀린 형식이 로컬·CI에서 실패 | 선행: INFRA-02 | 담당: 이현종 (#4 → PR #5)
 - [x] INFRA-11 원커맨드 개발 환경(`scripts/setup.py`)과 온보딩 문서 — 새 clone에서 한 번에 훅 설치·검사 통과 | 선행: INFRA-10 | 담당: 이현종 (#6)
 - [ ] INFRA-12 팀원 작성자 라벨과 자동 리뷰어 지정(CODEOWNERS) — PR 생성 시 리뷰 요청 자동 생성 | 선행: INFRA-11 | 담당: 이현종 (#9)
-- [ ] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 신지호
-- [ ] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 신지호
+- [x] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 신지호 (#23, 이현종 대행)
+- [x] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 신지호
 - [x] DOC-11 기술 스택·문서 사실 검증 — recipe·환경·버전 문서의 "(확인 필요)"를 공식 자료로 확인하고 출처 기록 | 선행: - | 담당: 이현종 (#11)
 - [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 신지호
 - [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환
@@ -50,6 +50,8 @@
 - [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 신지호
 
 ### BOM (초안)
+
+구매·무료 대안·유료 서비스 정리: [budget](./budget.md)
 
 | 품목 | 용도 | 비고 |
 |---|---|---|
