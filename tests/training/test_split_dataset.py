@@ -24,6 +24,12 @@ def test_every_action_in_every_split_and_ratio() -> None:
         assert all(r["meta"]["split"] == s for r in rows)
 
 
+def test_test_split_has_hard_negatives_guard_must_reject() -> None:
+    """Unsafe Rate를 test로 잴 수 있어야 한다."""
+    test = committed()["test"]
+    assert any(r["meta"].get("expect_guard") == "REJECT" for r in test)
+
+
 def test_calibration_only_from_train() -> None:
     train = {(r["instruction"], json.dumps(r["context"])) for r in committed()["train"]}
     calib = sd.load(SPLIT_DIR / "calib.jsonl")
