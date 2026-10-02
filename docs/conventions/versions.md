@@ -13,7 +13,7 @@
 | rknn-toolkit-lite2 / librknnrt (보드) | | 2.3.2 | aarch64, Python 3.7~3.12. 변환 툴과 같은 버전 | |
 | rkllm-toolkit (변환) | **1.3.0 (학교 제공 도커)** | 1.3.1 (GitHub 최신) | Linux x86_64 전용, Python 3.10~3.12. 보드 런타임과 맞추기 위해 학교 도커 버전을 따른다 | 2026-10-02 (학교 특강2 p.4, 27) |
 | librkllmrt (보드) | **1.3.0** | 1.3.1 | `run.sh build-demo` 산출물의 `lib/librkllmrt.so`를 쓴다 | 2026-10-02 (학교 특강2 p.27) |
-| sherpa-onnx | | 1.13.8 | NPU 실행은 별도 RKNN 빌드 | |
+| sherpa-onnx | **1.13.8** ([requirements](../../requirements.txt)) | 1.13.8 | NPU 실행은 별도 RKNN 빌드. 보드 배포 이미지에 든 버전은 보드 수령 후 확인 (확인 필요) | 2026-10-02 (Mac, SenseVoice int8 받아쓰기, #33) |
 | ultralytics (학습) | **8.4.171** | 8.4.171 | RKNN export는 x86 Linux 전용이라 쓰지 않음 (포크 사용) | 2026-10-02 (Mac에서 학습·평가 확인, #19) |
 | airockchip/ultralytics_yolov8 (export) | **4674fe6** + torch 2.4.1 · numpy<2 · onnx 1.16.1 ([export-requirements](../../training/yolo/export-requirements.txt)) | (포크, 커밋으로 고정) | 학습 환경과 별도 가상환경 | 2026-10-02 (Mac에서 export 성공, 출력 9개, #19) |
 | Python (보드 / Colab) | | — | 위 제약의 교집합: **3.10~3.12** | |
