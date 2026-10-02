@@ -1,0 +1,24 @@
+# 방치: 화구를 켠 채 사람이 자리를 비운다. 온도는 서서히 오른다.
+# 값은 개발용 가상 값이다 (측정값 아님). 방치 판정 시간은 FUS 작업에서 정한다.
+name: unattended
+description: 화구 켜짐 상태에서 30초 뒤 사람이 화면에서 사라지고 돌아오지 않음
+duration_s: 150
+heartbeat_hz: 1
+
+sensor:
+  device_id: esp32-1
+  hz: 1
+  temperature_c:
+    - [0, 25]
+    - [30, 150]
+    - [150, 210]
+  current_a:
+    - [0, 1.2]
+
+vision:
+  fps: 2
+  objects:
+    - [0, [pan, burner_on, person]]
+    - [30, [pan, burner_on]]          # 사람 사라짐
+
+stt: []

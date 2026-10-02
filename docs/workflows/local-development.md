@@ -53,6 +53,12 @@ mosquitto_sub -t '#' -v                                       # 모든 메시지
 
 브로커 없이 개발·테스트할 때는 `JARVIS_BUS=memory://` (한 프로세스 안에서만 전달).
 
+하드웨어 없이 입력을 만들려면 시뮬레이터로 시나리오를 재생한다 ([simulator](../../services/simulator/README.md)):
+
+```bash
+python -m services.simulator services/simulator/scenarios/overheat.yaml --speed 10
+```
+
 ## 보드 접속
 
 보드 세팅 절차는 [recipes/board-setup.md](../../recipes/board-setup.md). 접속 정보(IP, 계정)는 repo에 커밋하지 않고 팀 메신저·개인 `~/.ssh/config`에 둔다.
