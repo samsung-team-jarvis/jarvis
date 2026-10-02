@@ -43,3 +43,35 @@ python -m training.llm.build_seed --review-csv review.csv    # 검수용 표 (Ex
 
 - 목표보다 모자란 Action: `CANCEL_TIMER` −12, `CHECK_RISK` −7, `EMERGENCY_STOP` −12, `UNSUPPORTED` −2 (고정 문장 템플릿이 적고, "멈춰·그만·긴급 정지" 등은 STT 대본과 겹쳐 제외). **LLM-04 Paraphrase에서 채운다.**
 - 사람 검수 전이다.
+
+## Paraphrase → 데이터 v1 (LLM-04, 발표 p.9 ②~④)
+
+```bash
+python -m training.llm.build_dataset                           # → data/llm/dataset_v1.jsonl
+python -m training.llm.build_dataset --review-csv review.csv   # Paraphrase만 검수용 표
+```
+
+| 단계 | 하는 일 | 어디서 |
+|---|---|---|
+| ① Seed | 기획 시트 템플릿 → 627건 (모두 포함) | `plan_sheet.yaml`, `build_seed.py` |
+| ② Paraphrase | 부모 템플릿을 같은 뜻의 다른 말투로 바꿔 쓴 **템플릿** (생성: Claude, 프롬프트는 시트 머리말) | `paraphrase_sheet.yaml` |
+| ③ 검증·중복 제거 | 스키마 검증, 띄어쓰기·문장부호만 다른 중복 제거, 같은 문장에 다른 정답이면 실패 | `build_dataset.py` |
+| ④ Entity 치환·STT 정규화 | 슬롯 채우기(정답이 자동으로 따라옴) + 서비스와 같은 STT 오인식 사전 적용 (`meta.raw_instruction`에 원문) | `build_dataset.py` |
+| ⑤ Hard Negative 분리 | 따로 둔다 | `hard_negative_v1.jsonl` |
+| ⑥ 분할 | 가족(`meta.group`) 단위 | LLM-05 |
+
+- 바꿔 쓴 템플릿은 부모의 정답·장치 목록을 물려받고 **같은 가족(`group` = 부모 id)**이다. 분할을 가족 단위로 해야 비슷한 문장이 train·test에 함께 들어가지 않는다.
+- `(a|b|c)` 선택지는 모든 조합으로 펼친다. Action별 목표까지 템플릿을 돌아가며 뽑는다.
+- 헷갈리기 쉬운 경계를 일부러 넣었다: "타이머 정지"=타이머 취소(긴급 정지 아님), "청소기 꺼 줘"·"볼륨 줄여 줘"=지원 외, "불빛 밝게"=지원 외(조명).
+
+### v1 현황 (2026-10-02)
+
+| 구분 | 수 |
+|---|---|
+| 합계 | **2,234** (Seed 627 · Paraphrase 1,607) |
+| Action | TURN_ON 320 · TURN_OFF 320 · SET_LEVEL 340 · SET_TIMER 320 · CANCEL_TIMER 120 · CHECK_STATUS 180 · CHECK_RISK 103 · EMERGENCY_STOP 139 · ASK_CLARIFY 230 · UNSUPPORTED 162 |
+| 어투 | 명령 1,098 · 요청 675 · 평서 461 |
+| 가족(분할 단위) | 150 (템플릿 269) |
+
+- 목표보다 모자람: CHECK_RISK −17, EMERGENCY_STOP −11, UNSUPPORTED −18 (고정 문장 가족이라 표현이 적음).
+- Paraphrase 1,607건은 사람 검수 전이다 (Seed 검수와 같은 방식: 시트를 고쳐 재생성).
