@@ -58,6 +58,10 @@
 - [STT 평가](../recipes/stt-eval.md)
 - [새 서비스 추가](../recipes/add-service.md)
 
+## Services
+
+- [simulator (시나리오 기반 가짜 메시지)](../services/simulator/README.md)
+
 ## Training
 
 - [training (변환 노트북·스크립트)](../training/README.md)

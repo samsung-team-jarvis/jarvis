@@ -81,7 +81,7 @@
 - [ ] BOARD-05 RKLLM 데모를 지원 모델 1개로 보드에서 실행 (학교 도커 `run.sh build-demo`의 `llm_demo`, 클럭 고정 후) — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 이현종
 - [ ] BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북 — 변환 1회 성공 | 선행: BOARD-03 (보드 미수령으로 최신 릴리스 기준 선진행) | 담당: 이현종 (#13) — RKNN 변환 성공(Docker amd64), RKLLM은 Colab 실행 대기
 - [x] INFRA-03 `common/` 메시지 봉투 dataclass + 버스 래퍼 (Q-06 결정 방식) — 가짜 publisher/subscriber 예제 동작 | 선행: FUS-01 (v0.1 초안 기준 선진행) | 담당: 이현종 (#20)
-- [ ] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종
+- [x] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종 (#29, `services/simulator`)
 - [ ] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 이현종
 - [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 이현종
 - [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 주방(또는 유사) 영상 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 신지호
@@ -124,7 +124,7 @@
 - [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 이현종
 - [ ] LLM-04 Paraphrase 합성 → 형식 검증·중복 제거·사람 검수 파이프라인 (6단계, 발표 p.9). 생성은 SUDA식 **기획 시트**(기능별 키워드 목록 + 어투 3종 + 데이터 비율 + 생성 프롬프트)로 | 선행: LLM-02 | 담당: 이현종
 - [ ] LLM-05 템플릿·세션 단위 Train/Val/Test 분할, Test 고정, 캘리브레이션 세트는 Train에서만 | 선행: LLM-04 | 담당: 이현종
-- [ ] FUS-05 센서 시나리오 20~30개 정의 (정상·과열·방치·화구 켜짐 방치) + 기록 | 선행: HW-04 | 담당: 최지환
+- [ ] FUS-05 센서 시나리오 20~30개 정의 (정상·과열·방치·화구 켜짐 방치) + 기록 — 하드웨어 전에는 [simulator](../services/simulator/README.md) 시나리오 형식으로 먼저 작성 | 선행: HW-04 | 담당: 최지환
 - [ ] HW-07 모형 1차 (화구 LED·후드 팬·부저, 열전대 장착 위치) — 촬영 가능한 상태 | 선행: HW-02 | 담당: 최석진
 
 ### Baseline 측정 (모두 보드 기준)

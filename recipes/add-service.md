@@ -12,6 +12,6 @@
 6. **하트비트**: `system/heartbeat`를 주기적으로 발행.
 7. **측정 필드**: 처리 시간(ms)을 payload에 포함 (interfaces 토픽 표 참고).
 8. **확인**:
-   - 가짜 입력으로 출력 토픽이 나오는지 (`recorder` 로그 또는 구독 도구)
+   - 가짜 입력으로 출력 토픽이 나오는지 — 입력은 `python -m services.simulator <시나리오>`, 확인은 `recorder` 로그 또는 `mosquitto_sub`
    - 서비스가 죽었다 살아나도 다른 서비스가 계속 동작하는지
 9. **런처 등록**: 일괄 기동 스크립트(BOARD-07)에 추가.
