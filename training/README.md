@@ -13,6 +13,7 @@
 | `convert/yolo_onnx_to_rknn.py` | ONNX → RKNN 변환 스크립트 (목록의 상대 경로는 목록 파일 기준) | Linux x86_64 (또는 aarch64, 아래 주의) |
 | `convert/hf_to_rkllm.py` | HF LLM → RKLLM 변환 스크립트 | Linux x86_64 · Python 3.10~3.12 |
 | `convert/docker_rknn_smoke.sh` | Mac에서 Docker로 RKNN 변환 확인 | Docker (linux/amd64 에뮬레이션) |
+| `llm/plan_sheet.yaml` · `llm/build_seed.py` | LLM 기획 시트 → Seed·Hard Negative 데이터 (`data/llm/`) — [llm](./llm/README.md) | 어디서나 |
 
 ## 주의
 
