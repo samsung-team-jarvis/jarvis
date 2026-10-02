@@ -29,6 +29,7 @@ pip install pre-commit && pre-commit install
 
 ### Claude Code
 - `CLAUDE.md`가 `AGENTS.md`를 import한다. 세션 시작 시 git 훅 미설치를 경고한다.
+- `.claude/settings.json`의 `attribution.commit`을 빈 값으로 두어 커밋에 Co-Authored-By를 넣지 않는다. 다른 도구는 각자 설정을 끄고, 끄지 않아도 commit-msg 훅·CI가 거부한다.
 - 개인 설정은 `.claude/settings.local.json` (git 제외).
 - 참고: https://code.claude.com/docs/en/memory.md , https://code.claude.com/docs/en/hooks-guide.md
 
