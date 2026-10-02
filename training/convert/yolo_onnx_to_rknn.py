@@ -8,9 +8,11 @@ ONNX는 airockchip/ultralytics_yolov8 포크로 export한 것이어야 한다 (r
         --out best_int8.rknn --dtype i8
 
 dataset.txt: 캘리브레이션 이미지 경로를 한 줄에 하나씩 (Train 세트에서만).
+상대 경로는 dataset.txt가 있는 폴더 기준으로 해석한다 (make_calib_list.py --copy 결과).
 """
 
 import argparse
+import os
 import pathlib
 import sys
 import time
@@ -24,6 +26,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dtype", choices=["i8", "u8", "fp"], default="i8")
     parser.add_argument("--platform", default="rk3588")
     return parser.parse_args()
+
+
+def build(rknn: object, dataset: pathlib.Path | None) -> int:
+    """dataset.txt 안의 상대 경로가 txt 파일 위치 기준으로 풀리도록 그 폴더에서 build한다."""
+    if dataset is None:
+        return rknn.build(do_quantization=False)
+    dataset = dataset.resolve()
+    previous = os.getcwd()
+    os.chdir(dataset.parent)
+    try:
+        return rknn.build(do_quantization=True, dataset=str(dataset))
+    finally:
+        os.chdir(previous)
 
 
 def main() -> int:
@@ -45,12 +60,7 @@ def main() -> int:
         )
         steps = [
             ("load_onnx", lambda: rknn.load_onnx(model=str(args.onnx))),
-            (
-                "build",
-                lambda: rknn.build(
-                    do_quantization=quantize, dataset=str(args.dataset) if quantize else None
-                ),
-            ),
+            ("build", lambda: build(rknn, args.dataset if quantize else None)),
             ("export_rknn", lambda: rknn.export_rknn(str(args.out))),
         ]
         for name, call in steps:

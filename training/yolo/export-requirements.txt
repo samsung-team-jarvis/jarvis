@@ -1,0 +1,22 @@
+# RKNN용 ONNX export 전용 환경 (airockchip/ultralytics_yolov8 포크).
+# 학습 환경(최신 ultralytics, numpy 2.x)과 섞으면 깨지므로 별도 가상환경에 설치한다.
+# 2026-10-02 Mac(arm64, Python 3.11)에서 이 조합으로 export 성공 확인 (#19).
+#   - 포크는 numpy<2 필요
+#   - torch 2.9+ 는 torch.onnx.export가 새 exporter(dynamo, onnxscript 필요)를 써서 포크가 기대하는 그래프와 달라질 수 있음 → 2.4.1 고정
+#   - onnx는 rknn-toolkit2와 같은 1.16.1
+numpy>=1.23,<2
+torch==2.4.1
+torchvision==0.19.1
+onnx==1.16.1
+opencv-python-headless>=4.6
+matplotlib>=3.3
+pillow>=7.1.2
+pyyaml>=5.3.1
+requests>=2.23
+scipy>=1.4.1
+tqdm>=4.64
+psutil
+py-cpuinfo
+pandas>=1.1.4
+seaborn>=0.11
+ultralytics-thop>=2.0.0
