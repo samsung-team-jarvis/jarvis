@@ -45,6 +45,7 @@ def test_records_and_writes_manifest(tmp_path: pathlib.Path) -> None:
     items = load_manifest(tmp_path / "stt/manifest.csv", "test")  # stt_eval이 그대로 읽는다
     assert [i["utt_id"] for i in items] == ["spk01_quiet_pin_s01", "spk01_quiet_pin_s02"]
     assert items[0]["path"] == "stt/spk01/quiet_pin/s01.wav"
+    assert b"\r\n" not in (tmp_path / "stt/manifest.csv").read_bytes()  # 커밋할 파일이라 LF
 
 
 def test_bad_take_is_retried_and_skip_and_quit(tmp_path: pathlib.Path) -> None:
@@ -98,6 +99,7 @@ def test_invalid_names_rejected(tmp_path: pathlib.Path) -> None:
 
 
 def test_script_file_is_valid() -> None:
+    assert b"\r\n" not in SCRIPT.read_bytes()
     rows = load_script(SCRIPT)
     assert len(rows) == 40
     assert len({r["script_id"] for r in rows}) == 40

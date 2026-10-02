@@ -96,7 +96,7 @@ def upsert_manifest(path: pathlib.Path, row: dict[str, str]) -> None:
     rows[row["utt_id"]] = row
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w = csv.DictWriter(f, fieldnames=FIELDS, lineterminator="\n")  # git에서 CRLF 경고 없게
         w.writeheader()
         for key in sorted(rows):
             w.writerow(rows[key])
