@@ -1,6 +1,18 @@
 # Recipe: Orange Pi 보드 초기 세팅
 
-> 보드 미수령 상태(2026-10-02)에서 공식 자료로 확인한 내용이다. 실제 세팅(BOARD-02, BOARD-03)을 하면서 명령 결과를 확인하고, 남은 "(확인 필요)"를 지운다.
+> 보드 미수령 상태(2026-10-02)에서 공식 자료와 학교 특강2([school-materials](../docs/school-materials.md))로 확인한 내용이다. **학교 보드는 Orange Pi 5 Plus · 16GB · Ubuntu 22.04 배포 이미지(RKNPU v0.9.8·음성 모델 사전 설치)** 로 안내되어 있어, 배포 이미지를 받았다면 1~2절의 OS 설치는 건너뛰고 "0. 받은 보드 3분 검증"부터 한다.
+
+## 0. 받은 보드 3분 검증 (특강 p.28)
+
+| 명령 | 기대 출력 |
+|---|---|
+| `sudo cat /sys/kernel/debug/rknpu/version` | `RKNPU driver: v0.9.8` |
+| `dmesg \| grep -i rknpu` | `Initialized rknpu 0.9.8 ...` |
+| `ls /sys/class/devfreq/ \| grep npu` | `fdab0000.npu` |
+
+셋 다 나오면 정상. 비어 있거나 버전이 낮으면 **직접 고치지 말고 운영진에 문의** (NPU 드라이버는 벤더 커널에만 있어, 일반 우분투를 깔면 NPU가 안 잡힌다).
+
+자주 쓰는 명령: `sudo cat /sys/kernel/debug/rknpu/load`(NPU 사용률), `sudo bash fix_freq_rk3588.sh`(클럭 고정, **측정 전 필수**), `export RKLLM_LOG_LEVEL=1`(TTFT·tok/s 로그), `cat /sys/class/thermal/thermal_zone*/temp`(온도), `free -m`·`htop`.
 
 ## 준비물
 
@@ -9,7 +21,7 @@
 - 전원 어댑터, 방열판·팬, 랜선
 - Mac: balenaEtcher (이미지 굽기)
 
-## 1. OS 설치
+## 1. OS 설치 (배포 이미지가 없을 때만)
 
 1. Orange Pi 공식 사이트 다운로드 페이지에서 해당 보드의 **Ubuntu 이미지**를 받는다 (Rockchip 커널 포함 이미지 — NPU 드라이버가 들어 있어야 한다).
 2. balenaEtcher로 microSD에 굽는다.
