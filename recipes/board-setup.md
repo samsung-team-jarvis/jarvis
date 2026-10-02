@@ -70,6 +70,38 @@ python3 --version                               # rknn-toolkit-lite2는 Python 3
 - BOARD-04: `rknn_model_zoo`의 YOLOv8 예제로 이미지 1장 추론
 - BOARD-05: RKLLM `rkllm_api_demo`로 지원 모델 1개 실행
 
+## 6. 서비스 상시 구동 (systemd) — 보드 미검증
+
+개발 중에는 `python3 scripts/launch.py`로 직접 띄운다. 시연처럼 부팅하면 자동으로 떠야 할 때 런처를 systemd 서비스로 등록한다. **아래는 보드에서 아직 확인하지 않은 예시**다 (STT-02 이후 확인, 경로·사용자 이름은 보드에 맞게).
+
+```ini
+# /etc/systemd/system/jarvis.service
+[Unit]
+Description=JARVIS services (scripts/launch.py)
+After=network-online.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+User=<보드 사용자>
+WorkingDirectory=/home/<보드 사용자>/jarvis
+Environment=JARVIS_BUS=mqtt://localhost:1883
+Environment=JARVIS_STT_MODEL_DIR=/home/<보드 사용자>/voice/models/<SenseVoice 폴더>
+Environment=JARVIS_VAD_MODEL=/home/<보드 사용자>/voice/models/silero_vad.onnx
+ExecStart=/home/<보드 사용자>/jarvis/.venv/bin/python scripts/launch.py --restart --log-dir data/logs
+KillSignal=SIGTERM
+TimeoutStopSec=15
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now jarvis
+journalctl -u jarvis -f          # 로그 ([서비스] 접두어)
+sudo systemctl stop jarvis       # 런처가 모든 서비스에 SIGTERM
+```
+
 ## 자주 막히는 곳
 
 - 변환 툴 버전 ≠ 보드 런타임 버전 → 로드 실패 또는 결과 이상
