@@ -11,18 +11,22 @@
 - 진행 중이 아니게 된 작업은 담당을 다시 `미정`으로 돌린다.
 - 새 작업이 생기면 해당 워크스트림 끝에 다음 번호로 추가한다. 번호는 재사용하지 않는다.
 
-## 워크스트림
+## 작업물과 담당
 
-| 코드 | 범위 | 수행계획서 기준 참고 담당 (확정 아님) |
-|---|---|---|
-| INFRA | 저장소, 공통 메시지·버스, 레코더, 측정 도구 | 공동 |
-| BOARD | Orange Pi OS·드라이버·버전 고정, NPU 배치, 발열 | 신지호 |
-| STT | 마이크, VAD, STT, 호출어, 소음 평가 | 이현종 |
-| VIS | 카메라, YOLOv8n 학습·RKNN 변환 | 이현종 |
-| LLM | Function Call 데이터, LoRA, RKLLM 변환·추론 | 미정 (신지호/이현종 검토) |
-| FUS | State Machine, Context, Safety Guard, 규칙 파서 | 최지환 |
-| HW | ESP32 펌웨어, BLE, 센서, 릴레이, 모형 | 최석진 |
-| DOC | 주간보고, 발표, 멘토 소통, 최종 보고서 | 공동 |
+팀원마다 **입력 → 출력이 분명한 작업물 하나**를 처음부터 끝까지(데이터 → 모델/코드 → 보드 → 측정) 맡는다. 작업물 사이의 경계는 [interfaces](./architecture/interfaces.md)의 토픽이고, 각 작업물의 성과는 [METRICS](./METRICS.md)의 해당 지표로 보인다. 결정 근거: [decision log](./decisions/2026-10-02-deliverables-split.md)
+
+| 작업물 | 담당 | 입력 → 출력 | 주요 작업 ID | 대표 지표 |
+|---|---|---|---|---|
+| ① 비전 데이터·모델 + 보드 + 팀 운영 | **신지호** | 카메라 → 학습·변환된 비전 모델(`.rknn`) | BOARD-01~04·09, VIS-01~07·09, DOC-01~03·05·07·10 | mAP50, 양자화 전후 mAP |
+| ② 음성 → 명령 AI 서비스 + 공통 런타임 | **이현종** | 음성 → Function Call(JSON) / 서비스 실행 기반 | STT-*, LLM-*, INFRA-03~06·08, BOARD-05~08, VIS-08·10, FUS-02·06, UI-*(선택) | CER, Action Acc, JSON Valid, E2E 지연, NPU 동시 부하 |
+| ③ 상황 인식 + 안전 | **최지환** | 음성·비전·센서 → 주방 상태·위험 판단·차단 명령 | FUS-01·03~05·07~11, INFRA-07 | State F1, 위험 미탐율, 감지→차단 지연 |
+| ④ 제어 하드웨어 + 모형 | **최석진** | 제어 명령 → 장치 동작 / 센서 → 측정값 | HW-*, DOC-04·06 | BLE 성공률·지연, 하트비트 안전 정지 |
+
+- ①은 **코딩을 최소화**하도록 짰다: 촬영·라벨링(GUI 도구), Colab 노트북 실행(학습·변환), recipe 명령 실행(보드), 제공된 측정 스크립트 실행. 노트북·스크립트는 ②가 만든다 (VIS-10, BOARD-06).
+- ①의 모델을 서비스로 감싸는 코드(VIS-08 `vision_svc`)와 NPU 동시 부하 측정(BOARD-08)은 ②가 맡는다.
+- 공동: INFRA-02(규칙 동의), INFRA-09(정기 통합, ② 주관), DOC-08·09(최종 보고서·리허설).
+
+워크스트림 코드(라벨·작업 ID 접두사): INFRA 공통 · BOARD 보드·NPU · STT 음성 · VIS 비전 · LLM 명령 해석 · FUS 상황 인식·안전 · HW 하드웨어 · UI 대시보드 · DOC 문서·발표
 
 ---
 
@@ -31,19 +35,19 @@
 **Gate 0:** `docs/decisions/open-questions.md`의 Q-01~Q-05가 답변됨 · `docs/conventions/versions.md` 고정 · `docs/architecture/interfaces.md` v0.1 팀 합의 · 부품 주문 완료
 
 - [ ] INFRA-01 GitHub 저장소 생성, 팀원 초대, `main` 보호, 이 harness(CLAUDE.md·docs) 푸시 — 4명 모두 clone 성공 | 선행: - | 담당: 이현종 (#7, 팀원 온보딩 진행 중)
-- [ ] INFRA-02 `.gitignore`(가중치·원본 데이터 제외), 브랜치·커밋 규칙 공유 — CLAUDE.md 협업 규칙에 모두 동의 | 선행: INFRA-01 | 담당: 미정
+- [ ] INFRA-02 `.gitignore`(가중치·원본 데이터 제외), 브랜치·커밋 규칙 공유 — CLAUDE.md 협업 규칙에 모두 동의 | 선행: INFRA-01 | 담당: 공동
 - [x] INFRA-10 컨벤션 자동 검사 (커밋·브랜치·PR 형식 훅과 CI, AI 도구 guard hook, 브랜치 보호 필수 체크) — 틀린 형식이 로컬·CI에서 실패 | 선행: INFRA-02 | 담당: 이현종 (#4 → PR #5)
 - [x] INFRA-11 원커맨드 개발 환경(`scripts/setup.py`)과 온보딩 문서 — 새 clone에서 한 번에 훅 설치·검사 통과 | 선행: INFRA-10 | 담당: 이현종 (#6)
 - [ ] INFRA-12 팀원 작성자 라벨과 자동 리뷰어 지정(CODEOWNERS) — PR 생성 시 리뷰 요청 자동 생성 | 선행: INFRA-11 | 담당: 이현종 (#9)
-- [ ] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 미정
-- [ ] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 미정
+- [ ] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 신지호
+- [ ] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 신지호
 - [x] DOC-11 기술 스택·문서 사실 검증 — recipe·환경·버전 문서의 "(확인 필요)"를 공식 자료로 확인하고 출처 기록 | 선행: - | 담당: 이현종 (#11)
-- [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 미정
-- [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 미정
-- [ ] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 미정
-- [ ] HW-01 BLE GATT·패킷 규격 v0.1 확정 — interfaces §4 확정 | 선행: FUS-01 | 담당: 미정
-- [ ] HW-02 부품 목록(BOM) 확정·주문 — 아래 BOM 표 기준, 수량·구매처 기록 | 선행: - | 담당: 미정
-- [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 미정
+- [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 신지호
+- [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환
+- [ ] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 이현종
+- [ ] HW-01 BLE GATT·패킷 규격 v0.1 확정 — interfaces §4 확정 | 선행: FUS-01 | 담당: 최석진
+- [ ] HW-02 부품 목록(BOM) 확정·주문 — 아래 BOM 표 기준, 수량·구매처 기록 | 선행: - | 담당: 최석진
+- [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 신지호
 
 ### BOM (초안)
 
@@ -66,18 +70,18 @@
 
 **Gate 1:** 아래 5개가 각각 단독으로 시연 가능 — ① 보드에서 기본 YOLOv8 RKNN 예제 실행 ② 보드에서 RKLLM 기본 모델 대화 ③ SenseVoice 한국어 받아쓰기 ④ ESP32 BLE 에코 + LED 제어 ⑤ 버스로 가짜 메시지 송수신
 
-- [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 미정
-- [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN·RKLLM 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 미정
-- [ ] BOARD-04 `rknn_model_zoo` YOLOv8 예제를 보드에서 실행 (기본 모델) — 이미지 1장 추론 결과 확인 | 선행: BOARD-03 | 담당: 미정
-- [ ] BOARD-05 RKLLM 공식 데모를 지원 모델 1개로 보드에서 실행 — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 미정
+- [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 신지호
+- [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN·RKLLM 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 신지호
+- [ ] BOARD-04 `rknn_model_zoo` YOLOv8 예제를 보드에서 실행 (기본 모델) — 이미지 1장 추론 결과 확인 | 선행: BOARD-03 | 담당: 신지호
+- [ ] BOARD-05 RKLLM 공식 데모를 지원 모델 1개로 보드에서 실행 — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 이현종
 - [ ] BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북 — 변환 1회 성공 | 선행: BOARD-03 | 담당: 미정
-- [ ] INFRA-03 `common/` 메시지 봉투 dataclass + 버스 래퍼 (Q-06 결정 방식) — 가짜 publisher/subscriber 예제 동작 | 선행: FUS-01 | 담당: 미정
-- [ ] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 미정
-- [ ] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 미정
-- [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 미정
-- [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 주방(또는 유사) 영상 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 미정
-- [ ] HW-03 ESP32 BLE 서버 (cmd write / ack notify) — Pi 또는 Mac의 `bleak`으로 LED on/off | 선행: HW-01 | 담당: 미정
-- [ ] HW-04 열전대(MAX31855)·INA219 값 시리얼 출력 — 실온·뜨거운 물로 온도 변화 확인 | 선행: HW-02 | 담당: 미정
+- [ ] INFRA-03 `common/` 메시지 봉투 dataclass + 버스 래퍼 (Q-06 결정 방식) — 가짜 publisher/subscriber 예제 동작 | 선행: FUS-01 | 담당: 이현종
+- [ ] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종
+- [ ] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 이현종
+- [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 이현종
+- [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 주방(또는 유사) 영상 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 신지호
+- [ ] HW-03 ESP32 BLE 서버 (cmd write / ack notify) — Pi 또는 Mac의 `bleak`으로 LED on/off | 선행: HW-01 | 담당: 최석진
+- [ ] HW-04 열전대(MAX31855)·INA219 값 시리얼 출력 — 실온·뜨거운 물로 온도 변화 확인 | 선행: HW-02 | 담당: 최석진
 
 ---
 
@@ -85,17 +89,17 @@
 
 **Gate 2:** "자비스, 후드 켜줘" 발화 → STT → 규칙 파서 → Safety Guard → BLE → ESP32 LED 점등이 보드에서 동작하고, 전 구간 지연이 레코더 로그로 측정됨
 
-- [ ] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 | 담당: 미정
-- [ ] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 미정
-- [ ] FUS-02 규칙 기반 파서 v0 (키워드 → Function Call) — Action 10개 중 최소 TURN_ON/TURN_OFF/EMERGENCY_STOP | 선행: LLM-01 | 담당: 미정
-- [ ] FUS-03 `safety_guard` v0: 화이트리스트·스키마 검증, 위험 상태에서 REJECT — 단위 테스트 통과 | 선행: LLM-01 | 담당: 미정
-- [ ] FUS-04 긴급 빠른 경로: "정지/멈춰/그만" 등은 LLM 없이 즉시 EMERGENCY_STOP | 선행: FUS-03 | 담당: 미정
-- [ ] HW-05 `ble_gw` 서비스: 버스 `control/command` → BLE write, ACK(seq) 수신·재시도, `control/result` 발행 | 선행: HW-03, INFRA-03 | 담당: 미정
-- [ ] HW-06 ESP32 하트비트 감시: Pi 하트비트 N초 끊기면 모든 출력 OFF | 선행: HW-03 | 담당: 미정
-- [ ] INFRA-05 `recorder`: 모든 토픽을 세션별 JSONL로 저장 | 선행: INFRA-03 | 담당: 미정
-- [ ] INFRA-06 지연 분해 스크립트: 발화 끝 → STT → 파서 → Guard → BLE ACK 구간별 ms — METRICS E2E 항목 첫 기록 | 선행: INFRA-05 | 담당: 미정
-- [ ] BOARD-07 서비스 일괄 기동/종료 스크립트 (systemd 또는 단일 런처) | 선행: INFRA-03 | 담당: 미정
-- [ ] DOC-04 Skeleton 시연 영상 1편 녹화 | 선행: Gate 2 항목 전부 | 담당: 미정
+- [ ] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 | 담당: 이현종
+- [ ] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 이현종
+- [ ] FUS-02 규칙 기반 파서 v0 (키워드 → Function Call) — Action 10개 중 최소 TURN_ON/TURN_OFF/EMERGENCY_STOP | 선행: LLM-01 | 담당: 이현종
+- [ ] FUS-03 `safety_guard` v0: 화이트리스트·스키마 검증, 위험 상태에서 REJECT — 단위 테스트 통과 | 선행: LLM-01 | 담당: 최지환
+- [ ] FUS-04 긴급 빠른 경로: "정지/멈춰/그만" 등은 LLM 없이 즉시 EMERGENCY_STOP | 선행: FUS-03 | 담당: 최지환
+- [ ] HW-05 `ble_gw` 서비스: 버스 `control/command` → BLE write, ACK(seq) 수신·재시도, `control/result` 발행 | 선행: HW-03, INFRA-03 | 담당: 최석진
+- [ ] HW-06 ESP32 하트비트 감시: Pi 하트비트 N초 끊기면 모든 출력 OFF | 선행: HW-03 | 담당: 최석진
+- [ ] INFRA-05 `recorder`: 모든 토픽을 세션별 JSONL로 저장 | 선행: INFRA-03 | 담당: 이현종
+- [ ] INFRA-06 지연 분해 스크립트: 발화 끝 → STT → 파서 → Guard → BLE ACK 구간별 ms — METRICS E2E 항목 첫 기록 | 선행: INFRA-05 | 담당: 이현종
+- [ ] BOARD-07 서비스 일괄 기동/종료 스크립트 (systemd 또는 단일 런처) | 선행: INFRA-03 | 담당: 이현종
+- [ ] DOC-04 Skeleton 시연 영상 1편 녹화 | 선행: Gate 2 항목 전부 | 담당: 최석진
 
 ---
 
@@ -104,27 +108,28 @@
 **Gate 3:** `docs/METRICS.md`의 모든 Baseline 칸이 실측값으로 채워짐 (LLM은 기본 모델+프롬프트, 규칙 파서 포함)
 
 ### 데이터
-- [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 미정
-- [ ] STT-06 CER·RTF·STT→Action 정확도 측정 스크립트 (`jiwer`) | 선행: STT-05 | 담당: 미정
-- [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 미정
-- [ ] VIS-03 모형 주방 촬영 1차 (세션별 조명·각도·배치 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-07 | 담당: 미정
-- [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 미정
-- [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함) | 선행: LLM-01 | 담당: 미정
-- [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 미정
-- [ ] LLM-04 Paraphrase 합성 → 형식 검증·중복 제거·사람 검수 파이프라인 (6단계, 발표 p.9) | 선행: LLM-02 | 담당: 미정
-- [ ] LLM-05 템플릿·세션 단위 Train/Val/Test 분할, Test 고정, 캘리브레이션 세트는 Train에서만 | 선행: LLM-04 | 담당: 미정
-- [ ] FUS-05 센서 시나리오 20~30개 정의 (정상·과열·방치·화구 켜짐 방치) + 기록 | 선행: HW-04 | 담당: 미정
-- [ ] HW-07 모형 1차 (화구 LED·후드 팬·부저, 열전대 장착 위치) — 촬영 가능한 상태 | 선행: HW-02 | 담당: 미정
+- [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 이현종
+- [ ] STT-06 CER·RTF·STT→Action 정확도 측정 스크립트 (`jiwer`) | 선행: STT-05 | 담당: 이현종
+- [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 신지호
+- [ ] VIS-03 모형 주방 촬영 1차 (세션별 조명·각도·배치 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-07 | 담당: 신지호
+- [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 신지호
+- [ ] VIS-10 Colab YOLO 학습·평가 노트북 템플릿 (데이터 경로·클래스만 바꾸면 학습 → mAP 평가 → ONNX export까지) — ①이 코드 수정 없이 VIS-06·07 실행 가능 | 선행: VIS-02 | 담당: 이현종
+- [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함) | 선행: LLM-01 | 담당: 이현종
+- [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 이현종
+- [ ] LLM-04 Paraphrase 합성 → 형식 검증·중복 제거·사람 검수 파이프라인 (6단계, 발표 p.9) | 선행: LLM-02 | 담당: 이현종
+- [ ] LLM-05 템플릿·세션 단위 Train/Val/Test 분할, Test 고정, 캘리브레이션 세트는 Train에서만 | 선행: LLM-04 | 담당: 이현종
+- [ ] FUS-05 센서 시나리오 20~30개 정의 (정상·과열·방치·화구 켜짐 방치) + 기록 | 선행: HW-04 | 담당: 최지환
+- [ ] HW-07 모형 1차 (화구 LED·후드 팬·부저, 열전대 장착 위치) — 촬영 가능한 상태 | 선행: HW-02 | 담당: 최석진
 
 ### Baseline 측정 (모두 보드 기준)
-- [ ] STT-07 SenseVoice 기본 설정 Baseline (CER by 소음 조건, RTF) | 선행: STT-06 | 담당: 미정
-- [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 미정
-- [ ] STT-09 마이크 비교 (핀마이크 vs 웹캠 내장) CER | 선행: STT-06 | 담당: 미정
-- [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 | 담당: 미정
-- [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 미정
-- [ ] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 미정
-- [ ] FUS-07 단일 조건 판단 Baseline (State F1, 위험 미탐율) | 선행: FUS-05 | 담당: 미정
-- [ ] HW-08 BLE 제어 Baseline (성공률, 왕복 지연) — 단순 전달 vs ACK·재시도 | 선행: HW-05 | 담당: 미정
+- [ ] STT-07 SenseVoice 기본 설정 Baseline (CER by 소음 조건, RTF) | 선행: STT-06 | 담당: 이현종
+- [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 이현종
+- [ ] STT-09 마이크 비교 (핀마이크 vs 웹캠 내장) CER | 선행: STT-06 | 담당: 이현종
+- [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 | 담당: 신지호
+- [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종
+- [ ] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종
+- [ ] FUS-07 단일 조건 판단 Baseline (State F1, 위험 미탐율) | 선행: FUS-05 | 담당: 최지환
+- [ ] HW-08 BLE 제어 Baseline (성공률, 왕복 지연) — 단순 전달 vs ACK·재시도 | 선행: HW-05 | 담당: 최석진
 
 ---
 
@@ -132,18 +137,18 @@
 
 **Gate 4:** 실제 모델(STT·YOLO RKNN·LLM .rkllm)이 Skeleton에 들어가 동시에 구동되고, 동시 구동 시 지연·RAM·온도가 측정됨
 
-- [ ] VIS-06 YOLOv8n 파인튜닝 v1 (Colab) | 선행: VIS-04 | 담당: 미정
-- [ ] VIS-07 ONNX → RKNN INT8 변환 (실제 주방 이미지로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06, BOARD-06 | 담당: 미정
-- [ ] VIS-08 `vision_svc`: 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, INFRA-03 | 담당: 미정
-- [ ] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 미정
-- [ ] LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정 (서버 기본/서버 학습/보드 양자화 3단계 비교) | 선행: LLM-07, BOARD-06 | 담당: 미정
-- [ ] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-08, FUS-02 | 담당: 미정
-- [ ] FUS-08 State Machine v1 (센서+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 미정
-- [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 미정
-- [ ] HW-09 ESP32 자체 하드 리밋 (온도 상한 → 출력 OFF, Pi 무관) | 선행: HW-04 | 담당: 미정
-- [ ] HW-10 센서값 BLE notify → `ble_gw` → `sensor/reading` | 선행: HW-05, HW-04 | 담당: 미정
-- [ ] BOARD-08 NPU 코어 배치 (YOLO core0 / LLM 나머지) 및 동시 구동 부하 측정 (tok/s 변화, fps, RAM, SoC 온도) | 선행: VIS-08, LLM-09 | 담당: 미정
-- [ ] BOARD-09 장시간(30분+) 구동 발열·스로틀링 확인 | 선행: BOARD-08 | 담당: 미정
+- [ ] VIS-06 YOLOv8n 파인튜닝 v1 (Colab) | 선행: VIS-04, VIS-10 | 담당: 신지호
+- [ ] VIS-07 ONNX → RKNN INT8 변환 (실제 주방 이미지로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06, BOARD-06 | 담당: 신지호
+- [ ] VIS-08 `vision_svc`: 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, INFRA-03 | 담당: 이현종
+- [ ] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 이현종
+- [ ] LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정 (서버 기본/서버 학습/보드 양자화 3단계 비교) | 선행: LLM-07, BOARD-06 | 담당: 이현종
+- [ ] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-08, FUS-02 | 담당: 이현종
+- [ ] FUS-08 State Machine v1 (센서+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환
+- [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 최지환
+- [ ] HW-09 ESP32 자체 하드 리밋 (온도 상한 → 출력 OFF, Pi 무관) | 선행: HW-04 | 담당: 최석진
+- [ ] HW-10 센서값 BLE notify → `ble_gw` → `sensor/reading` | 선행: HW-05, HW-04 | 담당: 최석진
+- [ ] BOARD-08 NPU 코어 배치 (YOLO core0 / LLM 나머지) 및 동시 구동 부하 측정 (tok/s 변화, fps, RAM, SoC 온도) | 선행: VIS-08, LLM-09 | 담당: 이현종
+- [ ] BOARD-09 장시간(30분+) 구동 발열·스로틀링 확인 | 선행: BOARD-08 | 담당: 신지호
 
 ---
 
@@ -153,16 +158,18 @@
 
 > 절차 (발표 p.14): Baseline 측정 → 오류 로그 수집 → 오류 유형 분류 → 데이터 추가·정제 → 재학습·재포팅 → 동일 Test Set 재평가. **Validation으로 분석, Test는 고정.**
 
-- [ ] LLM-10 Validation 오류 유형 분류표 (환각 Action, 잘못된 target, 대명사 실패, 안전 위반 등) | 선행: LLM-08 | 담당: 미정
-- [ ] LLM-11 2차 데이터 보강 + LoRA v2 → 재변환 → 재평가 | 선행: LLM-10 | 담당: 미정
-- [ ] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 미정
-- [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 미정
-- [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 미정
-- [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 미정
-- [ ] FUS-10 통합 멀티모달 시나리오 20~30개 녹화 (recorder) → State F1·위험 미탐율 | 선행: FUS-08, INFRA-05 | 담당: 미정
-- [ ] FUS-11 recorder 로그 재생 테스트 (녹화 세션을 다시 흘려 State Machine 회귀 테스트) | 선행: FUS-10 | 담당: 미정
-- [ ] HW-11 BLE 성공률·지연 개선 (재시도 정책, 연결 끊김 복구) | 선행: HW-08 | 담당: 미정
-- [ ] HW-12 모형 완성 (발표 시연용) | 선행: HW-07 | 담당: 미정
+- [ ] LLM-10 Validation 오류 유형 분류표 (환각 Action, 잘못된 target, 대명사 실패, 안전 위반 등) | 선행: LLM-08 | 담당: 이현종
+- [ ] LLM-11 2차 데이터 보강 + LoRA v2 → 재변환 → 재평가 | 선행: LLM-10 | 담당: 이현종
+- [ ] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종
+- [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종
+- [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종
+- [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 신지호
+- [ ] FUS-10 통합 멀티모달 시나리오 20~30개 녹화 (recorder) → State F1·위험 미탐율 | 선행: FUS-08, INFRA-05 | 담당: 최지환
+- [ ] FUS-11 recorder 로그 재생 테스트 (녹화 세션을 다시 흘려 State Machine 회귀 테스트) | 선행: FUS-10 | 담당: 최지환
+- [ ] HW-11 BLE 성공률·지연 개선 (재시도 정책, 연결 끊김 복구) | 선행: HW-08 | 담당: 최석진
+- [ ] HW-12 모형 완성 (발표 시연용) | 선행: HW-07 | 담당: 최석진
+- [ ] UI-01 (선택) 로컬 대시보드 백엔드: 버스 구독 → WebSocket으로 상태·이벤트 전달 (FastAPI, 오프라인) | 선행: Gate 4 | 담당: 이현종
+- [ ] UI-02 (선택) 대시보드 화면: 현재 상태·타이머·위험 경고·판단 근거(evidence) 실시간 표시 — 시연에서 "AI가 왜 그렇게 판단했는지" 보여주기 | 선행: UI-01 | 담당: 이현종
 
 ---
 
@@ -170,20 +177,20 @@
 
 **Gate 6:** METRICS 최종 표 완성 (모두 보드·고정 Test Set) · 시연 영상 백업 · 최종 발표자료·보고서 제출
 
-- [ ] DOC-05 기능 동결 선언 (이후 버그 수정만) | 선행: Gate 5 | 담당: 미정
-- [ ] INFRA-07 전체 시나리오 회귀 테스트 체크리스트 실행 | 선행: DOC-05 | 담당: 미정
-- [ ] INFRA-08 최종 측정 일괄 스크립트 실행 → METRICS 최종 표 | 선행: DOC-05 | 담당: 미정
-- [ ] DOC-06 시연 영상 백업 촬영 (정상 조리·음성 제어·과열 차단·방치 경고·LLM 거부 사례) | 선행: DOC-05 | 담당: 미정
-- [ ] DOC-07 최종 발표자료 (측정 전후 비교표, 한계·원인 분석) | 선행: INFRA-08 | 담당: 미정
-- [ ] DOC-08 최종 보고서 | 선행: INFRA-08 | 담당: 미정
-- [ ] DOC-09 시연 리허설 (현장 조명·소음 조건) | 선행: DOC-06 | 담당: 미정
+- [ ] DOC-05 기능 동결 선언 (이후 버그 수정만) | 선행: Gate 5 | 담당: 신지호
+- [ ] INFRA-07 전체 시나리오 회귀 테스트 체크리스트 실행 | 선행: DOC-05 | 담당: 최지환
+- [ ] INFRA-08 최종 측정 일괄 스크립트 실행 → METRICS 최종 표 | 선행: DOC-05 | 담당: 이현종
+- [ ] DOC-06 시연 영상 백업 촬영 (정상 조리·음성 제어·과열 차단·방치 경고·LLM 거부 사례) | 선행: DOC-05 | 담당: 최석진
+- [ ] DOC-07 최종 발표자료 (측정 전후 비교표, 한계·원인 분석) | 선행: INFRA-08 | 담당: 신지호
+- [ ] DOC-08 최종 보고서 | 선행: INFRA-08 | 담당: 공동
+- [ ] DOC-09 시연 리허설 (현장 조명·소음 조건) | 선행: DOC-06 | 담당: 공동
 
 ---
 
 ## 상시 작업
 
-- [ ] DOC-10 주간보고 작성 (금주 수행 결과 · 문제점 · 해결 방법 · 다음 예정작업) — 매주 반복
-- [ ] INFRA-09 정기 통합: 각자 작업을 main에 합치고 Skeleton이 여전히 동작하는지 확인 — 주 1회 반복
+- [ ] DOC-10 주간보고 작성 (금주 수행 결과 · 문제점 · 해결 방법 · 다음 예정작업) — 매주 반복 | 담당: 신지호 (각자 자기 작업물 내용 제공)
+- [ ] INFRA-09 정기 통합: 각자 작업을 main에 합치고 Skeleton이 여전히 동작하는지 확인 — 주 1회 반복 | 담당: 공동 (이현종 주관)
 
 ## 리스크 & 대체 계획
 
