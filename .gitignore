@@ -8,7 +8,7 @@
 *.bin
 *.gguf
 
-# 원본 데이터 (Drive 보관, 매니페스트·split만 커밋)
+# 원본 데이터 (각자 보관·직접 전달, 매니페스트·split만 커밋 — docs/artifacts.md)
 data/**/*.wav
 data/**/*.mp3
 data/**/*.jpg
@@ -38,7 +38,7 @@ runs/
 # 변환 결과물
 training/convert/out/
 
-# 외부·학교 자료 원본 (저작권: public 저장소에 올리지 않음, 팀 Drive 보관)
+# 외부·학교 자료 원본 (저작권: public 저장소에 올리지 않음, 각자 보관)
 *.pdf
 *.xlsx
 *.pptx
