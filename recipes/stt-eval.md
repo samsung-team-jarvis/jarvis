@@ -60,6 +60,8 @@ python -m services.audio_svc.transcribe <wav...> --language ko
 
 ## 2. 녹음 규칙
 
+녹음 절차(대본·도구·소음 만드는 법·분할)는 [STT 테스트 세트 녹음](./stt-recording.md). 아래는 형식 규칙.
+
 - 형식: 16kHz, mono, wav
   ```bash
   ffmpeg -i input.m4a -ar 16000 -ac 1 output.wav
