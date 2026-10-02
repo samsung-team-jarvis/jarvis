@@ -1,0 +1,4 @@
+# 개발 도구 (로컬·CI 공통). 버전을 바꾸면 .pre-commit-config.yaml의 ruff rev도 같이 맞춘다.
+pre-commit==4.6.2
+ruff==0.16.10
+pytest==9.1.1
