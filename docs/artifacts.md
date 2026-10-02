@@ -44,6 +44,7 @@ scp vision_kitchen_v1_i8.rknn jarvis-board:~/models/
 
 - 메신저는 파일 크기 제한이 있을 수 있다. 큰 파일(수백 MB 이상)은 USB 또는 scp.
 - 학습 데이터에 팀원 목소리·얼굴이 들어 있으면 팀 밖으로 보내지 않는다.
+- Roboflow 다운로드 링크(raw URL)에는 계정 키가 들어 있다. 링크를 문서·이슈·커밋에 붙이지 않는다.
 
 ## 등록부
 
