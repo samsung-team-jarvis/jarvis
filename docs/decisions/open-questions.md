@@ -9,7 +9,7 @@
 | Q-03 | 팀원 중 x86 Linux PC 또는 NVIDIA GPU 보유자? | 없으면 Colab이 학습·RKLLM 변환 기본 경로 | |
 | Q-04 | 역할 분담 확정 (워크스트림 ↔ 담당자) | PLAN의 담당 칸 | 2026-10-02 결정: 작업물 4개 분할 — ① 신지호 ② 이현종 ③ 최지환 ④ 최석진 ([decision](./2026-10-02-deliverables-split.md)) |
 | Q-05 | 마음AI SUDA를 실제로 쓸 수 있나, 범위는? | 의존 여부 결정. 불가 시 "참고"로만 서술 | |
-| Q-06 | 모듈 간 통신 방식: MQTT(mosquitto) / ZeroMQ / multiprocessing Queue | INFRA-03 구현 방식 | 추천: MQTT (디버깅·녹화·병렬 개발 용이) |
+| Q-06 | 모듈 간 통신 방식: MQTT(mosquitto) / ZeroMQ / multiprocessing Queue | INFRA-03 구현 방식 | 2026-10-02 결정: **MQTT (mosquitto)** ([decision](./2026-10-02-message-bus-mqtt.md)) |
 | Q-07 | LLM 후보 모델 목록 (RKLLM 지원 목록 기준) | LLM-06 비교 범위 | 추천 후보 (2026-10-02 rknn-llm 확인): RK3588 공식 벤치마크에 있는 **Qwen2.5-1.5B, Qwen3-0.6B**, TinyLLaMA-1.1B + 한국어 비교용 Llama-3.2-1B(LLaMA 계열 지원, 이름으로는 미확인 → 변환해 봐야 확정). 근거: [llm-to-rkllm](../../recipes/llm-to-rkllm.md) |
 | Q-08 | 호출어 방식 | 오작동 방지 | 추천 v0: 텍스트 기반 "자비스" 접두 |
 
