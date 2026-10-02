@@ -16,9 +16,9 @@ from common.messages import Envelope
 from services.audio_svc.sources import Chunk
 from services.audio_svc.stt import Transcript
 from services.audio_svc.vad import SAMPLE_RATE, SpeechSegment
+from services.audio_svc.wake import is_wake
 
 SOURCE = "audio_svc"
-WAKE_WORD = "자비스"  # docs/decisions/open-questions.md Q-08 v0. 변형 허용은 STT-04
 
 
 class Transcriber(Protocol):
@@ -28,10 +28,6 @@ class Transcriber(Protocol):
 class SegmenterLike(Protocol):
     def feed(self, samples: np.ndarray, arrival_mono: float) -> list[SpeechSegment]: ...
     def flush(self) -> list[SpeechSegment]: ...
-
-
-def is_wake(text: str) -> bool:
-    return text.strip().startswith(WAKE_WORD)
 
 
 class AudioService:
@@ -53,6 +49,7 @@ class AudioService:
         self.on_text = on_text
         self.clock = clock
         self.published = 0  # 발행한 stt/text 수
+        self.ignored = 0  # 그중 호출어가 없어 명령으로 처리하지 않을 발화 수 (wake=false)
         self.skipped = 0  # 받아쓴 결과가 비어 버린 구간 수 (잡음 등)
         self._last_heartbeat: float | None = None
 
@@ -70,9 +67,10 @@ class AudioService:
             if not result.text:
                 self.skipped += 1
                 continue
+            wake = is_wake(result.text)
             payload = {
                 "text": result.text,
-                "wake": is_wake(result.text),
+                "wake": wake,
                 "audio_ms": result.audio_ms,
                 "stt_ms": result.stt_ms,
                 "speech_end_mono": seg.end_mono,
@@ -80,6 +78,7 @@ class AudioService:
             msg = Envelope.new("stt/text", SOURCE, payload, self.session_id)
             self.bus.publish(msg)
             self.published += 1
+            self.ignored += not wake
             if self.on_text:
                 self.on_text(msg)
 
