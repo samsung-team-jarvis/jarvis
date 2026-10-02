@@ -96,7 +96,7 @@ def session_start() -> int:
     if missing:
         print(f"⚠️ JARVIS: git 훅이 설치되지 않았습니다 ({', '.join(missing)}).")
         print("작업 전에 사용자에게 다음 명령 실행을 안내하세요:")
-        print("  pip install pre-commit && pre-commit install")
+        print("  python3 scripts/setup.py")
     return 0
 
 

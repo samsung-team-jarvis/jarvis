@@ -3,6 +3,10 @@
 구조, 컨벤션, 작업 절차, agent harness를 분리해서 관리한다.
 `README.md`는 빠른 진입점으로 유지하고, 세부 규칙은 이 문서들을 기준으로 갱신한다.
 
+## Start Here
+
+- [팀원 온보딩 체크리스트](./onboarding.md)
+
 ## Plan & Metrics
 
 - [Plan (작업 백로그)](./PLAN.md)
