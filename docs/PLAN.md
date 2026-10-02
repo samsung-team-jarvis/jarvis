@@ -42,6 +42,7 @@
 - [x] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 신지호 (#23, 이현종 대행)
 - [x] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 신지호
 - [x] DOC-11 기술 스택·문서 사실 검증 — recipe·환경·버전 문서의 "(확인 필요)"를 공식 자료로 확인하고 출처 기록 | 선행: - | 담당: 이현종 (#11)
+- [x] DOC-12 학교 제공 자료(마음AI 특강2·SUDA 데이터 시트) 반영 — 문서가 학교 환경·방식과 충돌하지 않음 | 선행: - | 담당: 이현종 (#25)
 - [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 신지호
 - [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환
 - [ ] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 이현종
@@ -59,6 +60,7 @@
 | microSD 또는 NVMe/eMMC | OS·모델 저장 | 모델 여러 개 보관 → 64GB 이상 권장 |
 | USB 웹캠 (UVC) | 비전 입력 | MIPI 카메라보다 드라이버 이슈 적음 |
 | USB 핀마이크 또는 USB 사운드카드 + 핀마이크 | 음성 입력 | 웹캠 내장 마이크와 비교 측정 예정 |
+| 소형 스피커 (USB 또는 3.5mm) | TTS 음성 응답·경고 | STT-12 |
 | ESP32 DevKit × 1~2 | 제어·센서 단말 | |
 | **Bluetooth 모듈 또는 USB BT 동글 (보드용)** | Pi ↔ ESP32 BLE | Orange Pi 5 / 5 Plus 모두 기본 BT 없음. 호환 모델은 보드 수령 후 확인 |
 | **K타입 열전대 + MAX31855** | 고온 측정 | DS18B20은 125°C 한계라 조리 온도 불가, MAX6675는 단종 정보가 있어 비권장 ([hardware](./architecture/hardware.md)) |
@@ -75,7 +77,7 @@
 - [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 신지호
 - [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN·RKLLM 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 신지호
 - [ ] BOARD-04 `rknn_model_zoo` YOLOv8 예제를 보드에서 실행 (기본 모델) — 이미지 1장 추론 결과 확인 | 선행: BOARD-03 | 담당: 신지호
-- [ ] BOARD-05 RKLLM 공식 데모를 지원 모델 1개로 보드에서 실행 — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 이현종
+- [ ] BOARD-05 RKLLM 데모를 지원 모델 1개로 보드에서 실행 (학교 도커 `run.sh build-demo`의 `llm_demo`, 클럭 고정 후) — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 이현종
 - [ ] BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북 — 변환 1회 성공 | 선행: BOARD-03 (보드 미수령으로 최신 릴리스 기준 선진행) | 담당: 이현종 (#13) — RKNN 변환 성공(Docker amd64), RKLLM은 Colab 실행 대기
 - [x] INFRA-03 `common/` 메시지 봉투 dataclass + 버스 래퍼 (Q-06 결정 방식) — 가짜 publisher/subscriber 예제 동작 | 선행: FUS-01 (v0.1 초안 기준 선진행) | 담당: 이현종 (#20)
 - [ ] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종
@@ -93,6 +95,7 @@
 
 - [ ] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 | 담당: 이현종
 - [ ] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 이현종
+- [ ] STT-12 TTS 음성 응답 v0: `guard/decision`·위험 경고를 한국어 VITS(sherpa-onnx, 배포 이미지 제공 모델)로 읽어 줌, 재생 중 마이크 입력 무시 — "자비스 후드 켜줘" → "후드를 켰습니다" | 선행: STT-03 | 담당: 이현종
 - [ ] FUS-02 규칙 기반 파서 v0 (키워드 → Function Call) — Action 10개 중 최소 TURN_ON/TURN_OFF/EMERGENCY_STOP | 선행: LLM-01 | 담당: 이현종
 - [ ] FUS-03 `safety_guard` v0: 화이트리스트·스키마 검증, 위험 상태에서 REJECT — 단위 테스트 통과 | 선행: LLM-01 | 담당: 최지환
 - [ ] FUS-04 긴급 빠른 경로: "정지/멈춰/그만" 등은 LLM 없이 즉시 EMERGENCY_STOP | 선행: FUS-03 | 담당: 최지환
@@ -116,9 +119,9 @@
 - [ ] VIS-03 모형 주방 촬영 1차 (세션별 조명·각도·배치 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-07 | 담당: 신지호
 - [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 신지호
 - [ ] VIS-10 Colab YOLO 학습·평가 노트북 템플릿 (데이터 경로·클래스만 바꾸면 학습 → mAP 평가 → ONNX export까지) — ①이 코드 수정 없이 VIS-06·07 실행 가능 | 선행: VIS-02 | 담당: 이현종
-- [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함) | 선행: LLM-01 | 담당: 이현종
+- [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함, **간접 발화**·**숫자 표기 변형**("3번"/"삼 번") 포함 — SUDA 방식, [school-materials](./school-materials.md)) | 선행: LLM-01 | 담당: 이현종
 - [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 이현종
-- [ ] LLM-04 Paraphrase 합성 → 형식 검증·중복 제거·사람 검수 파이프라인 (6단계, 발표 p.9) | 선행: LLM-02 | 담당: 이현종
+- [ ] LLM-04 Paraphrase 합성 → 형식 검증·중복 제거·사람 검수 파이프라인 (6단계, 발표 p.9). 생성은 SUDA식 **기획 시트**(기능별 키워드 목록 + 어투 3종 + 데이터 비율 + 생성 프롬프트)로 | 선행: LLM-02 | 담당: 이현종
 - [ ] LLM-05 템플릿·세션 단위 Train/Val/Test 분할, Test 고정, 캘리브레이션 세트는 Train에서만 | 선행: LLM-04 | 담당: 이현종
 - [ ] FUS-05 센서 시나리오 20~30개 정의 (정상·과열·방치·화구 켜짐 방치) + 기록 | 선행: HW-04 | 담당: 최지환
 - [ ] HW-07 모형 1차 (화구 LED·후드 팬·부저, 열전대 장착 위치) — 촬영 가능한 상태 | 선행: HW-02 | 담당: 최석진

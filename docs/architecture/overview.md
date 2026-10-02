@@ -9,14 +9,17 @@
                                                                    ▼
              ┌──────────── fusion_svc (State Machine + 현재 Context) ────────────┐
              │     stt/text + context ↓              ↑ llm/function_call         │
-             │              llm_svc : RKLLM .rkllm (NPU core1~2)                 │
-             │              (검증 실패 시 규칙 파서로 대체)                       │
+             │   llm_svc : 제공 FastAPI LLM 서버(RKLLM .rkllm, NPU)에 HTTP 요청   │
+             │              (출력 파싱·검증, 실패 시 규칙 파서로 대체)            │
              └─────────────────────────────┬─────────────────────────────────────┘
                                            ▼
                  safety_guard : 화이트리스트 · 스키마 검증 · 위험 규칙 (결정론적)
                                            ▼ control/command (허용된 것만)
                  ble_gw → ESP32 → 릴레이/LED/USB팬/부저   ← ACK(seq) → control/result
                  ESP32 자체 안전장치: 온도 상한 초과 또는 하트비트 끊김 → 모든 출력 OFF
+
+                 guard/decision · fusion/state → audio_svc TTS(한국어 VITS, CPU) → 스피커
+                 ("후드를 켰습니다", "기름 온도가 너무 높아요" 같은 음성 응답·경고)
 
 recorder : 모든 토픽 구독 → data/sessions/<session_id>.jsonl
            (데이터셋 · 지연 측정 · 재생 회귀 테스트에 공용)
@@ -55,9 +58,10 @@ RK3588/RK3588S NPU: 6 TOPS, 3코어. 하드웨어 상세는 [hardware](./hardwar
 
 | 작업 | 실행 장치 | 비고 |
 |---|---|---|
-| VAD, STT | CPU (기본) | sherpa-onnx RKNN 빌드로 NPU 실행 가능 (SenseVoice·Silero VAD 지원 확인). NPU 경합과 비교해 실측 후 결정 |
-| YOLOv8n | NPU core0 | 3~5fps면 "방치" 판단에 충분 |
-| LLM | NPU 나머지 코어 | RKLLM 변환 시 `num_npu_core`(최대 3)로 지정. 동시 구동 부하는 BOARD-08에서 측정 |
+| VAD, STT | CPU 4스레드 | 학교 특강 기본 배치. sherpa-onnx RKNN 빌드로 NPU 실행도 가능하지만 NPU는 LLM·YOLO가 쓰므로 CPU 유지 |
+| TTS (한국어 VITS) | CPU 2스레드 | 음성 응답·경고. 재생 중에는 마이크 입력을 무시(에코 방지) |
+| YOLOv8n | NPU (LLM과 공유) | 3~5fps면 "방치" 판단에 충분. LLM이 3코어를 모두 쓰므로 **동시 구동 시 서로 느려지는 정도를 BOARD-08에서 측정**하고, 필요하면 LLM 생성 중 YOLO를 잠시 멈추거나 fps를 낮춘다 |
+| LLM | NPU 3코어 | 학교 도커 기준 `num_npu_core: 3` 전 팀 고정. 제공 FastAPI 서버로 서빙 |
 | 전처리·후처리(NMS) | CPU | 병목이 되기 쉬움 → 구간별 시간 측정 |
 
 ## 7. 주요 상태 (State Machine 초안)
