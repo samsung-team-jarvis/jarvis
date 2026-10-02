@@ -1,0 +1,74 @@
+"""check_conventions.py가 docs/conventions/git.md 형식대로 판정하는지 검사한다.
+
+git.md의 Prefix·Scope 표를 바꿨을 때 이 테스트가 깨지면, 예시 값도 함께 고친다.
+"""
+
+import pathlib
+import subprocess
+import sys
+
+import pytest
+
+SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "check_conventions.py"
+
+
+def run(*args: str) -> int:
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), *args], capture_output=True, text=True
+    ).returncode
+
+
+@pytest.mark.parametrize(
+    ("branch", "expected"),
+    [
+        ("chore/github/4-convention-guards", 0),
+        ("feat/audio/12-sensevoice-hello", 0),
+        ("exp/llm/31-qwen-baseline", 0),
+        ("main", 1),
+        ("feature-stt", 1),
+        ("feat/audio/sensevoice", 1),
+        ("feat/unknown/3-x", 1),
+        ("feat/audio/3-Bad_Name", 1),
+    ],
+)
+def test_branch(branch: str, expected: int) -> None:
+    assert run("branch", branch) == expected
+
+
+@pytest.mark.parametrize(
+    ("title", "expected"),
+    [
+        ("[CHORE](root): #1 협업 harness 세팅", 0),
+        ("[EXP](llm): #31 Qwen Baseline 측정", 0),
+        ("[feat](audio): #12 x", 1),
+        ("[FEAT](audio): 12 x", 1),
+        ("STT 추가", 1),
+    ],
+)
+def test_pr_title(title: str, expected: int) -> None:
+    assert run("pr-title", title) == expected
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("feat(audio): #12 STT 추가", 0),
+        ("Merge pull request #3 from x", 0),
+        ('Revert "feat(audio): #12 STT 추가"', 0),
+        ("STT 추가했음", 1),
+        ("feat(audio): STT 추가", 1),
+        ("feat(nope): #1 x", 1),
+        ("feat(audio): #12 x\n\nCo-Authored-By: Someone <a@b.c>", 1),
+    ],
+)
+def test_commit_msg(tmp_path: pathlib.Path, message: str, expected: int) -> None:
+    msg_file = tmp_path / "COMMIT_EDITMSG"
+    msg_file.write_text(message, encoding="utf-8")
+    assert run("commit-msg", str(msg_file)) == expected
+
+
+@pytest.mark.parametrize(("body", "expected"), [("Closes #4", 0), ("fixes #10", 0), ("본문", 1)])
+def test_pr_body(tmp_path: pathlib.Path, body: str, expected: int) -> None:
+    body_file = tmp_path / "body.md"
+    body_file.write_text(body, encoding="utf-8")
+    assert run("pr-body", str(body_file)) == expected

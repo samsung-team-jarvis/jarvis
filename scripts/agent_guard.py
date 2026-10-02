@@ -1,8 +1,15 @@
-"""Claude Code 팀 공용 hook (.claude/settings.json에서 호출).
+"""AI coding agent 공용 guard hook.
 
-- 기본 모드 (PreToolUse, Bash): 규칙을 우회하는 git/gh 명령이면 exit 2로 실행을 막는다.
-  stderr 메시지는 Claude에게 전달된다.
-- session-start 모드 (SessionStart): git 훅이 설치되지 않았으면 안내를 stdout으로 출력한다.
+여러 도구의 "셸 명령 실행 전" hook에서 호출한다 (도구별 설정: docs/agent/tools.md).
+- 기본 모드: 규칙을 우회하는 git/gh 명령이면 exit 2로 실행을 막고 이유를 stderr로 알린다.
+- session-start 모드: git 훅이 설치되지 않았으면 안내를 stdout으로 출력한다 (Claude Code).
+
+도구마다 stdin JSON 모양이 달라서 아래 위치를 차례로 찾는다.
+- Claude Code · Codex · Gemini CLI · Copilot(PascalCase): tool_input.command
+- Cursor (beforeShellExecution): command
+- Windsurf / Devin (pre_run_command): tool_info.command_line
+- Antigravity: toolCall.args.CommandLine
+- Copilot (camelCase): toolArgs (JSON 문자열 또는 객체).command
 
 규칙 근거: docs/conventions/git.md, docs/agent/index.md
 """
@@ -45,12 +52,37 @@ BLOCKED = [
 HOOK_FILES = ("pre-commit", "commit-msg", "pre-push")
 
 
+def dig(data: object, *keys: str) -> object:
+    for key in keys:
+        if not isinstance(data, dict):
+            return None
+        data = data.get(key)
+    return data
+
+
+def extract_command(event: object) -> str:
+    tool_args = dig(event, "toolArgs")
+    if isinstance(tool_args, str):
+        try:
+            tool_args = json.loads(tool_args)
+        except json.JSONDecodeError:
+            tool_args = None
+    candidates = [
+        dig(event, "tool_input", "command"),
+        dig(event, "command"),
+        dig(event, "tool_info", "command_line"),
+        dig(event, "toolCall", "args", "CommandLine"),
+        dig(tool_args, "command"),
+    ]
+    return next((c for c in candidates if isinstance(c, str) and c), "")
+
+
 def guard_bash() -> int:
     try:
         event = json.load(sys.stdin)
     except json.JSONDecodeError:
         return 0
-    command = event.get("tool_input", {}).get("command", "")
+    command = extract_command(event)
     for pattern, reason in BLOCKED:
         if pattern.search(command):
             print(f"[JARVIS 규칙] {reason} (docs/conventions/git.md)", file=sys.stderr)
