@@ -24,7 +24,7 @@ description: PLAN 작업 ID(예: STT-01) 또는 새 작업을 시작할 때 사�
 
 ## 절차
 
-1. **작업 확인**: PLAN에서 ID를 찾아 완료 기준과 선행 작업을 읽는다. 선행이 미완료면 사용자에게 알린다. PLAN에 없는 작업이면 PLAN에 추가할지 먼저 묻는다.
+1. **작업 확인**: PLAN에서 ID를 찾아 완료 기준·선행 작업·**담당**을 읽는다. 담당이 현재 사용자(`git config user.name`, GitHub 아이디는 `docs/onboarding.md` 표)와 다르면 진행 전에 확인한다. 선행이 미완료면 사용자에게 알린다. PLAN에 없는 작업이면 PLAN에 추가할지 먼저 묻는다.
 2. **이슈 생성**: 제목 `[ID] 작업 요약`, 본문에 목적·작업 체크리스트·완료 기준. `.github/ISSUE_TEMPLATE`의 형식을 따른다.
 3. **브랜치 생성**: `main` 최신화 후 `prefix/{scope}/{이슈번호}-work-summary`.
 4. **스펙 판단**: 새 서비스는 `templates/service.spec.md`, 측정·학습은 `templates/experiment.spec.md`를 먼저 채운다. 단순 수정은 생략한다.
