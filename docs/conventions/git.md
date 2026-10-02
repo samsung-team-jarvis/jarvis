@@ -25,7 +25,7 @@
 | push할 때 | 브랜치 이름 형식, main 직접 push 차단 | pre-commit `pre-push` 훅 |
 | PR | 브랜치 이름, PR 제목, 본문 `Closes #N`, PR의 모든 커밋 메시지 | CI `Conventions` job |
 | 머지 | CI 통과 + 리뷰 승인 1명 | 브랜치 보호 |
-| Claude Code 사용 시 | force push, `--no-verify`, main push 명령 거부 | `.claude/settings.json` |
+| AI 도구 사용 시 | force push, `--no-verify`, main push, 관리자 머지 명령 거부 | `scripts/agent_guard.py` hook ([도구별 설정](../agent/tools.md)) |
 
 검사 스크립트: `scripts/check_conventions.py` (직접 실행: `python3 scripts/check_conventions.py branch`).
 로컬 훅은 `pre-commit install`을 해야 동작한다. 설치하지 않아도 CI에서 같은 검사가 걸린다.

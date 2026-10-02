@@ -37,6 +37,7 @@ agent용 허브 문서다. 상세 규칙을 여기에 복붙하지 말고, 작�
 | 결정 기록 | `docs/decisions/index.md`, `docs/decisions/open-questions.md` |
 | 커밋 분해 | `.claude/skills/commit-planning-workflow/SKILL.md`, `docs/conventions/git.md` |
 | PR 작성 | `.claude/skills/pr-prep-workflow/SKILL.md`, `docs/workflows/pull-request-writing.md` |
+| AI 도구 설정 (Codex·Gemini·Cursor 등) | `docs/agent/tools.md` |
 | harness·문서 구조 변경 | `.claude/skills/verify-agent-docs/SKILL.md`, `docs/agent/index.md`, `docs/index.md` |
 
 ## 필수 작업 원칙

@@ -34,6 +34,7 @@
 ## Agent Harness
 
 - [Agent Harness](./agent/index.md)
+- [AI 도구별 설정 (Claude Code · Codex · Gemini · Cursor · Copilot 등)](./agent/tools.md)
 - [Agent Guide (AGENTS.md)](../AGENTS.md)
 - [Task Workflow](../.claude/skills/task-workflow/SKILL.md)
 - [Commit Planning Workflow](../.claude/skills/commit-planning-workflow/SKILL.md)
