@@ -104,7 +104,7 @@
 - [ ] HW-06 ESP32 하트비트 감시: Pi 하트비트 N초 끊기면 모든 출력 OFF | 선행: HW-03 | 담당: 최석진
 - [x] INFRA-05 `recorder`: 모든 토픽을 세션별 JSONL로 저장 | 선행: INFRA-03 | 담당: 이현종 (#31, `services/recorder`)
 - [x] INFRA-06 지연 분해 스크립트: 발화 끝 → STT → 파서 → Guard → BLE ACK 구간별 ms — METRICS E2E 항목 첫 기록 | 선행: INFRA-05 | 담당: 이현종 (#45, `bench/latency.py` — 첫 기록은 Mac·명령 발행까지, Guard·BLE 구간은 해당 서비스가 생기면 같은 명령으로)
-- [ ] BOARD-07 서비스 일괄 기동/종료 스크립트 (systemd 또는 단일 런처) | 선행: INFRA-03 | 담당: 이현종
+- [x] BOARD-07 서비스 일괄 기동/종료 스크립트 (systemd 또는 단일 런처) | 선행: INFRA-03 | 담당: 이현종 (#47, `scripts/launch.py` — Mac 확인, systemd 예시는 보드 미검증)
 - [ ] DOC-04 Skeleton 시연 영상 1편 녹화 | 선행: Gate 2 항목 전부 | 담당: 최석진
 
 ---
