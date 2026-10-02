@@ -3,6 +3,7 @@
 python -m services.audio_svc                                  # 마이크 (Ctrl+C로 종료)
 python -m services.audio_svc --input data/stt/cmds.wav --realtime --bus mqtt://localhost:1883
 python -m services.audio_svc --input data/stt/cmds.wav --bus memory://   # 기다리지 않고 확인만
+python -m services.audio_svc --tts-out data/tts --no-play     # 음성 응답을 소리 없이 wav로만
 """
 
 from __future__ import annotations
@@ -15,9 +16,12 @@ import threading
 
 from common.bus import connect
 from common.messages import Envelope
+from services.audio_svc.responses import RiskWatcher, reply_for_decision
 from services.audio_svc.service import AudioService
 from services.audio_svc.sources import mic_chunks, wav_chunks
+from services.audio_svc.speaker import Speaker
 from services.audio_svc.stt import LANGUAGES, SenseVoice, model_dir_from_env
+from services.audio_svc.tts import KoreanTts, tts_model_dir_from_env
 from services.audio_svc.vad import Segmenter, vad_model_from_env
 from services.audio_svc.wake import split_wake
 
@@ -30,6 +34,34 @@ def show(msg: Envelope) -> None:
         print(f"[stt/text] 명령 {split_wake(p['text'])!r} ← {p['text']!r} ({timing})")
     else:
         print(f"[stt/text] 무시(호출어 없음) {p['text']!r} ({timing})")
+
+
+def start_speaker(args: argparse.Namespace, bus) -> Speaker | None:
+    """guard/decision·fusion/state를 구독해 음성으로 응답한다. TTS 모델이 없으면 응답 없이 진행."""
+    try:
+        tts = KoreanTts(args.tts_model_dir or tts_model_dir_from_env(), args.tts_threads)
+    except FileNotFoundError as e:
+        print(f"경고: 음성 응답 없이 진행합니다 — {e}", file=sys.stderr)
+        return None
+    speaker = Speaker(
+        tts,
+        play=not args.no_play,
+        out_dir=args.tts_out,
+        on_spoken=lambda text, sec: print(f"[tts] {text!r} ({sec:.1f} s)"),
+    )
+    watcher = RiskWatcher()
+
+    def on_decision(msg: Envelope) -> None:
+        if text := reply_for_decision(msg.payload):
+            speaker.say(text)
+
+    def on_state(msg: Envelope) -> None:
+        if text := watcher.update(msg.payload):
+            speaker.say(text)
+
+    bus.subscribe("guard/decision", on_decision)
+    bus.subscribe("fusion/state", on_state)
+    return speaker
 
 
 def main() -> int:
@@ -48,6 +80,12 @@ def main() -> int:
     parser.add_argument("--language", default="ko", choices=LANGUAGES)
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--quiet", action="store_true", help="발행할 때마다 출력하지 않음")
+    tts = parser.add_argument_group("음성 응답 (STT-12)")
+    tts.add_argument("--no-tts", action="store_true", help="음성 응답 끄기")
+    tts.add_argument("--no-play", action="store_true", help="스피커로 재생하지 않음")
+    tts.add_argument("--tts-out", default=None, help="응답 음성을 wav로 저장할 폴더")
+    tts.add_argument("--tts-model-dir", default=None, help="생략 시 JARVIS_TTS_MODEL_DIR 또는 기본")
+    tts.add_argument("--tts-threads", type=int, default=2, help="TTS CPU 스레드 (특강 p.34)")
     args = parser.parse_args()
 
     try:
@@ -69,17 +107,29 @@ def main() -> int:
 
     session_id = args.session or f"s_{datetime.datetime.now():%Y%m%d_%H%M%S}"
     bus = connect(args.bus, client_id="audio_svc")
-    service = AudioService(stt, segmenter, bus, session_id, on_text=None if args.quiet else show)
+    speaker = None if args.no_tts else start_speaker(args, bus)
+    service = AudioService(
+        stt,
+        segmenter,
+        bus,
+        session_id,
+        on_text=None if args.quiet else show,
+        mute=speaker.is_muted if speaker else None,
+    )
     print(f"audio_svc 시작: input={args.input} session={session_id} (Ctrl+C로 종료)")
+    code = 0
     try:
         service.run(chunks)
     except KeyboardInterrupt:
         pass
     except (OSError, ValueError) as e:
         print(f"오류: {e}", file=sys.stderr)
-        bus.close()
-        return 1
+        code = 1
     bus.close()
+    if speaker:
+        speaker.close()  # 남은 응답을 마저 읽고 끝낸다
+    if code:
+        return code
     print(
         f"OK: stt/text {service.published}건 발행 (호출 {service.published - service.ignored} · "
         f"호출어 없어 무시 {service.ignored}) · 빈 결과 {service.skipped}건 건너뜀"
