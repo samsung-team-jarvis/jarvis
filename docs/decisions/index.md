@@ -21,7 +21,7 @@ YYYY-MM-DD-short-decision-title.md
 
 ## Logs
 
-- [결정 대기 질문](./open-questions.md)
+- [결정 사항 (초기 결정 대기 질문 Q-01~09, 문서 불일치)](./open-questions.md)
 - [2026-10-01 Walking Skeleton 우선](./2026-10-01-walking-skeleton-first.md)
 - [2026-10-01 안전 3계층](./2026-10-01-safety-layers.md)
 - [2026-10-01 규칙 파서를 LLM 비교 기준선으로](./2026-10-01-rule-parser-baseline.md)
