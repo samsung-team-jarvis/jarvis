@@ -10,7 +10,9 @@ from __future__ import annotations
 # 사람 음성(2026-10-02, MacBook 마이크)에서 다비스·바비스, 합성 음성에서 차비스 확인 (#57).
 # "서비스"처럼 흔한 말과 겹치지 않게 모음이 ㅏ인 첫 글자만 허용한다.
 WAKE_INITIAL_VARIANTS = "자다바차짜사타"
-WAKE_WORDS: tuple[str, ...] = tuple(f"{c}비스" for c in WAKE_INITIAL_VARIANTS)
+# "자비스야"에서 '스'가 빠지거나 띄어진 형태 (spk01 val: "자비야", "자비 쓰야", #61)
+WAKE_VOCATIVE_FORMS = ("자비야", "자비쓰야")
+WAKE_WORDS: tuple[str, ...] = tuple(f"{c}비스" for c in WAKE_INITIAL_VARIANTS) + WAKE_VOCATIVE_FORMS
 # 호출어 바로 뒤의 호격 조사 ("자비스야", "자비스아")
 _VOCATIVES = ("야", "아")
 

@@ -1,0 +1,41 @@
+utt_id,speaker_id,noise_type,mic,path,transcript,action_label,split
+spk01_quiet_macbook_s01,spk01,quiet,macbook,stt/spk01/quiet_macbook/s01.wav,자비스 후드 켜줘,<jarvis_1>(target=hood)<jarvis_end>,val
+spk01_quiet_macbook_s02,spk01,quiet,macbook,stt/spk01/quiet_macbook/s02.wav,자비스 1번 화구 켜줘,<jarvis_1>(target=burner_1)<jarvis_end>,val
+spk01_quiet_macbook_s03,spk01,quiet,macbook,stt/spk01/quiet_macbook/s03.wav,자비스 환풍기 좀 틀어줘,<jarvis_1>(target=hood)<jarvis_end>,val
+spk01_quiet_macbook_s04,spk01,quiet,macbook,stt/spk01/quiet_macbook/s04.wav,자비스야 2번 불 켜줘,<jarvis_1>(target=burner_2)<jarvis_end>,val
+spk01_quiet_macbook_s05,spk01,quiet,macbook,stt/spk01/quiet_macbook/s05.wav,자비스 후드 꺼줘,<jarvis_2>(target=hood)<jarvis_end>,val
+spk01_quiet_macbook_s06,spk01,quiet,macbook,stt/spk01/quiet_macbook/s06.wav,자비스 2번 화구 꺼줘,<jarvis_2>(target=burner_2)<jarvis_end>,val
+spk01_quiet_macbook_s07,spk01,quiet,macbook,stt/spk01/quiet_macbook/s07.wav,"자비스, 첫 번째 불 꺼줘",<jarvis_2>(target=burner_1)<jarvis_end>,val
+spk01_quiet_macbook_s08,spk01,quiet,macbook,stt/spk01/quiet_macbook/s08.wav,자비스 전부 다 꺼줘,<jarvis_2>(target=all)<jarvis_end>,val
+spk01_quiet_macbook_s09,spk01,quiet,macbook,stt/spk01/quiet_macbook/s09.wav,자비스 후드 세게 해줘,"<jarvis_3>(target=hood, level=3)<jarvis_end>",val
+spk01_quiet_macbook_s10,spk01,quiet,macbook,stt/spk01/quiet_macbook/s10.wav,자비스 1번 화구 약하게,"<jarvis_3>(target=burner_1, level=1)<jarvis_end>",val
+spk01_quiet_macbook_s11,spk01,quiet,macbook,stt/spk01/quiet_macbook/s11.wav,자비스 2번 불 중간으로 해줘,"<jarvis_3>(target=burner_2, level=2)<jarvis_end>",val
+spk01_quiet_macbook_s12,spk01,quiet,macbook,stt/spk01/quiet_macbook/s12.wav,자비스야 후드 2단으로,"<jarvis_3>(target=hood, level=2)<jarvis_end>",val
+spk01_quiet_macbook_s13,spk01,quiet,macbook,stt/spk01/quiet_macbook/s13.wav,"자비스, 후드 약하게","<jarvis_3>(target=hood, level=1)<jarvis_end>",val
+spk01_quiet_macbook_s14,spk01,quiet,macbook,stt/spk01/quiet_macbook/s14.wav,자비스 2번 화구 세게,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",val
+spk01_quiet_macbook_s15,spk01,quiet,macbook,stt/spk01/quiet_macbook/s15.wav,자비스 타이머 3분 맞춰줘,<jarvis_4>(min=3)<jarvis_end>,val
+spk01_quiet_macbook_s16,spk01,quiet,macbook,stt/spk01/quiet_macbook/s16.wav,자비스 타이머 5분,<jarvis_4>(min=5)<jarvis_end>,val
+spk01_quiet_macbook_s17,spk01,quiet,macbook,stt/spk01/quiet_macbook/s17.wav,자비스 10분 뒤에 1번 화구 꺼줘,"<jarvis_4>(target=burner_1, min=10)<jarvis_end>",val
+spk01_quiet_macbook_s18,spk01,quiet,macbook,stt/spk01/quiet_macbook/s18.wav,자비스 타이머 1분 30초,"<jarvis_4>(min=1, sec=30)<jarvis_end>",val
+spk01_quiet_macbook_s19,spk01,quiet,macbook,stt/spk01/quiet_macbook/s19.wav,자비스 2분 뒤에 후드 꺼줘,"<jarvis_4>(target=hood, min=2)<jarvis_end>",val
+spk01_quiet_macbook_s20,spk01,quiet,macbook,stt/spk01/quiet_macbook/s20.wav,자비스 타이머 취소해줘,<jarvis_5>()<jarvis_end>,val
+spk01_quiet_macbook_s21,spk01,quiet,macbook,stt/spk01/quiet_macbook/s21.wav,자비스야 타이머 꺼줘,<jarvis_5>()<jarvis_end>,val
+spk01_quiet_macbook_s22,spk01,quiet,macbook,stt/spk01/quiet_macbook/s22.wav,자비스 1번 화구 켜져 있어,<jarvis_6>(target=burner_1)<jarvis_end>,val
+spk01_quiet_macbook_s23,spk01,quiet,macbook,stt/spk01/quiet_macbook/s23.wav,자비스 지금 상태 알려줘,<jarvis_6>()<jarvis_end>,val
+spk01_quiet_macbook_s24,spk01,quiet,macbook,stt/spk01/quiet_macbook/s24.wav,자비스 지금 위험해,<jarvis_7>()<jarvis_end>,val
+spk01_quiet_macbook_s25,spk01,quiet,macbook,stt/spk01/quiet_macbook/s25.wav,자비스 안전한지 확인해줘,<jarvis_7>()<jarvis_end>,val
+spk01_quiet_macbook_s26,spk01,quiet,macbook,stt/spk01/quiet_macbook/s26.wav,자비스 긴급 정지,<jarvis_8>()<jarvis_end>,val
+spk01_quiet_macbook_s27,spk01,quiet,macbook,stt/spk01/quiet_macbook/s27.wav,자비스 멈춰,<jarvis_8>()<jarvis_end>,val
+spk01_quiet_macbook_s28,spk01,quiet,macbook,stt/spk01/quiet_macbook/s28.wav,자비스 그만,<jarvis_8>()<jarvis_end>,val
+spk01_quiet_macbook_s29,spk01,quiet,macbook,stt/spk01/quiet_macbook/s29.wav,자비스 불 켜줘,<jarvis_1>(target=?)<jarvis_end>,val
+spk01_quiet_macbook_s30,spk01,quiet,macbook,stt/spk01/quiet_macbook/s30.wav,자비스 타이머 맞춰줘,<jarvis_4>(min=?)<jarvis_end>,val
+spk01_quiet_macbook_s31,spk01,quiet,macbook,stt/spk01/quiet_macbook/s31.wav,자비스,<jarvis_9>()<jarvis_end>,val
+spk01_quiet_macbook_s32,spk01,quiet,macbook,stt/spk01/quiet_macbook/s32.wav,자비스야,<jarvis_9>()<jarvis_end>,val
+spk01_quiet_macbook_s33,spk01,quiet,macbook,stt/spk01/quiet_macbook/s33.wav,자비스 오늘 날씨 어때,<jarvis_10>()<jarvis_end>,val
+spk01_quiet_macbook_s34,spk01,quiet,macbook,stt/spk01/quiet_macbook/s34.wav,자비스 노래 틀어줘,<jarvis_10>()<jarvis_end>,val
+spk01_quiet_macbook_s35,spk01,quiet,macbook,stt/spk01/quiet_macbook/s35.wav,후드 켜줘,,val
+spk01_quiet_macbook_s36,spk01,quiet,macbook,stt/spk01/quiet_macbook/s36.wav,저기 자비스 후드 켜줘,,val
+spk01_quiet_macbook_s37,spk01,quiet,macbook,stt/spk01/quiet_macbook/s37.wav,오늘 저녁 뭐 먹지,,val
+spk01_quiet_macbook_s38,spk01,quiet,macbook,stt/spk01/quiet_macbook/s38.wav,이거 좀 더 볶아야겠다,,val
+spk01_quiet_macbook_s39,spk01,quiet,macbook,stt/spk01/quiet_macbook/s39.wav,기름이 너무 튀네,,val
+spk01_quiet_macbook_s40,spk01,quiet,macbook,stt/spk01/quiet_macbook/s40.wav,불 조절 좀 해야겠다,,val

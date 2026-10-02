@@ -33,8 +33,8 @@ import jiwer
 
 from common.function_call import parse_tokens
 from services.audio_svc.stt import Transcript
-from services.audio_svc.wake import is_wake, split_wake
-from services.llm_svc.rule_parser import parse
+from services.audio_svc.wake import is_wake
+from services.llm_svc.interpret import interpret
 
 FIELDS = [
     "utt_id",
@@ -60,9 +60,8 @@ def normalize(text: str) -> str:
 
 
 def command_of(text: str) -> dict | None:
-    """문장 → (호출어가 있으면) 규칙 파서 결과, 없으면 None (명령으로 처리되지 않음)."""
-    command = split_wake(text)
-    return None if command is None else parse(command)
+    """문장 → llm_svc와 같은 해석(호출어 → 오인식 사전 → 규칙 파서). 호출어가 없으면 None."""
+    return interpret(text)
 
 
 @dataclasses.dataclass

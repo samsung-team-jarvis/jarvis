@@ -3,7 +3,7 @@
 호출어가 있는 발화(`stt/text`, `wake: true`)를 명령([interfaces](../../docs/architecture/interfaces.md) §3)으로 바꿔 `llm/function_call`로 발행한다. **v0는 규칙 파서만** 있다 (PLAN FUS-02). LLM 연결은 LLM-09에서 붙이고, 그때 규칙 파서는 LLM 출력 검증이 실패할 때의 대체 경로이자 비교 기준선이 된다 ([decision](../../docs/decisions/2026-10-01-rule-parser-baseline.md)).
 
 ```text
-stt/text (wake=true) ──split_wake──▶ "후드 켜 줘." ──rule_parser──▶ {"action":"TURN_ON","target":"hood"} ──▶ llm/function_call
+stt/text (wake=true) ──split_wake──▶ STT 오인식 사전 ──▶ "후드 켜 줘." ──rule_parser──▶ {"action":"TURN_ON","target":"hood"} ──▶ llm/function_call
 stt/text (wake=false) ──▶ 무시 (개수만 셈)
 ```
 
@@ -56,3 +56,18 @@ python -m services.audio_svc --input data/stt/cmds.wav --realtime   # 터미널 
 - **v0 한계**: 모르는 대상 + 켜기 동사("노래 틀어 줘")는 장치를 되묻는다. 이런 사례가 LLM과의 비교 지점이다 (FUS-06).
 
 발화별 기대 결과는 `tests/llm_svc/test_rule_parser.py`에 있다. 규칙을 바꾸면 이 표를 같이 고친다.
+
+## STT 오인식 사전 (`stt_fixes.py`, STT-10)
+
+파서에 넣기 전에 SenseVoice가 자주 틀리는 표현을 고친다. `stt/text`에는 원문이 그대로 남고, 고친 문장이 `raw_text`로 남는다. 측정(`bench.stt_eval`)도 같은 경로(`interpret.py`: 호출어 → 사전 → 파서)를 쓴다.
+
+| 틀린 표현 | 고친 표현 | 원래 말 |
+|---|---|---|
+| 타임머 | 타이머 | 타이머 |
+| 세개 | 세게 | 세게 |
+| 번구 | 번 화구 | 1번 화구 → "일 번구" |
+| 일본 번 / 일본 | 일번 / 1번 | 1번 화구 → "일본 번 화국" |
+
+- **근거는 val 화자에서만 찾는다** (지금은 spk01 1명, MacBook 마이크 30cm). test 화자를 보고 고치지 않는다.
+- "입(2번)", "하고(화구)", "산(3)"처럼 흔한 말로 틀리는 경우는 넣지 않았다 — 다른 문장을 망칠 수 있다.
+- 효과 (spk01 val 40문장, 같은 녹음): STT→Action 70.6% → **88.2%**, 호출어 인식 91.2% → 97.1% (호출어 형태 추가 포함), 오호출 0% 유지. **한 명 기준이라 test 화자로 다시 확인해야 한다.**
