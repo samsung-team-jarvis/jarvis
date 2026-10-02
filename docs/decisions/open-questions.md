@@ -1,24 +1,32 @@
-# 결정 대기 질문
+# 결정 사항 (초기 결정 대기 질문)
 
-답이 나면 `답` 칸을 채우고, 여러 작업에 영향을 주는 결정이면 [Decision Log](./index.md) 형식으로 별도 파일을 만든다.
+착수 시점에 열어 둔 질문과 그 결정. 초기 계획은 임시안이었고, 2026-10-02 확인된 사실(공식 문서 검증, Mac·Docker 실행 결과)을 기준으로 확정했다.
+여러 작업에 영향을 주는 결정은 [Decision Log](./index.md)에 별도 파일로 둔다. 비용이 드는 항목은 [budget](../budget.md)에 모은다.
 
-| ID | 질문 | 왜 중요한가 | 답 |
+상태: ✅ 확정 · ⏳ 정보 대기(무엇을 기다리는지 명시, 기다리는 동안의 기본값도 정함)
+
+| ID | 질문 | 결정 | 상태 |
 |---|---|---|---|
-| Q-01 | 보드 실물: Orange Pi 5인가 5 Plus인가? RAM은 몇 GB? 방열판·팬 있나? | RAM이 8GB 이하면 STT+LLM+YOLO 동시 구동 계획이 바뀜. 문서 표기 통일 필요 | 2026-10-02: **보드 미수령.** 수령 후 BOARD-01에서 기록. 그 전까지 Mac·Colab으로 개발 |
-| Q-02 | 학사 일정: 중간·최종 발표 시점, 주간보고 요구사항 | Phase 우선순위 조정 | |
-| Q-03 | 팀원 중 x86 Linux PC 또는 NVIDIA GPU 보유자? | 없으면 Colab이 학습·RKLLM 변환 기본 경로 | |
-| Q-04 | 역할 분담 확정 (워크스트림 ↔ 담당자) | PLAN의 담당 칸 | 2026-10-02 결정: 작업물 4개 분할 — ① 신지호 ② 이현종 ③ 최지환 ④ 최석진 ([decision](./2026-10-02-deliverables-split.md)) |
-| Q-05 | 마음AI SUDA를 실제로 쓸 수 있나, 범위는? | 의존 여부 결정. 불가 시 "참고"로만 서술 | |
-| Q-06 | 모듈 간 통신 방식: MQTT(mosquitto) / ZeroMQ / multiprocessing Queue | INFRA-03 구현 방식 | 2026-10-02 결정: **MQTT (mosquitto)** ([decision](./2026-10-02-message-bus-mqtt.md)) |
-| Q-07 | LLM 후보 모델 목록 (RKLLM 지원 목록 기준) | LLM-06 비교 범위 | 추천 후보 (2026-10-02 rknn-llm 확인): RK3588 공식 벤치마크에 있는 **Qwen2.5-1.5B, Qwen3-0.6B**, TinyLLaMA-1.1B + 한국어 비교용 Llama-3.2-1B(LLaMA 계열 지원, 이름으로는 미확인 → 변환해 봐야 확정). 근거: [llm-to-rkllm](../../recipes/llm-to-rkllm.md) |
-| Q-08 | 호출어 방식 | 오작동 방지 | 추천 v0: 텍스트 기반 "자비스" 접두 |
+| Q-01 | 보드: Orange Pi 5인가 5 Plus인가, RAM은? | 보드 미수령. 문서·코드는 **"Orange Pi 5 계열(RK3588/RK3588S)"** 기준으로 보드와 무관하게 쓴다 (NPU 사양 동일, [hardware](../architecture/hardware.md)). 수령 시 BOARD-01에서 모델·RAM 기록. **직접 구매해야 한다면 💰** RAM 8GB 이상(가능하면 16GB), BT 모듈 장착이 쉬운 5 Plus를 권장 | ⏳ 보드 수령 |
+| Q-02 | 학사 일정(중간·최종 발표) | 날짜별 일정 대신 PLAN의 Phase·Gate로 진행한다. 발표 일정이 나오면 "발표 전 도달할 Gate"만 PLAN에 적는다 (예: 중간발표 = Gate 2 시연) | ⏳ 학교 공지 (진행에는 영향 없음) |
+| Q-03 | 학습·변환용 x86 PC·GPU | **Colab 무료**를 기본 경로로 확정 (변환 도구가 x86 Linux 전용, Mac 불가). Mac에서는 Docker로 변환 확인 가능 (#13, #19에서 검증). 팀원 PC 사양은 온보딩 이슈 #7로 수집하되 계획은 바뀌지 않는다. 💰 Colab 유료 플랜은 무료 GPU 한도가 실제로 부족할 때만 상의 후 결정 | ✅ |
+| Q-04 | 역할 분담 | 작업물 4개 — ① 신지호 ② 이현종 ③ 최지환 ④ 최석진 ([decision](./2026-10-02-deliverables-split.md)) | ✅ |
+| Q-05 | 마음AI SUDA 사용 여부 | **의존하지 않는다.** 계획은 공개 도구(RKNN-Toolkit2, RKLLM, sherpa-onnx)만으로 완결한다. 멘토 답변(DOC-03)이 오면 참고 사례·비교 대상으로만 쓰고, 발표에는 "SUDA 이식 방식을 참고"로 서술한다 | ✅ (멘토 답변은 참고용) |
+| Q-06 | 모듈 간 통신 | 로컬 MQTT (mosquitto) ([decision](./2026-10-02-message-bus-mqtt.md)) | ✅ |
+| Q-07 | LLM 후보 | LLM-06 Baseline 비교 3종: **Qwen2.5-1.5B-Instruct**(주 후보, RK3588 공식 벤치마크 모델), **Qwen3-0.6B**(경량, 공식 벤치마크 모델), **Llama-3.2-1B-Instruct**(비교군, LLaMA 계열 지원·이름 미확인 → 변환 실패 시 TinyLLaMA-1.1B로 대체). 선택 기준: 보드 Action Accuracy·JSON Valid Rate, tok/s ≥ 10, RAM. 결과로 decision log 작성 | ✅ (최종 모델은 LLM-06 측정으로) |
+| Q-08 | 호출어 | v0: **STT 결과가 "자비스"로 시작할 때만** 명령으로 처리. 흔한 오인식 변형("자비스야", "쟈비스" 등)은 STT-05 녹음에서 확인해 허용 목록에 추가. 전용 호출어 모델은 오작동이 측정으로 확인될 때만 검토 | ✅ |
+| Q-09 | 비전 라벨링 도구 | **Roboflow 무료 플랜** 기본 (웹 GUI, 세트 분할, YOLOv8 zip export가 `train_yolo.ipynb` 입력 형식과 같음 → 코딩 없이 가능). 무료 플랜의 조건(데이터셋 공개 여부·이미지 수 한도)은 가입 시 확인 필요 — 공개 조건이면 **사람 얼굴이 찍히지 않게** 촬영한다. 조건이 맞지 않으면 무료·로컬인 Label Studio 또는 CVAT로 대체 | ✅ (조건 확인은 VIS-04 시작 시) |
 
 ## 문서 불일치 정리 (DOC-02)
 
-| 항목 | 수행계획서 | 발표자료 | 통일안 |
+이 저장소의 문서는 아래 통일안으로 이미 쓰여 있다. 다음 주간보고·발표자료(DOC-07, DOC-10)부터 같은 표현을 쓴다.
+
+| 항목 | 수행계획서 | 5주차 발표자료 | 통일안 (확정) |
 |---|---|---|---|
-| 보드 | Orange Pi 5 (RK3588S) | Orange Pi 5 Plus (RK3588) | Q-01 답에 따름 |
-| 언어 이해 | 오프라인 STT/NLU | VAD→STT→소형 LLM(Function Call) | "NLU = 소형 LLM Function Call 해석기"로 서술 |
-| 비전 | 조리 동작/도구 감지 | 객체 Context (pan·burner·hand) | 객체 감지 + 시간 기반 State 추론 |
-| STT 지표 | - | WER | CER 주지표 + STT→Action 정확도 (WER 병기 가능) |
-| 물리 차단 | 위험 시 물리 차단 | ESP32 직접 제어 | 저전압 모형 차단으로 시연 |
+| 보드 | Orange Pi 5 (RK3588S) | Orange Pi 5 Plus (RK3588) | "Orange Pi 5 계열 (RK3588, 6 TOPS NPU)" — 수령 후 실물 모델명으로 교체 |
+| 언어 이해 | 오프라인 STT/NLU | VAD→STT→소형 LLM(Function Call) | "STT → 소형 LLM 명령 해석기(Function Call). LLM은 명령을 제안만 하고, 실행은 Safety Guard가 결정" |
+| 비전 | 조리 동작/도구 감지 | 객체 Context (pan·burner·hand) | "객체 감지(YOLOv8n) + 시간 흐름으로 조리 상태 추론" — 동작 인식 모델은 쓰지 않는다 |
+| STT 지표 | - | WER | CER(글자 오류율)을 주지표, STT→Action 정확도를 함께 (한국어는 띄어쓰기 때문에 WER이 왜곡됨) |
+| 물리 차단 | 위험 시 물리 차단 | ESP32 직접 제어 | "저전압 모형(LED·USB 팬·릴레이)으로 차단 시연" — 실물 가스·220V는 다루지 않는다 |
+| SUDA | SUDA 플랫폼 연동 검토 | (언급 없음) | "마음AI SUDA의 경량화·이식 방식을 참고" (Q-05) |
+| LLM 모델 | (언급 없음) | Llama-3.2-1B | "소형 LLM 후보 3종 비교 후 선정" (Q-07) |
