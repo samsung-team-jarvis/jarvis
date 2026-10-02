@@ -7,6 +7,7 @@
 
 - [팀원 온보딩 체크리스트](./onboarding.md)
 - [비용 목록 (구매 필요 · 무료 · 유료 주의)](./budget.md)
+- [학교 제공 자료 (마음AI 특강·SUDA 데이터) 요약](./school-materials.md)
 
 ## Plan & Metrics
 
