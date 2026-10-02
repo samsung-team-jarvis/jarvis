@@ -19,6 +19,9 @@
 
 ## 1. 학습 (Colab)
 
+**노트북: [`training/colab/train_yolo.ipynb`](../training/colab/train_yolo.ipynb)** — 설정 셀만 바꾸면 아래 1~2단계와 캘리브레이션 목록까지 한 번에 끝난다. 스크립트: [`training/yolo/`](../training/yolo/)
+
+
 ```python
 from ultralytics import YOLO
 
@@ -27,6 +30,14 @@ model.train(data="kitchen.yaml", imgsz=640, epochs=100)  # 하이퍼파라미터
 ```
 
 ## 2. ONNX export — 방법 A (기본으로 사용)
+
+스크립트: [`training/yolo/export_rknn_onnx.sh`](../training/yolo/export_rknn_onnx.sh) (포크 커밋 고정). **학습 환경과 분리된 export 전용 환경**([`export-requirements.txt`](../training/yolo/export-requirements.txt))에서 실행한다:
+- 포크는 `numpy<2`가 필요하다 (최신 ultralytics는 numpy 2.x)
+- torch 2.9 이상은 `torch.onnx.export`가 새 exporter(onnxscript 필요)를 써서 포크가 기대하는 그래프와 달라질 수 있다 → torch 2.4.1 고정
+- 최신 ultralytics(8.4.171)로 학습한 `.pt`를 포크가 읽는 것은 확인했다 (2026-10-02, 출력 9개·640×640 ONNX 생성)
+
+아래는 스크립트가 하는 일이다.
+
 
 rknn_model_zoo YOLOv8 예제는 **airockchip/ultralytics_yolov8 포크**로 export한다. 이 포크는 후처리를 그래프 밖으로 빼고 DFL을 제거하고 score-sum 분기를 추가한다 (NPU에서 빠르게 돌리기 위한 구조). 기본 입력 크기는 640×640.
 
