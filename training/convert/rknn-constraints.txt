@@ -1,0 +1,5 @@
+# rknn-toolkit2 2.3.2 설치 시 함께 쓰는 제약 (pip install -r <공식 requirements> -c 이 파일)
+# 공식 x86_64 requirements는 onnx>=1.16.1로 상한이 없어 최신 onnx가 설치되는데,
+# onnx 최신 버전에는 rknn-toolkit2가 쓰는 onnx.mapping이 없어 load_onnx가 실패한다 (2026-10-02 확인).
+# 공식 arm64 requirements와 같은 버전으로 고정한다.
+onnx==1.16.1

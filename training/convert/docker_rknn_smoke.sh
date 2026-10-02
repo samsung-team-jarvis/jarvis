@@ -32,7 +32,7 @@ docker run --rm --platform "$PLATFORM" \
         WHL="$BASE/x86_64/rknn_toolkit2-${RKNN_VERSION}-${PYTAG}-${PYTAG}-manylinux_2_17_x86_64.manylinux2014_x86_64.whl" ;;
     esac
     echo "arch=$(uname -m) python=${PYTAG}"
-    pip install -q -r "$REQ"
+    pip install -q -r "$REQ" -c /work/training/convert/rknn-constraints.txt
     pip install -q "$WHL"
     python -c "import rknn.api; print(\"rknn-toolkit2 import OK\")"
 
