@@ -62,6 +62,8 @@ labels:
     branch: '(?i)^[a-z]+/(fusion|guard)/'
   - label: 'HW'
     branch: '(?i)^[a-z]+/(ble|firmware)/'
+  - label: 'UI'
+    branch: '(?i)^[a-z]+/dashboard/'
   - label: 'INFRA'
     branch: '(?i)^[a-z]+/(common|recorder|bench|root|github)/'
 

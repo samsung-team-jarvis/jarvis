@@ -7,7 +7,7 @@
 | Q-01 | 보드 실물: Orange Pi 5인가 5 Plus인가? RAM은 몇 GB? 방열판·팬 있나? | RAM이 8GB 이하면 STT+LLM+YOLO 동시 구동 계획이 바뀜. 문서 표기 통일 필요 | 2026-10-02: **보드 미수령.** 수령 후 BOARD-01에서 기록. 그 전까지 Mac·Colab으로 개발 |
 | Q-02 | 학사 일정: 중간·최종 발표 시점, 주간보고 요구사항 | Phase 우선순위 조정 | |
 | Q-03 | 팀원 중 x86 Linux PC 또는 NVIDIA GPU 보유자? | 없으면 Colab이 학습·RKLLM 변환 기본 경로 | |
-| Q-04 | 역할 분담 확정 (워크스트림 ↔ 담당자) | PLAN의 담당 칸 | 미정. 팀원 GitHub 아이디는 [onboarding](../onboarding.md)에 기록, 희망 워크스트림은 온보딩 이슈 #7 댓글로 수집 |
+| Q-04 | 역할 분담 확정 (워크스트림 ↔ 담당자) | PLAN의 담당 칸 | 2026-10-02 결정: 작업물 4개 분할 — ① 신지호 ② 이현종 ③ 최지환 ④ 최석진 ([decision](./2026-10-02-deliverables-split.md)) |
 | Q-05 | 마음AI SUDA를 실제로 쓸 수 있나, 범위는? | 의존 여부 결정. 불가 시 "참고"로만 서술 | |
 | Q-06 | 모듈 간 통신 방식: MQTT(mosquitto) / ZeroMQ / multiprocessing Queue | INFRA-03 구현 방식 | 추천: MQTT (디버깅·녹화·병렬 개발 용이) |
 | Q-07 | LLM 후보 모델 목록 (RKLLM 지원 목록 기준) | LLM-06 비교 범위 | 추천 후보 (2026-10-02 rknn-llm 확인): RK3588 공식 벤치마크에 있는 **Qwen2.5-1.5B, Qwen3-0.6B**, TinyLLaMA-1.1B + 한국어 비교용 Llama-3.2-1B(LLaMA 계열 지원, 이름으로는 미확인 → 변환해 봐야 확정). 근거: [llm-to-rkllm](../../recipes/llm-to-rkllm.md) |
