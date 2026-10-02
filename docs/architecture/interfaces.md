@@ -23,7 +23,7 @@
 | `v` | 봉투 버전 |
 | `ts` | Pi 기준 유닉스 시각(초, 소수) |
 | `mono` | Pi 단조 시계(초) — 지연 계산용 |
-| `session_id` | 실행/녹화 세션 ID (데이터 분할 단위) |
+| `session_id` | 실행/녹화 세션 ID (데이터 분할 단위). **다른 메시지를 받아 만든 메시지는 받은 메시지의 `session_id`를 그대로 쓴다** (발화 → 명령 → 판정 → 제어를 지연 분해에서 이어 붙이는 기준, [bench](../../bench/README.md)) |
 | `source` | 발행 서비스 이름 |
 | `type` | 토픽 이름과 동일 |
 
@@ -162,3 +162,4 @@
 | 2026-10-02 | v0.1 | §3에 LLM 생성 형식(SUDA식 함수 토큰)과 버스 JSON의 관계 명시 — 필드 변경 없음 (#25) | 이현종 |
 | 2026-10-02 | v0.1 | §2.2 target 확정(hood·burner_1·burner_2·all), §2.3 State 확정, §3 Function Call 확정 — Action별 파라미터·값 범위, `need_confirmation` 삭제(Guard가 판정), `ASK_CLARIFY.question` → `for_action`·`missing`, 함수 토큰 문법, 예시 (#39, LLM-01·FUS-01) | 이현종 |
 | 2026-10-02 | v0.1 | §2 `llm/function_call`을 규칙 파서가 만들 때의 필드 의미 명시 — 필드 변경 없음 (#41) | 이현종 |
+| 2026-10-02 | v0.1 | §1 `session_id` 이어 쓰기 규칙 명시 (지연 분해 연결 기준) — 필드 변경 없음 (#45) | 이현종 |
