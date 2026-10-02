@@ -82,7 +82,7 @@
 - [ ] BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북 — 변환 1회 성공 | 선행: BOARD-03 (보드 미수령으로 최신 릴리스 기준 선진행) | 담당: 이현종 (#13) — RKNN 변환 성공(Docker amd64), RKLLM은 Colab 실행 대기
 - [x] INFRA-03 `common/` 메시지 봉투 dataclass + 버스 래퍼 (Q-06 결정 방식) — 가짜 publisher/subscriber 예제 동작 | 선행: FUS-01 (v0.1 초안 기준 선진행) | 담당: 이현종 (#20)
 - [x] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종 (#29, `services/simulator`)
-- [ ] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 이현종
+- [x] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 이현종 (#33, `services/audio_svc`)
 - [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 이현종
 - [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 주방(또는 유사) 영상 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 신지호
 - [ ] HW-03 ESP32 BLE 서버 (cmd write / ack notify) — Pi 또는 Mac의 `bleak`으로 LED on/off | 선행: HW-01 | 담당: 최석진
