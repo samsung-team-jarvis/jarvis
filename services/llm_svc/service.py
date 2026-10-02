@@ -11,8 +11,9 @@ from collections.abc import Callable
 
 from common.bus import Bus
 from common.messages import Envelope
-from services.audio_svc.wake import split_wake
+from services.llm_svc.interpret import command_text
 from services.llm_svc.rule_parser import parse
+from services.llm_svc.stt_fixes import normalize
 
 SOURCE = "llm_svc"
 
@@ -41,9 +42,9 @@ class LlmService:
             self.ignored += 1
             return
         text = msg.payload["text"]
-        command = split_wake(text)
+        command = command_text(text)
         if command is None:  # wake=true인데 호출어를 못 찾음 (다른 판정을 쓰는 발행자)
-            command = text
+            command = normalize(text)
         start = time.monotonic()
         call = parse(command)
         gen_ms = round((time.monotonic() - start) * 1000, 3)
