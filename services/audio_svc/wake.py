@@ -1,13 +1,16 @@
 """텍스트 기반 호출어 (docs/decisions/open-questions.md Q-08 v0).
 
 받아쓴 문장이 호출어로 시작할 때만 명령으로 본다. 비교할 때 띄어쓰기·문장부호는 무시한다
-(SenseVoice가 "자비스야"를 "자비 스야"로 받아쓴 사례가 있다).
+(SenseVoice가 "자비스야"를 "자비 스야"로 받아쓴 사례가 있다). 첫 자음 오인식 변형도 호출로 본다.
 """
 
 from __future__ import annotations
 
-# 오인식 변형은 STT-05 사람 녹음에서 확인한 것만 추가한다 (후보는 README).
-WAKE_WORDS: tuple[str, ...] = ("자비스",)
+# 첫 자음 오인식 변형 (Q-08): SenseVoice가 "자"의 ㅈ을 ㄷ·ㅂ·ㅊ 등으로 받아쓴다.
+# 사람 음성(2026-10-02, MacBook 마이크)에서 다비스·바비스, 합성 음성에서 차비스 확인 (#57).
+# "서비스"처럼 흔한 말과 겹치지 않게 모음이 ㅏ인 첫 글자만 허용한다.
+WAKE_INITIAL_VARIANTS = "자다바차짜사타"
+WAKE_WORDS: tuple[str, ...] = tuple(f"{c}비스" for c in WAKE_INITIAL_VARIANTS)
 # 호출어 바로 뒤의 호격 조사 ("자비스야", "자비스아")
 _VOCATIVES = ("야", "아")
 
