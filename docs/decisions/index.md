@@ -28,6 +28,7 @@ YYYY-MM-DD-short-decision-title.md
 - [2026-10-01 협업 흐름: 이슈 → 브랜치 → PR → 머지](./2026-10-01-issue-branch-pr-flow.md)
 - [2026-10-02 작업물 4개 분할과 담당](./2026-10-02-deliverables-split.md)
 - [2026-10-02 서비스 간 통신은 로컬 MQTT](./2026-10-02-message-bus-mqtt.md)
+- [2026-10-02 Function Call 스키마 v0.1 (장치·세기·타이머·함수 토큰 문법)](./2026-10-02-function-call-schema.md)
 
 ## Template
 
