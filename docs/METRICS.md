@@ -60,3 +60,4 @@
 
 | 날짜 | 지표 | 값 | 보드/버전 | 데이터셋 | 커밋 | 측정자 |
 |---|---|---|---|---|---|---|
+| 2026-10-02 | E2E 지연 — 발화 끝 → `llm/function_call` (Guard·BLE 미구현 구간 제외) · **Mac 참고값** | 평균 609 ms · p50 592 · p95 705 · 최대 705 (vad_wait 평균 540 / stt 68 / to_call 1) | M1 Pro Mac / sherpa-onnx 1.13.8, SenseVoice int8 CPU 4스레드, 규칙 파서, MQTT(Docker mosquitto 2) | macOS `say` 합성 명령 wav `--realtime` (n=14: 명령 4종×3회 + 2) — 사람 음성·보드 아님 | 37e43d1 + `bench/latency.py`(#45) | 이현종 |
