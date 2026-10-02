@@ -48,6 +48,13 @@ Colab 노트북: [`training/colab/convert_rknn.ipynb`](../training/colab/convert
 
 설치는 공식 저장소의 **버전 고정 requirements를 먼저**, 그다음 휠을 설치한다 (PyPI 최신 의존성은 휠이 없어 빌드에 실패할 수 있다).
 
+⚠️ 공식 x86_64 requirements는 `onnx>=1.16.1`로 상한이 없다. 최신 onnx에는 rknn-toolkit2가 쓰는 `onnx.mapping`이 없어 `load_onnx`가 `AttributeError: module 'onnx' has no attribute 'mapping'`으로 실패한다 (2026-10-02 실제 발생). [`rknn-constraints.txt`](../training/convert/rknn-constraints.txt)로 `onnx==1.16.1`을 함께 지정한다:
+
+```bash
+pip install -r <공식 requirements URL> -c training/convert/rknn-constraints.txt
+pip install <공식 휠 URL>
+```
+
 model_zoo 예제 스크립트를 그대로 쓰는 것이 가장 안전하다.
 
 ```bash
