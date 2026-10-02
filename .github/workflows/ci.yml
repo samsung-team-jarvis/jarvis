@@ -13,8 +13,8 @@ jobs:
     name: Docs links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Check relative links in markdown
@@ -24,8 +24,8 @@ jobs:
     name: Python lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - run: pip install -r requirements-dev.txt
@@ -36,8 +36,8 @@ jobs:
     name: Script tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - run: pip install -r requirements-dev.txt
@@ -48,7 +48,7 @@ jobs:
     name: No model weights / raw data
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fail if model weights or raw media are tracked
         run: |
           found=$(git ls-files | grep -Ei '\.(pt|pth|onnx|rknn|rkllm|safetensors|gguf|wav|mp3|mp4)$' || true)
