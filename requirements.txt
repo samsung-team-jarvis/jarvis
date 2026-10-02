@@ -4,3 +4,5 @@ PyYAML==6.0.3
 # STT (STT-01). numpy 2.2.x는 Python 3.10(보드 Ubuntu 22.04) 지원 마지막 계열
 numpy==2.2.6
 sherpa-onnx==1.13.8
+# 마이크 입력 (STT-03). 보드(Ubuntu)는 sudo apt install -y libportaudio2 필요
+sounddevice==0.5.6

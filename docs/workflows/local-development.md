@@ -60,6 +60,12 @@ python -m services.simulator services/simulator/scenarios/overheat.yaml --speed 
 python -m services.recorder            # 다른 터미널: 모든 메시지를 data/sessions/에 녹화
 ```
 
+음성 입력은 실제 서비스(`audio_svc`)를 wav 파일로 돌릴 수 있다 ([audio_svc](../../services/audio_svc/README.md), 모델은 먼저 받기):
+
+```bash
+python -m services.audio_svc --input data/stt/cmds.wav --realtime   # 마이크 대신 wav를 실제 속도로
+```
+
 ## 보드 접속
 
 보드 세팅 절차는 [recipes/board-setup.md](../../recipes/board-setup.md). 접속 정보(IP, 계정)는 repo에 커밋하지 않고 팀 메신저·개인 `~/.ssh/config`에 둔다.
