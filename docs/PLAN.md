@@ -37,6 +37,7 @@
 - [ ] INFRA-12 팀원 작성자 라벨과 자동 리뷰어 지정(CODEOWNERS) — PR 생성 시 리뷰 요청 자동 생성 | 선행: INFRA-11 | 담당: 이현종 (#9)
 - [ ] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 미정
 - [ ] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 미정
+- [x] DOC-11 기술 스택·문서 사실 검증 — recipe·환경·버전 문서의 "(확인 필요)"를 공식 자료로 확인하고 출처 기록 | 선행: - | 담당: 이현종 (#11)
 - [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 미정
 - [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 미정
 - [ ] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 미정
@@ -48,12 +49,13 @@
 
 | 품목 | 용도 | 비고 |
 |---|---|---|
-| Orange Pi 5 / 5 Plus + 전원 어댑터 + **방열판·팬** | 메인 추론 | 주방 환경·장시간 구동이라 방열 필수 |
+| Orange Pi 5 / 5 Plus + 전원 어댑터 + **방열판·팬** | 메인 추론 | 주방 환경·장시간 구동이라 방열 필수. 두 보드 차이: [hardware](./architecture/hardware.md) |
 | microSD 또는 NVMe/eMMC | OS·모델 저장 | 모델 여러 개 보관 → 64GB 이상 권장 |
 | USB 웹캠 (UVC) | 비전 입력 | MIPI 카메라보다 드라이버 이슈 적음 |
 | USB 핀마이크 또는 USB 사운드카드 + 핀마이크 | 음성 입력 | 웹캠 내장 마이크와 비교 측정 예정 |
 | ESP32 DevKit × 1~2 | 제어·센서 단말 | |
-| **K타입 열전대 + MAX31855(또는 MAX6675)** | 고온 측정 | DS18B20은 125°C 한계라 조리 온도 불가 |
+| **Bluetooth 모듈 또는 USB BT 동글 (보드용)** | Pi ↔ ESP32 BLE | Orange Pi 5 / 5 Plus 모두 기본 BT 없음. 호환 모델은 보드 수령 후 확인 |
+| **K타입 열전대 + MAX31855** | 고온 측정 | DS18B20은 125°C 한계라 조리 온도 불가, MAX6675는 단종 정보가 있어 비권장 ([hardware](./architecture/hardware.md)) |
 | INA219 | DC 부하 전류 측정 | 220V 계측 금지 |
 | 릴레이 모듈(저전압), LED, USB 팬, 부저 | 화구·후드·알림 모형 | |
 | 브레드보드·점퍼·저항 | 배선 | |

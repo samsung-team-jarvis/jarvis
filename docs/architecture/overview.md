@@ -50,11 +50,13 @@ recorder : 모든 토픽 구독 → data/sessions/<session_id>.jsonl
 
 ## 6. NPU · 자원 배치 (초안, 측정 후 확정)
 
+RK3588/RK3588S NPU: 6 TOPS, 3코어. 하드웨어 상세는 [hardware](./hardware.md).
+
 | 작업 | 실행 장치 | 비고 |
 |---|---|---|
-| VAD, STT | CPU | STT NPU 포팅은 시간 남을 때 검토 |
+| VAD, STT | CPU (기본) | sherpa-onnx RKNN 빌드로 NPU 실행 가능 (SenseVoice·Silero VAD 지원 확인). NPU 경합과 비교해 실측 후 결정 |
 | YOLOv8n | NPU core0 | 3~5fps면 "방치" 판단에 충분 |
-| LLM | NPU 나머지 코어 | RKLLM 코어 설정 방법 확인 필요 |
+| LLM | NPU 나머지 코어 | RKLLM 변환 시 `num_npu_core`(최대 3)로 지정. 동시 구동 부하는 BOARD-08에서 측정 |
 | 전처리·후처리(NMS) | CPU | 병목이 되기 쉬움 → 구간별 시간 측정 |
 
 ## 7. 주요 상태 (State Machine 초안)

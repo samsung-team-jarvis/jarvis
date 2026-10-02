@@ -8,10 +8,13 @@
 | sherpa-onnx STT 실험, CER 측정 | ✅ | ✅ | ✅ (공식 수치) |
 | YOLO 기본 모델 실행, 라벨링 | ✅ | | |
 | YOLO 학습 | 느림 | ✅ 권장 | |
-| ONNX → RKNN 변환 | ❌/비권장 | ✅ | ✅ (aarch64 휠, 확인 필요) |
+| ONNX → RKNN 변환 | ❌ (macOS 휠 없음) | ✅ | ✅ (aarch64 휠) |
 | LLM LoRA 학습 | ❌ | ✅ | |
-| HF → `.rkllm` 변환 | ❌ (x86 Linux 전용으로 알려짐, 확인 필요) | ✅ | ❌ |
+| Ultralytics 공식 RKNN export (방법 B) | ❌ | ✅ | ❌ (x86 Linux 전용) |
+| HF → `.rkllm` 변환 | ❌ | ✅ | ❌ (rkllm-toolkit은 Linux x86_64 · Python 3.10~3.12 전용) |
 | 최종 성능 측정 | | | ✅ **모든 공식 수치는 보드 기준** |
+
+근거와 절차: [yolo-to-rknn](../../recipes/yolo-to-rknn.md), [llm-to-rkllm](../../recipes/llm-to-rkllm.md) (2026-10-02 공식 저장소 확인). Mac에서 꼭 변환해야 하면 Docker(Linux 컨테이너)를 쓸 수 있지만, 팀 기본 경로는 Colab이다.
 
 ## 처음 clone 후
 
