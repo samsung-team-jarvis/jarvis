@@ -94,7 +94,7 @@
 
 **Gate 2:** "자비스, 후드 켜줘" 발화 → STT → 규칙 파서 → Safety Guard → BLE → ESP32 LED 점등이 보드에서 동작하고, 전 구간 지연이 레코더 로그로 측정됨
 
-- [ ] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 | 담당: 이현종
+- [ ] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 (보드 미수령으로 Mac 기준 선진행) | 담당: 이현종 (#35 — wav·MQTT 확인, Mac 마이크 확인 대기)
 - [ ] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 이현종
 - [ ] STT-12 TTS 음성 응답 v0: `guard/decision`·위험 경고를 한국어 VITS(sherpa-onnx, 배포 이미지 제공 모델)로 읽어 줌, 재생 중 마이크 입력 무시 — "자비스 후드 켜줘" → "후드를 켰습니다" | 선행: STT-03 | 담당: 이현종
 - [ ] FUS-02 규칙 기반 파서 v0 (키워드 → Function Call) — Action 10개 중 최소 TURN_ON/TURN_OFF/EMERGENCY_STOP | 선행: LLM-01 | 담당: 이현종
