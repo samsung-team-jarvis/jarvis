@@ -40,9 +40,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-      - run: pip install -r requirements-dev.txt
-      - name: Convention checker & agent guard tests
-        run: pytest scripts/tests -q
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Unit tests (common, scripts)
+        run: pytest tests scripts/tests -q
 
   forbidden-files:
     name: No model weights / raw data

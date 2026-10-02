@@ -4,7 +4,7 @@
 
 1. Python 버전 확인 (3.10 이상)
 2. .venv 가상환경 생성 (없을 때만)
-3. 개발 도구 설치 (requirements-dev.txt)
+3. 의존성 설치 (requirements.txt · requirements-dev.txt)
 4. git 훅 설치 (pre-commit · commit-msg · pre-push)
 5. git 사용자 정보 확인
 6. 빠른 검사 실행 (스크립트 테스트, 문서 링크, ruff)
@@ -59,8 +59,9 @@ def main() -> int:
         print("생성함")
     py = str(venv_python())
 
-    step("개발 도구 설치 (requirements-dev.txt)")
+    step("의존성 설치 (requirements.txt · requirements-dev.txt)")
     run([py, "-m", "pip", "install", "-q", "--upgrade", "pip"])
+    run([py, "-m", "pip", "install", "-q", "-r", "requirements.txt"])
     run([py, "-m", "pip", "install", "-q", "-r", "requirements-dev.txt"])
     print("완료")
 
@@ -79,7 +80,7 @@ def main() -> int:
 
     step("빠른 검사")
     checks = [
-        ("스크립트 테스트", [py, "-m", "pytest", "scripts/tests", "-q"]),
+        ("테스트", [py, "-m", "pytest", "tests", "scripts/tests", "-q"]),
         ("문서 링크", [py, "scripts/check_doc_links.py"]),
         ("ruff", [py, "-m", "ruff", "check", "."]),
     ]
