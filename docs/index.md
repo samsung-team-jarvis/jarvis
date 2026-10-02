@@ -65,6 +65,10 @@
 - [audio_svc (마이크·wav → VAD → STT → `stt/text`, 모델 받기)](../services/audio_svc/README.md)
 - [llm_svc (`stt/text` → 규칙 파서 → `llm/function_call`)](../services/llm_svc/README.md)
 
+## Bench
+
+- [bench (지연 분해 등 측정 스크립트)](../bench/README.md)
+
 ## Training
 
 - [training (변환 노트북·스크립트)](../training/README.md)
