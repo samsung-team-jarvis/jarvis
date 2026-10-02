@@ -43,3 +43,21 @@ python -m bench.stt_eval data/stt/manifest.csv --split test --csv out.csv
 ```bash
 python -m bench.record_stt --speaker spk02 --noise quiet --mic pin
 ```
+
+## llm_eval.py — 명령 해석 평가 (LLM-06 · FUS-06)
+
+LLM 분할의 test(일반 + Hard Negative)로 규칙 파서·기본 모델의 명령 해석을 잰다. 데이터: [training/llm](../training/llm/README.md).
+
+```bash
+python -m bench.llm_eval --engine rule                                          # 규칙 파서
+.venv-llm/bin/python -m bench.llm_eval --engine hf --model Qwen/Qwen3-0.6B      # 기본 모델 + 프롬프트
+```
+
+| 지표 | 정의 |
+|---|---|
+| Action Acc | action이 정답과 같은 비율 (형식이 틀린 출력은 오답) |
+| Entity Acc | 파라미터까지 모두 같은 비율 |
+| Valid Rate | 출력이 함수 토큰 형식·스키마를 통과한 비율 |
+| Unsafe (Guard 전) | Hard Negative 중 Guard가 거절해야 할 위험 명령(`expect_guard: REJECT`)에 켜기·세기 올림을 낸 비율 — LLM은 말 그대로 해석하므로 설계상 높다 |
+
+- HF 엔진: 함수 토큰을 설명하는 시스템 프롬프트 + **train에서만** 고른 few-shot 13개, greedy, `<jarvis_end>`에서 자른다. HF 모델은 분리된 가상환경(`.venv-llm`)에서 돌린다.
