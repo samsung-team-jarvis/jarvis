@@ -51,7 +51,7 @@ VS Code: Remote-SSH 확장으로 `jarvis-board` 접속.
 
 ```bash
 uname -a                                        # 커널 버전
-sudo cat /sys/kernel/debug/rknpu/version        # NPU 드라이버 버전 (root·debugfs 필요). RKLLM 1.3.1은 v0.9.8 이상 필요
+sudo cat /sys/kernel/debug/rknpu/version        # NPU 드라이버 버전 (root·debugfs 필요). RKLLM 1.3.x는 v0.9.8 이상 필요
 free -h                                         # RAM
 cat /sys/class/thermal/thermal_zone*/temp       # SoC 온도 (1/1000 °C)
 python3 --version                               # rknn-toolkit-lite2는 Python 3.7~3.12
@@ -62,7 +62,7 @@ python3 --version                               # rknn-toolkit-lite2는 Python 3
 ## 4. 런타임 설치
 
 - RKNN: airockchip/rknn-toolkit2의 `rknn-toolkit-lite2/packages/`에서 보드 Python 버전에 맞는 **aarch64 휠**(v2.3.2)을 설치하고, 같은 릴리스의 `librknnrt.so`를 쓴다. 변환에 쓴 RKNN-Toolkit2와 버전을 맞춘다.
-- RKLLM: airockchip/rknn-llm 저장소(1.3.1)의 보드 런타임(`librkllmrt.so`)과 `rkllm_api_demo`를 사용한다. 런타임은 C/C++ API다.
+- RKLLM: 학교 도커 `run.sh build-demo` 산출물(`demo_Linux_aarch64/`의 `llm_demo`, `lib/librkllmrt.so` 1.3.0)을 쓴다. 변환 툴킷과 런타임 버전을 맞추기 위해서다. 런타임은 C/C++ API다.
 - STT를 NPU로 돌리려면 sherpa-onnx의 RKNN 빌드가 필요하다 ([stt-eval](./stt-eval.md)).
 
 ## 5. 동작 확인
