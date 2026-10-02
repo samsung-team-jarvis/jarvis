@@ -37,22 +37,47 @@ class Recorder(Protocol):
 
 
 class MicRecorder:
+    """마이크 스트림을 세션 동안 한 번만 열어 두고, 녹음 중일 때만 소리를 모은다.
+
+    문장마다 스트림을 열고 닫으면 macOS CoreAudio에서 정지(AudioOutputUnitStop)가
+    교착돼 도구가 멈춘 적이 있다 (#59).
+    """
+
     def __init__(self, device: int | str | None = None) -> None:
         self.device = device
+        self._stream = None
+        self._chunks: list[np.ndarray] = []
+        self._recording = False
+
+    def _callback(self, data, frames, time_info, status) -> None:
+        if self._recording:
+            self._chunks.append(data[:, 0].copy())
 
     def record(self, wait: Callable[[], object]) -> np.ndarray:
-        import sounddevice as sd
+        if self._stream is None:
+            import sounddevice as sd
 
-        chunks: list[np.ndarray] = []
-        with sd.InputStream(
-            samplerate=SAMPLE_RATE,
-            channels=1,
-            dtype="float32",
-            device=self.device,
-            callback=lambda data, *_: chunks.append(data[:, 0].copy()),
-        ):
+            self._stream = sd.InputStream(
+                samplerate=SAMPLE_RATE,
+                channels=1,
+                dtype="float32",
+                device=self.device,
+                callback=self._callback,
+            )
+            self._stream.start()
+        self._chunks = []
+        self._recording = True
+        try:
             wait()
+        finally:
+            self._recording = False
+        chunks, self._chunks = self._chunks, []
         return np.concatenate(chunks) if chunks else np.zeros(0, dtype=np.float32)
+
+    def close(self) -> None:
+        if self._stream is not None:
+            self._stream.close()  # 세션이 끝날 때 한 번만
+            self._stream = None
 
 
 def write_wav(path: pathlib.Path, samples: np.ndarray) -> None:
@@ -144,9 +169,13 @@ class Session:
         self.say(
             f"{self.speaker} · {self.noise} · {self.mic}: {len(todo)}/{len(self.script)}문장 남음"
         )
-        for i, row in enumerate(todo, 1):
-            if not self._one(i, len(todo), row):
-                break
+        try:
+            for i, row in enumerate(todo, 1):
+                if not self._one(i, len(todo), row):
+                    break
+        finally:
+            if hasattr(self.recorder, "close"):
+                self.recorder.close()
         self.say(f"저장 {self.saved}건 → {self.manifest}")
         return self.saved
 
