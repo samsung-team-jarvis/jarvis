@@ -95,6 +95,7 @@ fix(ble): #40 ACK 타임아웃 시 재시도 누락 수정
 | `guard` | `services/safety_guard`, 규칙 파서 |
 | `ble` | `services/ble_gw` |
 | `recorder` | `services/recorder` |
+| `dashboard` | `services/dashboard` (로컬 대시보드, 선택 과제) |
 | `firmware` | `firmware/esp32` |
 | `training` | `training/*` (YOLO·LLM 학습, Colab 노트북, 변환 스크립트) |
 | `bench` | `bench/*` 측정 스크립트 |
