@@ -42,7 +42,7 @@ AI 도구에 작업을 시킬 때는 **작업 ID로 지시**하면 규칙대로 
 ## 4. 꼭 읽을 문서 (15분)
 
 - [Git Convention](./conventions/git.md) — 이슈 → 브랜치 → PR → 머지, 이름 형식
-- [PLAN](./PLAN.md) — 해야 할 작업 목록. 맡을 작업을 고른다
+- [PLAN](./PLAN.md) — 맨 위 **작업물과 담당** 표에서 내 작업물과 작업 ID를 확인한다
 - [Architecture Overview](./architecture/overview.md) — 전체 구조, 안전 규칙
 
 규칙 요약:
@@ -54,14 +54,14 @@ AI 도구에 작업을 시킬 때는 **작업 ID로 지시**하면 규칙대로 
 
 ## 5. 완료 보고
 
-- [ ] [결정 대기 질문](./decisions/open-questions.md) 중 본인이 답할 수 있는 것에 답하기 — 특히 Q-03(본인 PC: x86/ARM, GPU 유무), Q-04(맡고 싶은 워크스트림)
+- [ ] [결정 대기 질문](./decisions/open-questions.md) 중 본인이 답할 수 있는 것에 답하기 — 특히 Q-03(본인 PC: x86/ARM, GPU 유무)
 - [ ] [온보딩 이슈 #7](https://github.com/samsung-team-jarvis/jarvis/issues/7)에 본인 항목 체크 + 댓글 (형식은 이슈 본문 참고)
 
 ## 팀원 GitHub 아이디
 
-| 이름 | GitHub |
-|---|---|
-| 신지호 | `SJH0428` |
-| 이현종 | `Navi-Up` |
-| 최지환 | `spaceImage` |
-| 최석진 | `pleine1279` |
+| 이름 | GitHub | 작업물 |
+|---|---|---|
+| 신지호 | `SJH0428` | ① 비전 데이터·모델 + 보드 + 팀 운영 |
+| 이현종 | `Navi-Up` | ② 음성 → 명령 AI 서비스 + 공통 런타임 |
+| 최지환 | `spaceImage` | ③ 상황 인식 + 안전 |
+| 최석진 | `pleine1279` | ④ 제어 하드웨어 + 모형 |
