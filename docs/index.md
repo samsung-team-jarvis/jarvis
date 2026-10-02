@@ -55,6 +55,10 @@
 - [STT 평가](../recipes/stt-eval.md)
 - [새 서비스 추가](../recipes/add-service.md)
 
+## Training
+
+- [training (변환 노트북·스크립트)](../training/README.md)
+
 ## Templates
 
 - [Experiment Spec](../templates/experiment.spec.md)

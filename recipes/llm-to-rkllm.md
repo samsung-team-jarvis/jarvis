@@ -41,21 +41,25 @@
 
 ## 3. RKLLM 변환 (Colab, x86_64)
 
-공식 예제(`examples/rkllm_api_demo/export/export_rkllm.py`) 기준:
+Colab 노트북: [`training/colab/convert_rkllm.ipynb`](../training/colab/convert_rkllm.ipynb). rknn-toolkit2와 의존성이 충돌하므로 **별도 런타임**에서 실행한다 (torch 2.6.0 vs ≤ 2.2.0).
+
+
+공식 예제(`examples/rkllm_api_demo/export/export_rkllm.py`, release-v1.3.1) 기준. 값의 대소문자도 예제 그대로 쓴다 (`RK3588`, `W8A8`). 스크립트: [`training/convert/hf_to_rkllm.py`](../training/convert/hf_to_rkllm.py)
 
 ```python
 from rkllm.api import RKLLM
 
 llm = RKLLM()
-llm.load_huggingface(model="./merged_fp16", model_lora=None, device="cuda")
+llm.load_huggingface(model="./merged_fp16", model_lora=None, device="cuda", dtype="float32")
 llm.build(
     do_quantization=True,
     optimization_level=1,
-    quantized_dtype="w8a8",
+    quantized_dtype="W8A8",
     quantized_algorithm="normal",
-    target_platform="rk3588",
+    target_platform="RK3588",
     num_npu_core=3,          # YOLO와 NPU를 나눠 쓸 경우 조정 (architecture §6, BOARD-08)
     dataset="./quant.json",  # 캘리브레이션: Train 발화에서만
+    hybrid_rate=0,
     max_context=4096,
 )
 llm.export_rkllm("./jarvis_w8a8.rkllm")

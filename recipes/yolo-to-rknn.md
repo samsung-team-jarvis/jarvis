@@ -14,7 +14,7 @@
 |---|---|---|
 | 학습 | Colab (GPU) | |
 | ONNX export (방법 A) | 어디서나 (Python) | airockchip/ultralytics_yolov8 |
-| ONNX → RKNN 변환 | **Linux x86_64 또는 Linux aarch64(보드)**. macOS 휠 없음 → Mac에서는 불가 | rknn-toolkit2 `packages/` (v2.3.2, Python 3.6~3.12) |
+| ONNX → RKNN 변환 | **Linux x86_64 (Colab 기본)**. aarch64 휠도 있지만 의존성 `onnxoptimizer==0.3.8`의 aarch64 휠이 없어 소스 빌드 필요. macOS 휠 없음 | rknn-toolkit2 `packages/` (v2.3.2, Python 3.6~3.12), PyPI onnxoptimizer 0.3.8 |
 | 보드 추론 | 보드 (`rknn-toolkit-lite2`, aarch64 · Python 3.7~3.12) | rknn-toolkit-lite2 `packages/` |
 
 ## 1. 학습 (Colab)
@@ -43,6 +43,10 @@ python ./ultralytics/engine/exporter.py
 `model.export(format="rknn", name="rk3588")`가 있지만 **x86 Linux에서만** 된다(ARM64·보드에서 export 불가). 기본은 FP16이고 INT8은 검출(detect) 모델만 지원한다. rknn-toolkit2 ≥ 2.3.2 필요. 후처리 코드가 model_zoo 예제와 다를 수 있어서, 이 프로젝트는 방법 A를 기본으로 한다.
 
 ## 3. RKNN 변환
+
+Colab 노트북: [`training/colab/convert_rknn.ipynb`](../training/colab/convert_rknn.ipynb) · 스크립트: [`training/convert/yolo_onnx_to_rknn.py`](../training/convert/yolo_onnx_to_rknn.py)
+
+설치는 공식 저장소의 **버전 고정 requirements를 먼저**, 그다음 휠을 설치한다 (PyPI 최신 의존성은 휠이 없어 빌드에 실패할 수 있다).
 
 model_zoo 예제 스크립트를 그대로 쓰는 것이 가장 안전하다.
 
