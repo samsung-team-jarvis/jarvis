@@ -9,11 +9,10 @@
 ```bash
 git clone https://github.com/samsung-team-jarvis/jarvis.git
 cd jarvis
-python3 -m venv .venv && source .venv/bin/activate
-pip install pre-commit ruff && pre-commit install
+python3 scripts/setup.py      # 가상환경 · 개발 도구 · git 훅 · 검사까지 한 번에
 ```
 
-자세한 환경 구성: [Local Development](docs/workflows/local-development.md)
+처음 합류했다면: [온보딩 체크리스트](docs/onboarding.md) · 자세한 환경 구성: [Local Development](docs/workflows/local-development.md)
 
 ## 작업 방식
 

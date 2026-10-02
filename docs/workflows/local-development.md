@@ -18,10 +18,12 @@
 ```bash
 git clone https://github.com/samsung-team-jarvis/jarvis.git
 cd jarvis
-python3 -m venv .venv && source .venv/bin/activate
-pip install pre-commit ruff
-pre-commit install          # pre-commit · commit-msg · pre-push 훅 설치
+python3 scripts/setup.py          # Windows: py scripts\setup.py
+source .venv/bin/activate         # 작업할 때마다 (Windows: .venv\Scripts\activate)
 ```
+
+`setup.py`는 `.venv` 생성 → `requirements-dev.txt` 설치(pre-commit·ruff·pytest, CI와 같은 버전) → git 훅 설치 → 빠른 검사를 한다. 여러 번 실행해도 안전하다.
+합류 절차 전체는 [온보딩 체크리스트](../onboarding.md).
 
 설치되는 검사:
 - 커밋 전: 큰 파일·모델 가중치·원본 데이터 차단, ruff, 문서 링크
