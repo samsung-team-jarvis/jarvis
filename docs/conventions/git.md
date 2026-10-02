@@ -90,9 +90,9 @@ fix(ble): #40 ACK 타임아웃 시 재시도 누락 수정
 | `common` | `common/*` 메시지 스키마·버스·로거 |
 | `audio` | `services/audio_svc` (VAD·STT·호출어) |
 | `vision` | `services/vision_svc` |
-| `llm` | `services/llm_svc` |
+| `llm` | `services/llm_svc` (LLM 어댑터, 규칙 파서) |
 | `fusion` | `services/fusion_svc` (State Machine) |
-| `guard` | `services/safety_guard`, 규칙 파서 |
+| `guard` | `services/safety_guard` |
 | `ble` | `services/ble_gw` |
 | `recorder` | `services/recorder` |
 | `simulator` | `services/simulator` (가짜 메시지 생성기) |
