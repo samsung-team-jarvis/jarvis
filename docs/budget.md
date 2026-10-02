@@ -28,7 +28,6 @@
 |---|---|---|
 | GitHub (org, public 저장소, Actions) | 코드·CI | public 저장소라 브랜치 보호·Actions 무료 |
 | Google Colab 무료 | 학습·모델 변환 | GPU 사용 시간 한도가 있다. 부족하면 💰 유료 플랜을 상의 |
-| Google Drive | 데이터·모델 공유 | 개인 무료 용량 안에서. 부족하면 💰 |
 | RKNN-Toolkit2, RKLLM, sherpa-onnx, ultralytics, mosquitto, paho-mqtt | 변환·추론·통신 | 오픈소스 |
 | Hugging Face | LLM 다운로드 | 계정 무료 |
 | Roboflow 무료 플랜 | 비전 라벨링 | 무료 플랜 조건(데이터셋 공개 여부·한도)을 가입 시 확인 ([Q-09](./decisions/open-questions.md)). 대안: Label Studio·CVAT(무료) |

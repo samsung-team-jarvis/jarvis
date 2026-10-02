@@ -67,4 +67,4 @@ pre-commit run --all-files
 ## 큰 파일
 
 - 모델 가중치·원본 데이터는 git에 넣지 않는다 (`.gitignore`, pre-commit `check-added-large-files`).
-- 공유는 팀 Google Drive. 경로와 버전은 `data/` 또는 `training/`의 매니페스트 파일에 기록한다.
+- 공유는 메신저·USB·scp로 직접 전달하고, 파일 이름·버전·sha256은 [산출물 등록부](../artifacts.md)에 기록한다 (`python3 scripts/artifact_info.py <파일>`).

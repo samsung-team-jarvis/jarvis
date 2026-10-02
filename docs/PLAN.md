@@ -42,6 +42,7 @@
 - [x] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 신지호 (#23, 이현종 대행)
 - [x] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 신지호
 - [x] DOC-11 기술 스택·문서 사실 검증 — recipe·환경·버전 문서의 "(확인 필요)"를 공식 자료로 확인하고 출처 기록 | 선행: - | 담당: 이현종 (#11)
+- [x] INFRA-13 대용량 파일 공유: 직접 전달 + 산출물 등록부(`docs/artifacts.md`, `scripts/artifact_info.py`), 노트북 Drive 의존 제거 — 저장소에 Drive 경로 없음 | 선행: - | 담당: 이현종 (#27)
 - [x] DOC-12 학교 제공 자료(마음AI 특강2·SUDA 데이터 시트) 반영 — 문서가 학교 환경·방식과 충돌하지 않음 | 선행: - | 담당: 이현종 (#25)
 - [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 신지호
 - [ ] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환
