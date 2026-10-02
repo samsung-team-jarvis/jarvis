@@ -13,7 +13,23 @@
 
 - `main`에 직접 push 금지 (브랜치 보호). 모든 변경은 PR로.
 - PLAN에 없는 작업이면 이슈를 만들기 전에 PLAN에 항목부터 추가한다.
-- 이슈 하나 = PR 하나가 기본. 이슈가 크면 sub-issue로 쪼갠다.
+- 이슈 하나 = PR 하나가 기본. 이슈가 크면 sub-issue로 쪼갠다. 한 브랜치의 커밋은 모두 같은 이슈 번호를 쓴다.
+
+## 자동 검사
+
+이 문서의 형식은 사람·agent·도구와 상관없이 아래에서 기계적으로 검사된다. **허용 prefix·scope는 아래 `## Prefix`, `## Scope` 표에서 그대로 읽는다** — 표를 바꾸면 검사 기준도 바뀐다. 표의 첫 열 형식(`` `값` ``)을 유지할 것.
+
+| 시점 | 검사 | 위치 |
+|---|---|---|
+| 커밋할 때 | 커밋 메시지 형식, Co-Authored-By 금지 | pre-commit `commit-msg` 훅 |
+| push할 때 | 브랜치 이름 형식, main 직접 push 차단 | pre-commit `pre-push` 훅 |
+| PR | 브랜치 이름, PR 제목, 본문 `Closes #N`·AI 서명 줄 금지, PR의 모든 커밋 메시지 | CI `Conventions` job |
+| 머지 | CI 통과 + 리뷰 승인 1명 | 브랜치 보호 |
+| AI 도구 사용 시 | force push, `--no-verify`, main push, 관리자 머지 명령 거부 | `scripts/agent_guard.py` hook ([도구별 설정](../agent/tools.md)) |
+
+검사 스크립트: `scripts/check_conventions.py` (직접 실행: `python3 scripts/check_conventions.py branch`).
+로컬 훅은 `pre-commit install`을 해야 동작한다. 설치하지 않아도 CI에서 같은 검사가 걸린다.
+**훅을 우회하지 않는다** (`--no-verify` 금지). 검사가 틀렸다고 생각되면 이슈를 만들어 스크립트·문서를 고친다.
 
 ## Branch
 
@@ -69,6 +85,7 @@ fix(ble): #40 ACK 타임아웃 시 재시도 누락 수정
 | `templates` | `templates/*` |
 | `skills` | `.claude/skills/*` |
 | `github` | `.github/*` |
+| `scripts` | `scripts/*` 저장소 공용 검사·도구 스크립트 |
 | `common` | `common/*` 메시지 스키마·버스·로거 |
 | `audio` | `services/audio_svc` (VAD·STT·호출어) |
 | `vision` | `services/vision_svc` |
@@ -112,4 +129,5 @@ fix(ble): #40 ACK 타임아웃 시 재시도 누락 수정
 - 모델 가중치(`*.pt`, `*.onnx`, `*.rknn`, `*.rkllm` 등)와 원본 데이터(wav, jpg, mp4) 커밋
 - `.env`, 토큰, 개인 설정 커밋
 - 커밋 메시지에 Co-Authored-By 등 AI 도구 서명 푸터 추가
+- PR 본문에 "Generated with Claude Code" 같은 AI 도구 서명 줄 추가
 - `main` force push

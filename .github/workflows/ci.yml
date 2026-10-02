@@ -32,6 +32,18 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
 
+  script-tests:
+    name: Script tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pytest
+      - name: Convention checker & agent guard tests
+        run: pytest scripts/tests -q
+
   forbidden-files:
     name: No model weights / raw data
     runs-on: ubuntu-latest

@@ -1,5 +1,9 @@
 # 설치: pip install pre-commit && pre-commit install
+#   → pre-commit / commit-msg / pre-push 훅이 한 번에 설치된다.
 # 최신 버전으로 갱신: pre-commit autoupdate
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -33,3 +37,15 @@ repos:
         language: system
         pass_filenames: false
         files: '\.md$'
+      - id: check-commit-message
+        name: 커밋 메시지 형식 검사 (docs/conventions/git.md)
+        entry: python3 scripts/check_conventions.py commit-msg
+        language: system
+        stages: [commit-msg]
+      - id: check-branch-name
+        name: 브랜치 이름 형식 검사 · main 직접 push 차단
+        entry: python3 scripts/check_conventions.py branch
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

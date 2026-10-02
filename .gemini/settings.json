@@ -1,0 +1,19 @@
+{
+  "context": {
+    "fileName": ["AGENTS.md"]
+  },
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "run_shell_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$(git rev-parse --show-toplevel 2>/dev/null)/scripts/agent_guard.py\"; [ ! -f \"$f\" ] || python3 \"$f\"",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}

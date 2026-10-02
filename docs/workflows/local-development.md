@@ -20,8 +20,15 @@ git clone https://github.com/samsung-team-jarvis/jarvis.git
 cd jarvis
 python3 -m venv .venv && source .venv/bin/activate
 pip install pre-commit ruff
-pre-commit install          # 커밋 전 자동 검사 (큰 파일·모델 파일 차단, ruff)
+pre-commit install          # pre-commit · commit-msg · pre-push 훅 설치
 ```
+
+설치되는 검사:
+- 커밋 전: 큰 파일·모델 가중치·원본 데이터 차단, ruff, 문서 링크
+- 커밋 메시지: `prefix(scope): #N summary` 형식 ([Git Convention](../conventions/git.md))
+- push 전: 브랜치 이름 형식, main 직접 push 차단
+
+Claude Code로 이 repo를 열었을 때 훅이 설치되어 있지 않으면 세션 시작 시 경고가 뜬다 (`.claude/settings.json`).
 
 의존성 파일(`requirements*.txt` / `pyproject.toml`)이 생기면 이 절에 설치 명령을 추가한다.
 

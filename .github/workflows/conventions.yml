@@ -1,0 +1,47 @@
+name: Conventions
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  conventions:
+    name: Conventions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Branch name
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: python scripts/check_conventions.py branch "$HEAD_REF"
+
+      - name: PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: python scripts/check_conventions.py pr-title "$PR_TITLE"
+
+      - name: PR body (Closes #N)
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pr_body.md"
+          python scripts/check_conventions.py pr-body "$RUNNER_TEMP/pr_body.md"
+
+      - name: Commit messages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git checkout -q -B "$HEAD_REF"
+          python scripts/check_conventions.py commits "$BASE_SHA..HEAD"
