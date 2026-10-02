@@ -24,7 +24,7 @@
 | 커밋할 때 | 커밋 메시지 형식, Co-Authored-By 금지 | pre-commit `commit-msg` 훅 |
 | push할 때 | 브랜치 이름 형식, main 직접 push 차단 | pre-commit `pre-push` 훅 |
 | PR | 브랜치 이름, PR 제목, 본문 `Closes #N`·AI 서명 줄 금지, PR의 모든 커밋 메시지 | CI `Conventions` job |
-| PR 열릴 때 | 작성자 Assignee 지정, 작업 종류·워크스트림·작성자 라벨, 작성자 외 팀원에게 리뷰 요청 | `auto-assign`, `labeler`, `CODEOWNERS` |
+| PR 열릴 때 | 작성자 Assignee 지정, 작업 종류·워크스트림·작성자 라벨 (리뷰 요청은 자동으로 보내지 않는다 — 필요할 때 작성자가 직접 지정) | `auto-assign`, `labeler` |
 | 머지 | CI 통과 + 리뷰 승인 1명 (org 관리자는 우회 가능) | 브랜치 보호 |
 | AI 도구 사용 시 | force push, `--no-verify`, main push, 관리자 머지 명령 거부 | `scripts/agent_guard.py` hook ([도구별 설정](../agent/tools.md)) |
 
