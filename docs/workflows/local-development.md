@@ -68,6 +68,20 @@ python -m services.audio_svc --input data/stt/cmds.wav --realtime   # 마이크 
 
 음성 → 명령까지 이어 보려면 다른 터미널에서 `python -m services.llm_svc`를 같이 띄운다 ([llm_svc](../../services/llm_svc/README.md)).
 
+### 서비스 한 번에 띄우기 (런처)
+
+서비스마다 터미널을 여는 대신 런처로 한 번에 띄우고 Ctrl+C 한 번으로 모두 정리한다. 목록·순서는 [`scripts/launch.yaml`](../../scripts/launch.yaml).
+
+```bash
+python3 scripts/launch.py                                        # recorder → llm_svc → audio_svc(마이크)
+python3 scripts/launch.py --arg audio_svc="--input data/stt/cmds.wav --realtime --session demo" --until audio_svc
+python -m bench.latency data/sessions/demo.jsonl                 # 방금 녹화로 구간별 지연
+```
+
+- 로그는 `[서비스]` 접두어로 한 화면에 나온다. `--log-dir data/logs`면 서비스별 파일로도 남는다 (git 제외).
+- `--only recorder,llm_svc`로 일부만, `--bus`로 버스 주소 일괄 지정, `--restart`로 비정상 종료 시 재시작.
+- 새 서비스를 만들면 `launch.yaml`에 한 줄 추가한다 ([새 서비스 추가](../../recipes/add-service.md) 9단계).
+
 ## 보드 접속
 
 보드 세팅 절차는 [recipes/board-setup.md](../../recipes/board-setup.md). 접속 정보(IP, 계정)는 repo에 커밋하지 않고 팀 메신저·개인 `~/.ssh/config`에 둔다.

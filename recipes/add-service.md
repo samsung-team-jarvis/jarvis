@@ -14,4 +14,4 @@
 8. **확인**:
    - 가짜 입력으로 출력 토픽이 나오는지 — 입력은 `python -m services.simulator <시나리오>`, 확인은 `recorder` 로그 또는 `mosquitto_sub`
    - 서비스가 죽었다 살아나도 다른 서비스가 계속 동작하는지
-9. **런처 등록**: 일괄 기동 스크립트(BOARD-07)에 추가.
+9. **런처 등록**: [`scripts/launch.yaml`](../scripts/launch.yaml)의 `services`에 `name`·`module`을 추가 (받는 쪽이 앞에 오게). 종료 신호(SIGTERM)를 받으면 정리하고 끝나야 한다.

@@ -1,0 +1,11 @@
+# 서비스 일괄 기동 설정 (scripts/launch.py). 위에서부터 순서대로 띄운다.
+# 받는 쪽을 먼저 띄워야 앞쪽 메시지를 놓치지 않는다: 녹화 → 처리 → 입력.
+start_delay_s: 1.0   # 서비스 사이 대기 (모델 로드·브로커 접속 시간)
+services:
+  - name: recorder
+    module: services.recorder
+  - name: llm_svc
+    module: services.llm_svc
+  - name: audio_svc
+    module: services.audio_svc
+    # args: [--input, data/stt/cmds.wav, --realtime]   # 마이크 대신 wav (또는 실행 시 --arg)
