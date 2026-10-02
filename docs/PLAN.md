@@ -38,7 +38,7 @@
 - [ ] INFRA-02 `.gitignore`(가중치·원본 데이터 제외), 브랜치·커밋 규칙 공유 — CLAUDE.md 협업 규칙에 모두 동의 | 선행: INFRA-01 | 담당: 공동
 - [x] INFRA-10 컨벤션 자동 검사 (커밋·브랜치·PR 형식 훅과 CI, AI 도구 guard hook, 브랜치 보호 필수 체크) — 틀린 형식이 로컬·CI에서 실패 | 선행: INFRA-02 | 담당: 이현종 (#4 → PR #5)
 - [x] INFRA-11 원커맨드 개발 환경(`scripts/setup.py`)과 온보딩 문서 — 새 clone에서 한 번에 훅 설치·검사 통과 | 선행: INFRA-10 | 담당: 이현종 (#6)
-- [ ] INFRA-12 팀원 작성자 라벨과 자동 리뷰어 지정(CODEOWNERS) — PR 생성 시 리뷰 요청 자동 생성 | 선행: INFRA-11 | 담당: 이현종 (#9)
+- [x] INFRA-12 팀원 작성자 라벨과 자동 리뷰어 지정(CODEOWNERS) — PR 생성 시 리뷰 요청 자동 생성 | 선행: INFRA-11 | 담당: 이현종 (#9 → PR #10)
 - [x] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 신지호 (#23, 이현종 대행)
 - [x] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 신지호
 - [x] DOC-11 기술 스택·문서 사실 검증 — recipe·환경·버전 문서의 "(확인 필요)"를 공식 자료로 확인하고 출처 기록 | 선행: - | 담당: 이현종 (#11)
@@ -95,7 +95,7 @@
 **Gate 2:** "자비스, 후드 켜줘" 발화 → STT → 규칙 파서 → Safety Guard → BLE → ESP32 LED 점등이 보드에서 동작하고, 전 구간 지연이 레코더 로그로 측정됨
 
 - [ ] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 (보드 미수령으로 Mac 기준 선진행) | 담당: 이현종 (#35 — wav·MQTT 확인, Mac 마이크 확인 대기)
-- [ ] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 이현종
+- [x] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 이현종 (#37, `services/audio_svc/wake.py`)
 - [ ] STT-12 TTS 음성 응답 v0: `guard/decision`·위험 경고를 한국어 VITS(sherpa-onnx, 배포 이미지 제공 모델)로 읽어 줌, 재생 중 마이크 입력 무시 — "자비스 후드 켜줘" → "후드를 켰습니다" | 선행: STT-03 | 담당: 이현종
 - [ ] FUS-02 규칙 기반 파서 v0 (키워드 → Function Call) — Action 10개 중 최소 TURN_ON/TURN_OFF/EMERGENCY_STOP | 선행: LLM-01 | 담당: 이현종
 - [ ] FUS-03 `safety_guard` v0: 화이트리스트·스키마 검증, 위험 상태에서 REJECT — 단위 테스트 통과 | 선행: LLM-01 | 담당: 최지환
