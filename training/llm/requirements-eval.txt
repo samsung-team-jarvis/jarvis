@@ -1,0 +1,8 @@
+# LLM 평가용 가상환경 (bench/llm_eval.py --engine hf). 서비스 환경(requirements.txt)과 분리 — torch가 크다.
+#   python3.11 -m venv .venv-llm && .venv-llm/bin/pip install -r training/llm/requirements-eval.txt
+# Mac(M1, MPS)에서 2026-10-02 확인 (#67).
+torch==2.14.1
+transformers==5.18.0
+accelerate==1.15.0
+pyyaml==6.0.3
+numpy==2.4.6

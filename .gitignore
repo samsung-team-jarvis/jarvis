@@ -49,3 +49,6 @@ models/
 
 # 런처 로그 (scripts/launch.py --log-dir)
 data/logs/
+
+# LLM 평가용 가상환경 (training/llm/requirements-eval.txt)
+.venv-llm/
