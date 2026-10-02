@@ -61,6 +61,7 @@
 ## Services
 
 - [simulator (시나리오 기반 가짜 메시지)](../services/simulator/README.md)
+- [recorder (메시지 녹화·요약)](../services/recorder/README.md)
 
 ## Training
 

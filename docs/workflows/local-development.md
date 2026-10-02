@@ -57,6 +57,7 @@ mosquitto_sub -t '#' -v                                       # 모든 메시지
 
 ```bash
 python -m services.simulator services/simulator/scenarios/overheat.yaml --speed 10
+python -m services.recorder            # 다른 터미널: 모든 메시지를 data/sessions/에 녹화
 ```
 
 ## 보드 접속
