@@ -72,19 +72,35 @@ python -m services.audio_svc.transcribe <wav...> --language ko
 
 ```text
 utt_id,speaker_id,noise_type,mic,path,transcript,action_label,split
-u0001,spk01,quiet,pin,stt/spk01/u0001.wav,자비스 후드 켜줘,TURN_ON:hood,test
+u0001,spk01,quiet,pin,stt/spk01/u0001.wav,자비스 후드 켜줘,<jarvis_1>(target=hood)<jarvis_end>,test
+u0002,spk01,hood,pin,stt/spk01/u0002.wav,오늘 저녁 뭐 먹지,,test
 ```
 
-## 4. 지표 계산
+- `path`: `data/` 기준 wav 경로 (wav는 git 제외, 매니페스트만 커밋)
+- `transcript`: 실제로 말한 문장 (호출어 포함). 숫자는 SenseVoice ITN 출력처럼 아라비아 숫자로 쓴다 ("3분")
+- `action_label`: 정답 명령의 **함수 토큰** ([interfaces](../docs/architecture/interfaces.md) §3). 호출어가 없는 발화(명령으로 처리되면 안 됨)는 비운다. 형식이 틀리면 측정 전에 오류로 알려 준다
+- `split`: 화자 단위로 나눈다 (같은 화자가 train·test에 같이 들어가지 않게)
 
-```python
-import jiwer
+## 4. 지표 계산 — `bench/stt_eval.py`
 
-cer = jiwer.cer(references, hypotheses)  # 소음 조건별로 따로 계산
+```bash
+python -m bench.stt_eval data/stt/manifest.csv --split test --csv out.csv
 ```
 
-- RTF = 전체 처리시간 / 전체 음성 길이
-- STT→Action: STT 결과를 파서(규칙 또는 LLM)에 넣고 `action_label`과 비교
+전체·소음·마이크·화자별로 아래 표를 낸다 (Markdown, METRICS·PR에 붙여 넣기 좋게). 발화별 결과는 `--csv`.
+
+| 열 | 정의 |
+|---|---|
+| CER | 띄어쓰기·문장부호를 지운 글자 기준 (`jiwer.cer`, 묶음 전체 합산) |
+| RTF | 인식 시간 합 / 음성 길이 합 |
+| 호출어 인식 | 정답에 호출어가 있는 발화 중 받아쓴 문장도 호출로 판정된 비율 |
+| 오호출 | 정답에 호출어가 없는데 호출로 판정된 비율 |
+| STT→Action (전체 / action만) | 받아쓴 문장 → 호출어 판정 → 규칙 파서 결과가 정답 명령과 같은 비율 |
+| 정답 문장→파서 | 정답 문장을 그대로 파서에 넣었을 때 — STT 오류를 뺀 파서 자체 정확도. 이 값과 STT→Action의 차이가 STT 탓 |
+
+- 파일 전체를 한 번에 받아쓴다 (VAD 없이). 녹음 파일 하나 = 발화 하나.
+- STT 엔진은 `Engine`(`transcribe_file`)만 맞추면 바꿔 끼울 수 있다 (STT-08 Whisper).
+- 2026-10-02 합성 음성(macOS `say`) 18개로 동작만 확인했다 — 사람 음성 테스트 세트가 아니라 METRICS에 넣지 않는다.
 
 ## 5. 비교 실험
 

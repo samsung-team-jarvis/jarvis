@@ -2,3 +2,5 @@
 pre-commit==4.6.2
 ruff==0.16.10
 pytest==9.1.1
+# 측정 스크립트 (bench/)
+jiwer==4.0.0

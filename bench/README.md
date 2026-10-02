@@ -27,3 +27,11 @@ python -m bench.latency data/sessions/<세션>.jsonl [...] --csv out.csv
 - **시각**: `mono`는 서비스가 발행할 때 찍은 `time.monotonic()`. 같은 기기의 단조 시계라 프로세스가 달라도 뺄 수 있다. ESP32 시각은 쓰지 않는다.
 - **`speech_end_mono`는 VAD 구간의 끝**이라 실제로 말이 끝난 순간보다 조금 늦다 → `vad_wait`·`e2e`는 실제보다 약간 작게 나온다.
 - 아직 없는 서비스의 구간은 `-`로 비워 둔다. Guard·ble_gw가 생기면 같은 명령으로 전 구간이 나온다.
+
+## stt_eval.py — STT 평가 (STT-06)
+
+STT 매니페스트로 CER·RTF·호출어 인식·STT→Action 정확도를 소음·마이크·화자별로 낸다. 매니페스트 형식과 지표 정의는 [STT 평가 recipe](../recipes/stt-eval.md) §3·§4.
+
+```bash
+python -m bench.stt_eval data/stt/manifest.csv --split test --csv out.csv
+```
