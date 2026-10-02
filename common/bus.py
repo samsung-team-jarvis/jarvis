@@ -84,6 +84,7 @@ class MqttBus:
         self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
         self._client.on_message = self._on_message
         self._client.on_connect = self._on_connect
+        self._network_thread: int | None = None  # paho 네트워크 스레드 (콜백이 도는 곳)
         self._client.connect(host, port)
         self._client.loop_start()
 
@@ -95,6 +96,7 @@ class MqttBus:
             client.subscribe(pattern, qos=1)
 
     def _on_message(self, client, userdata, mqtt_msg) -> None:
+        self._network_thread = threading.get_ident()
         try:
             msg = Envelope.from_json(mqtt_msg.payload)
         except MessageError:
@@ -107,7 +109,11 @@ class MqttBus:
 
     def publish(self, msg: Envelope) -> None:
         msg.validate()
-        self._client.publish(msg.type, msg.to_json(), qos=1).wait_for_publish(timeout=5)
+        info = self._client.publish(msg.type, msg.to_json(), qos=1)
+        # 구독 핸들러 안(네트워크 스레드)에서 발행하면 PUBACK을 처리할 스레드가 자기 자신이라
+        # 기다리면 timeout까지 멈춘다. 그때는 기다리지 않는다 (QoS 1 재전송은 paho가 맡는다).
+        if threading.get_ident() != self._network_thread:
+            info.wait_for_publish(timeout=5)
 
     def subscribe(self, pattern: str, handler: Handler) -> None:
         with self._lock:
