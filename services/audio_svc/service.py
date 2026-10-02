@@ -40,6 +40,7 @@ class AudioService:
         heartbeat_s: float = 1.0,
         on_text: Callable[[Envelope], None] | None = None,
         clock: Callable[[], float] = time.monotonic,
+        mute: Callable[[float], bool] | None = None,
     ) -> None:
         self.stt = stt
         self.segmenter = segmenter
@@ -48,6 +49,7 @@ class AudioService:
         self.heartbeat_s = heartbeat_s
         self.on_text = on_text
         self.clock = clock
+        self.mute = mute  # TTS 재생 중이면 True → 그 구간 입력을 무음으로 (에코 방지, STT-12)
         self.published = 0  # 발행한 stt/text 수
         self.ignored = 0  # 그중 호출어가 없어 명령으로 처리하지 않을 발화 수 (wake=false)
         self.skipped = 0  # 받아쓴 결과가 비어 버린 구간 수 (잡음 등)
@@ -56,6 +58,9 @@ class AudioService:
     def run(self, chunks: Iterable[Chunk]) -> int:
         """입력이 끝날 때까지 처리하고, 발행한 stt/text 수를 돌려준다."""
         for samples, arrival_mono in chunks:
+            if self.mute and self.mute(arrival_mono):
+                # 건너뛰지 않고 무음으로 넣는다: 샘플 수로 계산하는 발화 끝 시각이 어긋나지 않게
+                samples = np.zeros_like(samples)
             self.handle(self.segmenter.feed(samples, arrival_mono))
             self.heartbeat()
         self.handle(self.segmenter.flush())
