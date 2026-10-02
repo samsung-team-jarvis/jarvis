@@ -6,7 +6,7 @@ import pytest
 
 from common.bus import MemoryBus
 from common.messages import Envelope
-from services.audio_svc.service import AudioService, is_wake
+from services.audio_svc.service import AudioService
 from services.audio_svc.sources import wav_chunks
 from services.audio_svc.stt import DEFAULT_MODEL_DIR, SenseVoice, Transcript, read_wav
 from services.audio_svc.vad import (
@@ -74,19 +74,6 @@ def test_end_mono_counts_back_from_last_arrival() -> None:
     assert end_mono(32000, 32000, 50.0) == 50.0
 
 
-@pytest.mark.parametrize(
-    ("text", "wake"),
-    [
-        ("자비스 후드 켜 줘.", True),
-        (" 자비스, 긴급 정지", True),
-        ("후드 켜 줘", False),
-        ("", False),
-    ],
-)
-def test_is_wake(text: str, wake: bool) -> None:
-    assert is_wake(text) is wake
-
-
 def test_wav_chunks_splits_into_chunks(tmp_path: pathlib.Path) -> None:
     path = tmp_path / "a.wav"
     write_wav(path, np.zeros(4000, dtype=np.float32))  # 0.25초
@@ -127,6 +114,7 @@ def test_publishes_stt_text_per_segment() -> None:
          "speech_end_mono": 12.0},
     ]  # fmt: skip
     assert {(m.source, m.session_id) for m in got} == {("audio_svc", "s_test")}
+    assert service.ignored == 1  # "오늘 날씨 좋다"는 호출어 없음
 
 
 def test_empty_transcripts_are_skipped() -> None:
