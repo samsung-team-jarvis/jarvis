@@ -18,14 +18,16 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from common.function_call import DEVICES, validate
+from common.function_call import DEVICES, MAX_DURATION_S, validate
 
 # 비교는 띄어쓰기·문장부호를 지운 문장으로 한다 ("2 화국 꺼줘." → "2화국꺼줘")
 _NOT_WORD = re.compile(r"[^0-9A-Za-z가-힣]")
 
 EMERGENCY = re.compile(r"긴급|비상|정지|멈춰|멈춰줘|그만|스톱|스탑")
 TIMER = re.compile(r"타이머|알람")
-TIMER_LATER = re.compile(r"뒤에|뒤|후에|후|있다가|이따가")
+TIMER_LATER = re.compile(
+    r"뒤에|뒤|후에|후|있다가|이따가|지나면|두고"
+)  # "N분만 켜 두고 꺼" (train 근거)
 TIMER_CANCEL = re.compile(r"취소|꺼|끄|그만|멈춰|정지|없애|지워")
 RISK = re.compile(r"위험|안전해|안전한")
 STATUS = re.compile(r"(켜져|꺼져)있|상태")
@@ -74,9 +76,11 @@ def korean_number(word: str) -> int | None:
     if word.isdigit():
         return int(word)
     if all(ch in _SINO + "십" for ch in word):  # 한자어 수: 이십오, 십, 삼십
-        tens, _, ones = word.rpartition("십")
         if "십" not in word:
             return _SINO.index(word) + 1 if len(word) == 1 else None
+        tens, _, ones = word.rpartition("십")
+        if len(tens) > 1 or len(ones) > 1 or "십" in tens:
+            return None  # "구이십"처럼 앞 글자가 붙은 경우 — 호출한 쪽에서 앞 글자를 떼고 다시
         t = _SINO.index(tens) + 1 if tens else 1
         o = _SINO.index(ones) + 1 if ones else 0
         return t * 10 + o
@@ -91,7 +95,9 @@ def duration_s(text: str) -> int | None:
     """문장 속 시간 표현의 합(초). 없으면 None. 예: '3분30초' → 210, '1분반' → 90."""
     total, found = 0, False
     for num, unit, half in DURATION.findall(text):
-        n = korean_number(num)
+        # 띄어쓰기를 지운 문장에서는 "화구 이십 분"의 '구'가 숫자에 붙는다 ("구이십")
+        # → 앞 글자를 하나씩 떼며 읽을 수 있는 가장 긴 수를 쓴다
+        n = next((v for k in range(len(num)) if (v := korean_number(num[k:])) is not None), None)
         if n is None:
             continue
         found = True
@@ -162,8 +168,8 @@ def _parse(text: str) -> dict[str, Any]:
             if target not in (None, "?"):
                 call["target"] = target
             return call
-        if seconds is None:
-            return _ask("SET_TIMER", "duration")
+        if seconds is None or not 1 <= seconds <= MAX_DURATION_S:
+            return _ask("SET_TIMER", "duration")  # 시간이 없거나 범위 밖(최대 60분)이면 되묻기
         call = {"action": "SET_TIMER", "duration_s": seconds}
         if target == "?":
             return _ask("SET_TIMER", "target")

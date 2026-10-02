@@ -37,6 +37,13 @@ CASES = [
     ("타이머 1분 반", {"action": "SET_TIMER", "duration_s": 90}),
     ("타이머 열다섯 분", {"action": "SET_TIMER", "duration_s": 900}),
     ("타이머 맞춰 줘", ask("SET_TIMER", "duration")),
+    ("타이머 90분 맞춰줘", ask("SET_TIMER", "duration")),  # 최대 60분 초과
+    # 띄어쓰기를 지우면 "화구"의 '구'가 숫자에 붙던 버그 (#67)
+    ("2번 화구 이십 분 뒤에 꺼", {"action": "SET_TIMER", "target": "burner_2", "duration_s": 1200}),
+    (
+        "첫 번째 화구 사십오 초만 켜 두고 꺼줘",
+        {"action": "SET_TIMER", "target": "burner_1", "duration_s": 45},
+    ),
     ("타이머 취소", {"action": "CANCEL_TIMER"}),
     ("타이머 정지", {"action": "CANCEL_TIMER"}),  # 긴급 정지가 아니라 타이머 끄기
     ("후드 타이머 꺼", {"action": "CANCEL_TIMER", "target": "hood"}),
@@ -68,7 +75,8 @@ def test_parse(text: str, call: dict) -> None:
 @pytest.mark.parametrize(
     ("word", "n"),
     [("3", 3), ("삼", 3), ("십", 10), ("십오", 15), ("이십오", 25), ("삼십", 30),
-     ("한", 1), ("열", 10), ("열다섯", 15), ("스무", 20), ("서른두", 32), ("뭐", None)],
+     ("한", 1), ("열", 10), ("열다섯", 15), ("스무", 20), ("서른두", 32), ("뭐", None),
+     ("구이십", None), ("이삼십", None)],
 )  # fmt: skip
 def test_korean_number(word: str, n: int | None) -> None:
     assert korean_number(word) == n
