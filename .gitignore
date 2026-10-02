@@ -37,3 +37,9 @@ runs/
 
 # 변환 결과물
 training/convert/out/
+
+# 외부·학교 자료 원본 (저작권: public 저장소에 올리지 않음, 팀 Drive 보관)
+*.pdf
+*.xlsx
+*.pptx
+*.docx
