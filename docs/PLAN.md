@@ -32,6 +32,7 @@
 
 - [ ] INFRA-01 GitHub 저장소 생성, 팀원 초대, `main` 보호, 이 harness(CLAUDE.md·docs) 푸시 — 4명 모두 clone 성공 | 선행: - | 담당: 미정
 - [ ] INFRA-02 `.gitignore`(가중치·원본 데이터 제외), 브랜치·커밋 규칙 공유 — CLAUDE.md 협업 규칙에 모두 동의 | 선행: INFRA-01 | 담당: 미정
+- [ ] INFRA-10 컨벤션 자동 검사 (커밋·브랜치·PR 형식 훅과 CI, Claude Code 팀 권한, 브랜치 보호 필수 체크) — 틀린 형식이 로컬·CI에서 실패 | 선행: INFRA-02 | 담당: 이현종 (#4)
 - [ ] DOC-01 결정 대기 질문 Q-01~Q-08 답변 수집 (`docs/decisions/open-questions.md`) — 각 질문에 답 또는 "보류 사유" 기재 | 선행: - | 담당: 미정
 - [ ] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 미정
 - [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 미정

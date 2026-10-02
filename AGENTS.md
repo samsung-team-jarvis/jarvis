@@ -54,10 +54,13 @@ agent용 허브 문서다. 상세 규칙을 여기에 복붙하지 말고, 작�
 
 ```bash
 git diff --check
-python3 scripts/check_doc_links.py   # 문서 변경 시
-ruff check . && ruff format --check .  # Python 변경 시
-pre-commit run --all-files           # 설치한 경우
+python3 scripts/check_doc_links.py              # 문서 변경 시
+ruff check . && ruff format --check .           # Python 변경 시
+python3 scripts/check_conventions.py branch     # 브랜치 이름
+pre-commit run --all-files                      # 설치한 경우
 ```
+
+브랜치·커밋·PR 형식은 로컬 훅과 CI가 검사한다 ([자동 검사](./docs/conventions/git.md)). 검사가 실패하면 우회(`--no-verify`, force push)하지 말고 형식을 고친다. 작업 시작 전 `pre-commit install` 여부를 확인한다.
 
 보드·ESP32가 필요한 검증을 못 했으면 "미검증"으로 남기고 이유를 적는다.
 
