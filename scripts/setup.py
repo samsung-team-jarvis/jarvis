@@ -43,6 +43,7 @@ def git_config(key: str) -> str:
 
 
 def main() -> int:
+    sys.stdout.reconfigure(line_buffering=True)  # 하위 명령 출력과 순서가 섞이지 않게
     step("Python 버전 확인")
     current = sys.version.split()[0]
     if sys.version_info < MIN_PYTHON:
