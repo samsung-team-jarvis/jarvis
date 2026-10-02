@@ -65,6 +65,12 @@ labels:
   - label: 'INFRA'
     branch: '(?i)^[a-z]+/(common|recorder|bench|root|github)/'
 
-  # 작성자 (팀원 GitHub 아이디가 정해지면 추가)
+  # 작성자 (docs/onboarding.md의 팀원 GitHub 아이디 표와 맞춘다)
+  - label: '지호'
+    authors: ['SJH0428']
   - label: '현종'
     authors: ['Navi-Up']
+  - label: '지환'
+    authors: ['spaceImage']
+  - label: '석진'
+    authors: ['pleine1279']
