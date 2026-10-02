@@ -6,7 +6,7 @@
 
 - [ ] GitHub org `samsung-team-jarvis` 초대 수락 (메일 또는 https://github.com/orgs/samsung-team-jarvis)
 - [ ] 수락 후 저장소 **Write 권한**이 있는지 확인 (jarvis 저장소 화면에 Settings 탭은 없어도 브랜치 push가 되면 OK). 안 되면 현종에게 요청
-- [ ] 팀 공유 Drive 폴더 접근 수락 (데이터·모델 파일 저장소, 링크는 팀 메신저)
+- [ ] 데이터·모델 파일은 공용 저장소 없이 직접 주고받는다 — [산출물 규칙](./artifacts.md) 읽기
 
 ## 2. PC 준비
 

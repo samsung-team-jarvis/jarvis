@@ -1,6 +1,6 @@
 # training
 
-모델 학습·변환 코드. 가중치·데이터는 git에 넣지 않고 팀 Drive(`MyDrive/jarvis/models`)에 둔다.
+모델 학습·변환 코드. 가중치·데이터는 git에 넣지 않고 각자 보관·직접 전달한다 ([artifacts](../docs/artifacts.md) — 이름 규칙·등록부). 노트북은 결과를 zip으로 다운로드한다.
 
 | 경로 | 내용 | 실행 환경 |
 |---|---|---|
