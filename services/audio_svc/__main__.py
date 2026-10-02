@@ -19,15 +19,17 @@ from services.audio_svc.service import AudioService
 from services.audio_svc.sources import mic_chunks, wav_chunks
 from services.audio_svc.stt import LANGUAGES, SenseVoice, model_dir_from_env
 from services.audio_svc.vad import Segmenter, vad_model_from_env
+from services.audio_svc.wake import split_wake
 
 
 def show(msg: Envelope) -> None:
     p = msg.payload
     lag_ms = round((msg.mono - p["speech_end_mono"]) * 1000)
-    print(
-        f"[stt/text] wake={p['wake']} {p['text']!r} "
-        f"(음성 {p['audio_ms']} ms · STT {p['stt_ms']} ms · 발화 끝→발행 {lag_ms} ms)"
-    )
+    timing = f"음성 {p['audio_ms']} ms · STT {p['stt_ms']} ms · 발화 끝→발행 {lag_ms} ms"
+    if p["wake"]:
+        print(f"[stt/text] 명령 {split_wake(p['text'])!r} ← {p['text']!r} ({timing})")
+    else:
+        print(f"[stt/text] 무시(호출어 없음) {p['text']!r} ({timing})")
 
 
 def main() -> int:
@@ -78,7 +80,10 @@ def main() -> int:
         bus.close()
         return 1
     bus.close()
-    print(f"OK: stt/text {service.published}건 발행 (빈 결과 {service.skipped}건 건너뜀)")
+    print(
+        f"OK: stt/text {service.published}건 발행 (호출 {service.published - service.ignored} · "
+        f"호출어 없어 무시 {service.ignored}) · 빈 결과 {service.skipped}건 건너뜀"
+    )
     return 0
 
 
