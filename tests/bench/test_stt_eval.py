@@ -35,7 +35,7 @@ ROWS = [
 ]  # fmt: skip
 OUTPUTS = {
     "a.wav": "자비스 후드 켜 줘.",  # 띄어쓰기·문장부호만 다름 → CER 0, 정답
-    "b.wav": "다비스 2번 화구 꺼줘.",  # 호출어 오인식 → 명령 안 됨
+    "b.wav": "다비 2번 화구 꺼줘.",  # 호출어 오인식('스'까지 빠짐, 실제 마이크 출력) → 명령 안 됨
     "c.wav": "자비스 뭐 먹지",  # 호출어가 아닌데 호출로 받아씀 → 오호출
 }
 
@@ -60,7 +60,7 @@ def test_metrics_overall(rows) -> None:
     assert m["action_exact"] == pytest.approx(0.5)  # u1 정답, u2 실패
     assert m["action_only"] == pytest.approx(0.5)
     assert m["parser_on_reference"] == pytest.approx(1.0)  # 정답 문장이면 파서는 둘 다 맞힘
-    # 글자 오류: u2 '자'→'다' 1글자, u3 '오늘'→'자비스'
+    # 글자 오류: u2 '자'→'다'·'스' 빠짐, u3 '오늘'→'자비스'
     assert 0 < m["cer"] < 1
 
 
