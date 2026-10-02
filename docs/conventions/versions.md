@@ -9,7 +9,7 @@
 |---|---|---|---|---|
 | 보드 OS 이미지 | | — | 보드 모델(5 / 5 Plus)에 맞는 이미지 | |
 | 커널 / NPU 드라이버 | | — | RKLLM 1.3.1은 NPU 드라이버 **v0.9.8 이상** | |
-| RKNN-Toolkit2 (변환) | | 2.3.2 | Linux x86_64 / aarch64, Python 3.6~3.12 | |
+| RKNN-Toolkit2 (변환) | **2.3.2** + onnx 1.16.1 ([constraints](../../training/convert/rknn-constraints.txt)) | 2.3.2 | Linux x86_64 / aarch64, Python 3.6~3.12. aarch64는 onnxoptimizer 소스 빌드 필요 | 2026-10-02 (Docker linux/amd64, Python 3.11에서 YOLOv8n INT8 변환 성공, #13) |
 | rknn-toolkit-lite2 / librknnrt (보드) | | 2.3.2 | aarch64, Python 3.7~3.12. 변환 툴과 같은 버전 | |
 | rkllm-toolkit (변환) | | 1.3.1 | Linux x86_64 전용, Python 3.10~3.12 | |
 | librkllmrt (보드) | | 1.3.1 | 변환 툴과 같은 버전 | |
