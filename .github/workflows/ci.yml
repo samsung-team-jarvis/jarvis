@@ -49,9 +49,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Fail if model weights or raw media are tracked
+      - name: Fail if model weights, raw media, or external documents are tracked
         run: |
-          found=$(git ls-files | grep -Ei '\.(pt|pth|onnx|rknn|rkllm|safetensors|gguf|wav|mp3|mp4)$' || true)
+          found=$(git ls-files | grep -Ei '\.(pt|pth|onnx|rknn|rkllm|safetensors|gguf|wav|mp3|mp4|pdf|xlsx|pptx|docx)$' || true)
           if [ -n "$found" ]; then
             echo "::error::Tracked model/raw data files found:"
             echo "$found"
