@@ -41,6 +41,8 @@
 | `control/result` | ble_gw | `{seq, ok: bool, retries, rtt_ms}` |
 | `system/heartbeat` | 각 서비스 | `{alive: true}` |
 
+- `llm/function_call`을 규칙 파서가 만들면(LLM 연결 전, 또는 LLM 출력 검증 실패 시 대체): `fallback: true`, `tokens: 0`, `raw_text`는 파서에 넣은 명령 문장, `gen_ms`는 파싱 시간. `session_id`는 원래 `stt/text`의 것을 이어 쓴다.
+
 ### 2.1 비전 클래스 (VIS-02에서 확정)
 후보: `pan, pot, burner_on, burner_off, fryer_basket, spatula, hand` + COCO 기본 `person` 활용 검토
 
@@ -159,3 +161,4 @@
 | 2026-10-01 | v0.1 | 최초 초안 (5주차 발표자료 기반) | - |
 | 2026-10-02 | v0.1 | §3에 LLM 생성 형식(SUDA식 함수 토큰)과 버스 JSON의 관계 명시 — 필드 변경 없음 (#25) | 이현종 |
 | 2026-10-02 | v0.1 | §2.2 target 확정(hood·burner_1·burner_2·all), §2.3 State 확정, §3 Function Call 확정 — Action별 파라미터·값 범위, `need_confirmation` 삭제(Guard가 판정), `ASK_CLARIFY.question` → `for_action`·`missing`, 함수 토큰 문법, 예시 (#39, LLM-01·FUS-01) | 이현종 |
+| 2026-10-02 | v0.1 | §2 `llm/function_call`을 규칙 파서가 만들 때의 필드 의미 명시 — 필드 변경 없음 (#41) | 이현종 |

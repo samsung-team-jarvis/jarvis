@@ -1,0 +1,58 @@
+# llm_svc — 명령 해석 (stt/text → Function Call)
+
+호출어가 있는 발화(`stt/text`, `wake: true`)를 명령([interfaces](../../docs/architecture/interfaces.md) §3)으로 바꿔 `llm/function_call`로 발행한다. **v0는 규칙 파서만** 있다 (PLAN FUS-02). LLM 연결은 LLM-09에서 붙이고, 그때 규칙 파서는 LLM 출력 검증이 실패할 때의 대체 경로이자 비교 기준선이 된다 ([decision](../../docs/decisions/2026-10-01-rule-parser-baseline.md)).
+
+```text
+stt/text (wake=true) ──split_wake──▶ "후드 켜 줘." ──rule_parser──▶ {"action":"TURN_ON","target":"hood"} ──▶ llm/function_call
+stt/text (wake=false) ──▶ 무시 (개수만 셈)
+```
+
+## 실행
+
+```bash
+python -m services.llm_svc                          # 버스는 JARVIS_BUS (기본 MQTT)
+python -m services.llm_svc parse "3분 뒤에 2번 불 꺼"  # 버스 없이 결과만 (JSON + 함수 토큰)
+```
+
+음성부터 명령까지 (Mac, 브로커 필요 — [local-development](../../docs/workflows/local-development.md)):
+
+```bash
+python -m services.recorder                                         # 터미널 1: 녹화
+python -m services.llm_svc                                          # 터미널 2
+python -m services.audio_svc --input data/stt/cmds.wav --realtime   # 터미널 3 (또는 마이크)
+```
+
+## 발행 내용 (규칙 파서일 때)
+
+| 필드 | 값 |
+|---|---|
+| `call` | Function Call JSON (`common.function_call.validate` 통과 보장) |
+| `raw_text` | 파서에 넣은 명령 문장 (호출어를 뺀 부분) |
+| `valid` | `true` |
+| `fallback` | `true` — 규칙 파서가 만든 명령 |
+| `gen_ms` | 파싱 시간 (ms) |
+| `tokens` | `0` |
+
+`session_id`는 받은 `stt/text`의 것을 그대로 쓴다 (발화 → 명령 지연을 같은 세션에서 추적). `system/heartbeat`는 1초마다 자기 세션(`--session`)으로 발행한다.
+
+## 규칙 파서 (`rule_parser.py`)
+
+문장을 띄어쓰기·문장부호 없이 이어 붙인 뒤 키워드로 판단한다. 판단 순서와 키워드는 코드 상단에 모아 두었다.
+
+| 순서 | 판단 | 예 |
+|---|---|---|
+| 1 | 빈 문장(호출어만) → 의도 불명 되묻기 | "자비스." |
+| 2 | 긴급어(긴급·비상·정지·멈춰·그만) → `EMERGENCY_STOP` — 타이머 이야기가 아닐 때만 | "멈춰" (단, "타이머 정지"는 타이머 끄기) |
+| 3 | 타이머 → `CANCEL_TIMER` / `SET_TIMER` / 시간 되묻기 | "타이머 삼 분 삼십 초", "3분 뒤에 1번 화구 꺼 줘" |
+| 4 | 위험 확인 → `CHECK_RISK` | "지금 위험해?" |
+| 5 | 상태 확인 → `CHECK_STATUS` ("어때·확인"은 장치 이름과 같이 나올 때만) | "1번 화구 켜져 있어?" |
+| 6 | 세기 → `SET_LEVEL` (약·중·강, N단; "더·줄여" 같은 상대 조절은 되묻기) | "후드 세게", "후드 2단" |
+| 7 | 켜기·끄기 → `TURN_ON` / `TURN_OFF` | "환풍기 틀어 줘", "다 꺼 줘" |
+| 8 | 장치만 → 의도 불명 되묻기, 그 외 → `UNSUPPORTED` | "후드", "오늘 날씨 어때?" |
+
+- 장치: 후드·환풍기 → `hood`, "1번/첫 번째 화구·불·버너" → `burner_1`, 2번 → `burner_2`, 전부·모두·"다 꺼" → `all`. 번호 없는 화구·없는 번호는 장치 되묻기.
+- 시간: 아라비아 숫자, 한자어 수(삼, 이십오), 고유어 수(열다섯, 스무), "1분 반".
+- "화국"은 SenseVoice가 "화구"를 받아쓴 실제 출력이라 화구로 본다 ([audio_svc](../audio_svc/README.md)).
+- **v0 한계**: 모르는 대상 + 켜기 동사("노래 틀어 줘")는 장치를 되묻는다. 이런 사례가 LLM과의 비교 지점이다 (FUS-06).
+
+발화별 기대 결과는 `tests/llm_svc/test_rule_parser.py`에 있다. 규칙을 바꾸면 이 표를 같이 고친다.
