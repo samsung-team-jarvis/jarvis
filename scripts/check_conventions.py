@@ -22,6 +22,11 @@ DOC_HINT = "형식: docs/conventions/git.md"
 # 사람이 만들지 않는 커밋 메시지(머지, 되돌리기)는 형식 검사에서 제외
 EXEMPT_COMMIT_RE = re.compile(r"^(Merge |Revert \")")
 FORBIDDEN_TRAILER_RE = re.compile(r"^Co-Authored-By:", re.IGNORECASE | re.MULTILINE)
+# AI 도구가 PR 본문에 붙이는 서명 줄 (예: "Generated with [Claude Code](...)")
+AI_SIGNATURE_RE = re.compile(
+    r"generated (with|by) \[?(claude|codex|cursor|copilot|gemini|windsurf|devin|antigravity)",
+    re.IGNORECASE,
+)
 Patterns = dict[str, re.Pattern[str]]
 
 CLOSING_RE = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)", re.IGNORECASE)
@@ -137,6 +142,8 @@ def main(argv: list[str]) -> int:
     elif command == "pr-body":
         body = pathlib.Path(args[0]).read_text(encoding="utf-8")
         errors = [] if CLOSING_RE.search(body) else ["PR 본문에 'Closes #이슈번호'가 없습니다."]
+        if AI_SIGNATURE_RE.search(body):
+            errors.append("PR 본문에 AI 서명 줄(Generated with ...)은 넣지 않습니다 (팀 규칙).")
     else:
         print(f"알 수 없는 명령: {command}\n{__doc__}")
         return 2
