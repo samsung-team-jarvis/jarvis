@@ -20,6 +20,9 @@ from services.audio_svc.wake import is_wake, split_wake
         ("다비스 타이머 3분 맞춰줘.", "타이머 3분 맞춰줘."),
         ("바비스 긴급정지 아 물어볼까?", "긴급정지 아 물어볼까?"),
         ("차비스.", ""),  # 합성 음성 출력
+        # spk01 val: "자비스야"에서 '스'가 빠지거나 띄어진 형태 (#61)
+        ("자비야 이번 불 켜줘.", "이번 불 켜줘."),
+        ("자비 쓰야.", ""),
     ],
 )
 def test_wake_utterance_gives_command_part(text: str, command: str) -> None:
