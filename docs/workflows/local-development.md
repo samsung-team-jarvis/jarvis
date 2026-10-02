@@ -37,6 +37,22 @@ Claude Code로 이 repo를 열었을 때 훅이 설치되어 있지 않으면 �
 
 의존성 파일(`requirements*.txt` / `pyproject.toml`)이 생기면 이 절에 설치 명령을 추가한다.
 
+## 메시지 버스 (MQTT 브로커) 띄우기
+
+서비스끼리 통신하려면 로컬 MQTT 브로커가 있어야 한다. 무료·오프라인이다.
+
+```bash
+# Mac: Docker로 (Docker Desktop 또는 colima)
+docker run -d --rm --name mosquitto -p 1883:1883 eclipse-mosquitto:2 mosquitto -c /mosquitto-no-auth.conf
+# 또는 Homebrew: brew install mosquitto && brew services start mosquitto
+# 보드(Ubuntu): sudo apt install -y mosquitto mosquitto-clients
+
+python -m common.demo selftest --bus mqtt://localhost:1883   # 동작 확인
+mosquitto_sub -t '#' -v                                       # 모든 메시지 보기 (mosquitto-clients)
+```
+
+브로커 없이 개발·테스트할 때는 `JARVIS_BUS=memory://` (한 프로세스 안에서만 전달).
+
 ## 보드 접속
 
 보드 세팅 절차는 [recipes/board-setup.md](../../recipes/board-setup.md). 접속 정보(IP, 계정)는 repo에 커밋하지 않고 팀 메신저·개인 `~/.ssh/config`에 둔다.

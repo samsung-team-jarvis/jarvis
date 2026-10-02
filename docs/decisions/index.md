@@ -27,6 +27,7 @@ YYYY-MM-DD-short-decision-title.md
 - [2026-10-01 규칙 파서를 LLM 비교 기준선으로](./2026-10-01-rule-parser-baseline.md)
 - [2026-10-01 협업 흐름: 이슈 → 브랜치 → PR → 머지](./2026-10-01-issue-branch-pr-flow.md)
 - [2026-10-02 작업물 4개 분할과 담당](./2026-10-02-deliverables-split.md)
+- [2026-10-02 서비스 간 통신은 로컬 MQTT](./2026-10-02-message-bus-mqtt.md)
 
 ## Template
 
