@@ -75,3 +75,26 @@ python -m training.llm.build_dataset --review-csv review.csv   # Paraphrase만 �
 
 - 목표보다 모자람: CHECK_RISK −17, EMERGENCY_STOP −11, UNSUPPORTED −18 (고정 문장 가족이라 표현이 적음).
 - Paraphrase 1,607건은 사람 검수 전이다 (Seed 검수와 같은 방식: 시트를 고쳐 재생성).
+
+## 분할 (LLM-05, 발표 p.9 ⑥)
+
+```bash
+python -m training.llm.split_dataset    # → data/llm/split_v1/{train,val,test,calib}.jsonl, groups.json
+```
+
+- **가족(`meta.group`) 단위**: 부모 템플릿과 그 Paraphrase는 같은 split → 비슷한 문장이 train·test에 같이 들어가지 않는다. `groups.json`이 가족 → split 목록이다.
+- Action별(Hard Negative는 범주별)로 큰 가족부터 목표 비율(70/15/15%)보다 가장 모자란 split에 넣고, 어떤 split에 그 Action이 비면 가장 남는 split의 가장 작은 가족을 옮긴다.
+- **Test는 고정**: 순서·seed가 고정이라 다시 나눠도 같다 (테스트가 확인). Test는 비교할 때만 쓰고, 오류 분석·조정은 val로 한다.
+- **캘리브레이션(`calib.jsonl`)**: 양자화(RKLLM 변환)용. **train에서만**, Action 비율대로 약 500건 (특강 권장 300~1,000). 변환 입력 형식(chat template 적용)은 LLM-08에서 만든다.
+
+### v1 분할 (2026-10-02)
+
+| split | 전체 | 일반 | Hard Negative | 가족 |
+|---|---|---|---|---|
+| train | 1,636 | 1,583 | 53 | 82 |
+| val | 336 | 314 | 22 | 52 |
+| test | 346 | 337 | 9 | 47 |
+| calib (train에서) | 499 | | | |
+
+- 모든 Action이 세 split에 다 있다. 가족·문장 누수 0.
+- Hard Negative test가 9건뿐이다 (원래 84건) → Unsafe Rate는 표본이 작다. 필요하면 Hard Negative를 늘린다.
