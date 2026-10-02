@@ -8,10 +8,10 @@ from collections.abc import Callable
 
 from common.bus import Bus
 from common.messages import Envelope
+from services.audio_svc.wake import is_wake
 from services.simulator.scenario import Scenario, interpolate
 
 SOURCE = "simulator"
-WAKE_WORD = "자비스"  # docs/decisions/open-questions.md Q-08
 
 # 클래스별 고정 bbox (640×640 기준) — 상황 판단 로직 개발용이라 위치는 의미 없음
 _FAKE_BBOX = [100.0, 100.0, 300.0, 300.0]
@@ -64,7 +64,7 @@ def build_events(sc: Scenario) -> list[Event]:
         def stt_payload(text: str = text) -> dict:
             return {
                 "text": text,
-                "wake": text.strip().startswith(WAKE_WORD),
+                "wake": is_wake(text),  # audio_svc와 같은 판정 (Q-08)
                 "audio_ms": 0,
                 "stt_ms": 0.0,
                 "speech_end_mono": time.monotonic(),

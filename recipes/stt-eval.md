@@ -1,6 +1,6 @@
 # Recipe: STT 평가 (CER · RTF · STT→Action)
 
-> 2026-10-02 공식 저장소와 학교 특강2 p.34~38([school-materials](../docs/school-materials.md))로 API·지원 언어·기본 파라미터를 확인했다. 실제 실행 결과(STT-01, STT-05~07)는 아직 없다.
+> 2026-10-02 공식 저장소와 학교 특강2 p.34~38([school-materials](../docs/school-materials.md))로 API·지원 언어·기본 파라미터를 확인했다. Mac 실행은 STT-01에서 확인했다(아래 [STT-01 결과](#stt-01-결과-mac)). 테스트 세트 측정(STT-05~07)은 아직 없다.
 >
 > 학교 보드 배포 이미지에는 `~/voice/models`에 **silero_vad.onnx, sherpa-onnx SenseVoice(int8), 한국어 VITS TTS**가 미리 들어 있다. 같은 모델을 Mac에서도 받아 쓴다.
 
@@ -23,27 +23,31 @@
 
 ## 1. 모델 실행 (Mac에서 먼저)
 
+모델 받기와 실행 명령은 [audio_svc README](../services/audio_svc/README.md)가 source of truth다. `sherpa-onnx`·`numpy`는 `requirements.txt`에 있어 `python3 scripts/setup.py`로 같이 설치된다.
+
 ```bash
-pip install sherpa-onnx soundfile jiwer
+python -m services.audio_svc.transcribe <wav...> --language ko
 ```
 
-sherpa-onnx 문서의 SenseVoice 모델 다운로드 안내에 따라 모델(int8)과 `tokens.txt`를 받는다.
+코드에서는 `services.audio_svc.stt.SenseVoice`를 쓴다 (내부적으로 `sherpa_onnx.OfflineRecognizer.from_sense_voice`).
 
-```python
-import sherpa_onnx
-import soundfile as sf
+### STT-01 결과 (Mac)
 
-rec = sherpa_onnx.OfflineRecognizer.from_sense_voice(
-    model="model.int8.onnx", tokens="tokens.txt", language="ko", use_itn=True
-)
-samples, sr = sf.read("sample.wav", dtype="float32")
-stream = rec.create_stream()
-stream.accept_waveform(sr, samples)
-rec.decode_stream(stream)
-print(stream.result.text)
-```
+2026-10-02, M1 Pro Mac · Python 3.11 · sherpa-onnx 1.13.8 · `sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17` · CPU 4스레드. **Mac 측정이고 테스트 세트가 아니다** — METRICS에 넣지 않는다.
 
-`language="ko"`(고정)와 `"auto"`(자동 감지)를 둘 다 측정해 보고 결정한다.
+입력: 모델에 들어 있는 `test_wavs/ko.wav`(사람 음성) 1개 + macOS `say -v Yuna`로 만든 합성 음성 명령 4개(사람 녹음 아님).
+
+| 파일 | 정답 | `language=ko` | `language=auto` |
+|---|---|---|---|
+| ko.wav (4.6 s) | — | 조금만 생각을 하면서 살면 훨씬 편할 거야. | (ko와 같음) |
+| c01 (1.4 s) | 자비스 후드 켜줘 | 자비스 후드 켜 줘. | **サビス 후드켜嬢。** (일본어로 감지) |
+| c02 (1.7 s) | 자비스 2번 화구 꺼줘 | 자비스 2 화국꺼 죠. | 자비스 2 화국거 죠. |
+| c03 (2.2 s) | 자비스 타이머 3분 맞춰줘 | 자비스 타이머 3분 맞추하 죠. | 자비스 타이머 3분 맞춰하 죠. |
+| c04 (1.5 s) | 자비스 긴급 정지 | 자비스 긴급 정지. | 자비스 긴급 정지. |
+
+- 처리 시간 36~78 ms, RTF 0.017~0.026 (Mac). 모델 로드 약 0.5~0.6 s.
+- **`ko` 고정을 기본으로 한다**: `auto`는 짧은 명령에서 언어를 잘못 감지했다(c01).
+- 합성 음성 기준으로도 "2번 화구" → "2 화국", "꺼줘·맞춰줘" → "꺼 죠·맞추하 죠" 같은 오인식이 나왔다. 숫자+단위, 짧은 어미가 약점 후보 → 사람 음성 테스트 세트(STT-05~07)에서 확인하고, 오인식 변형 데이터(STT-10)·규칙 파서(FUS-02) 키워드에 반영한다.
 
 ### VAD 기본 파라미터 (특강 p.36 예시값 — 주방 소음에서 STT-11로 조정)
 
