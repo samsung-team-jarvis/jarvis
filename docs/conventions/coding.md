@@ -4,7 +4,7 @@
 
 ## Python (서비스·학습·측정 스크립트)
 
-- Python 3.10+ (보드 OS 기본 버전에 맞춰 [versions](./versions.md)에서 확정)
+- Python 3.10~3.12 (rkllm-toolkit·rknn-toolkit-lite2 지원 범위의 교집합. [versions](./versions.md)에서 확정)
 - 포맷·린트: `ruff format`, `ruff check` (pre-commit과 CI에서 실행)
 - 네이밍: 모듈·함수·변수 `snake_case`, 클래스 `PascalCase`, 상수 `BIG_SNAKE_CASE`
 - 타입 힌트를 공개 함수 시그니처에 붙인다.

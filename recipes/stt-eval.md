@@ -1,12 +1,23 @@
 # Recipe: STT 평가 (CER · RTF · STT→Action)
 
-> ⚠️ **검증 전 초안.** STT-01, STT-05, STT-06을 진행하면서 실제 명령으로 교체한다.
+> 2026-10-02 공식 저장소로 API·지원 언어를 확인했다 (아래 출처). 실제 실행 결과(STT-01, STT-05~07)는 아직 없다.
 
 ## 개념 3줄
 
 - **CER (Character Error Rate)**: 글자 단위 오류율. 한국어는 띄어쓰기 때문에 WER보다 CER이 공정하다.
 - **RTF (Real Time Factor)**: 처리시간 ÷ 음성 길이. 1보다 작아야 실시간이다.
 - **STT→Action 정확도**: 받아쓰기가 조금 틀려도 최종 명령이 맞으면 성공. 실사용 관점에서 가장 중요하다.
+
+## 확인된 사실
+
+| 항목 | 내용 |
+|---|---|
+| SenseVoice-Small 지원 언어 | 중국어(zh) · 광둥어(yue) · 영어(en) · 일본어(ja) · **한국어(ko)** |
+| sherpa-onnx | 1.13.8, pip 휠: macOS arm64 · Linux aarch64 (Python 3.10~3.13) → Mac·보드 모두 설치 가능 |
+| `language` 값 | `auto`, `zh`, `en`, `ja`, `ko`, `yue` |
+| NPU(RKNN) 실행 | sherpa-onnx가 RK3588에서 SenseVoice·Silero VAD 등의 RKNN 실행을 지원. 단 **기본 PyPI 휠이 아니라 RKNN 빌드**가 따로 필요 |
+| VAD | sherpa-onnx에 Silero VAD 포함 (`VadModelConfig`, `VoiceActivityDetector`) |
+| CER 계산 | `jiwer.cer(reference, hypothesis)` (jiwer 4.0.0) |
 
 ## 1. 모델 실행 (Mac에서 먼저)
 
@@ -17,16 +28,20 @@ pip install sherpa-onnx soundfile jiwer
 sherpa-onnx 문서의 SenseVoice 모델 다운로드 안내에 따라 모델(int8)과 `tokens.txt`를 받는다.
 
 ```python
-import sherpa_onnx, soundfile as sf
+import sherpa_onnx
+import soundfile as sf
 
 rec = sherpa_onnx.OfflineRecognizer.from_sense_voice(
-    model="model.int8.onnx", tokens="tokens.txt", use_itn=True)   # 언어 옵션 확인 필요
+    model="model.int8.onnx", tokens="tokens.txt", language="ko", use_itn=True
+)
 samples, sr = sf.read("sample.wav", dtype="float32")
 stream = rec.create_stream()
 stream.accept_waveform(sr, samples)
 rec.decode_stream(stream)
 print(stream.result.text)
 ```
+
+`language="ko"`(고정)와 `"auto"`(자동 감지)를 둘 다 측정해 보고 결정한다.
 
 ## 2. 녹음 규칙
 
@@ -49,7 +64,8 @@ u0001,spk01,quiet,pin,stt/spk01/u0001.wav,자비스 후드 켜줘,TURN_ON:hood,t
 
 ```python
 import jiwer
-cer = jiwer.cer(references, hypotheses)   # 소음 조건별로 따로 계산
+
+cer = jiwer.cer(references, hypotheses)  # 소음 조건별로 따로 계산
 ```
 
 - RTF = 전체 처리시간 / 전체 음성 길이
@@ -58,5 +74,14 @@ cer = jiwer.cer(references, hypotheses)   # 소음 조건별로 따로 계산
 ## 5. 비교 실험
 
 - 모델: SenseVoice vs Whisper(small/base) — 정확도는 Mac, **속도는 보드**
+- 실행 장치: SenseVoice CPU vs NPU(RKNN 빌드) — NPU는 YOLO·LLM과 코어를 나눠 쓰므로 동시 구동 부하까지 측정 (BOARD-08)
 - 마이크: 핀마이크 vs 웹캠 내장
 - 결과는 [METRICS](../docs/METRICS.md)에 기록
+
+## 출처 (2026-10-02 확인)
+
+- https://github.com/FunAudioLLM/SenseVoice (README — 지원 언어)
+- https://github.com/k2-fsa/sherpa-onnx (`python/sherpa_onnx/offline_recognizer.py`, `python-api-examples/vad-with-non-streaming-asr.py`, `sherpa-onnx/csrc/rknn/`)
+- https://k2-fsa.github.io/sherpa/onnx/rknn/
+- https://pypi.org/project/sherpa-onnx/
+- https://github.com/jitsi/jiwer
