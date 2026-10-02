@@ -71,7 +71,7 @@
 ```
 
 - 산출물 크기가 원본 HF 모델의 1/3~1/4이면 정상. 실패하면 로그 마지막부터 dtype·max_context·모델 경로 순으로 확인.
-- 파일 이름에 설정이 들어 있으니 이름을 바꾸지 않는다. `config.yaml`·`data_quant.json`은 재현용으로 보관 (Drive).
+- 파일 이름에 설정이 들어 있으니 이름을 바꾸지 않는다. `config.yaml`·`data_quant.json`은 재현용으로 보관한다 (작으면 커밋, 크면 [등록부](../docs/artifacts.md)에 기록).
 
 ## 5. 보드 추론 (특강 p.27~29)
 
@@ -100,5 +100,5 @@ export RKLLM_LOG_LEVEL=1               # TTFT · tok/s · 메모리 로그
 
 ## 출처
 
-- 학교 특강2 p.4~32 (원본은 팀 Drive)
+- 학교 특강2 p.4~32 (원본은 각자 보관)
 - https://github.com/airockchip/rknn-llm (README, `examples/rkllm_api_demo/export/export_rkllm.py`)

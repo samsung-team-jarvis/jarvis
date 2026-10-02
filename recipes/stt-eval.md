@@ -62,7 +62,7 @@ print(stream.result.text)
   ```
 - 소음 조건 4종: `quiet`, `hood`(환풍기), `frying`(튀김), `mixed`
 - 화자마다 `speaker_id`를 부여하고, 분할은 화자 단위로 한다.
-- 원본 wav는 git에 넣지 않는다 (Drive). 매니페스트만 커밋한다.
+- 원본 wav는 git에 넣지 않는다 (각자 보관·직접 전달, [등록부](../docs/artifacts.md)). 매니페스트만 커밋한다.
 
 ## 3. 매니페스트 (`data/stt/manifest.csv`)
 
