@@ -17,12 +17,13 @@
 
 | 작업물 | 담당 | 입력 → 출력 | 주요 작업 ID | 대표 지표 |
 |---|---|---|---|---|
-| ① 비전 데이터·모델 + 보드 + 팀 운영 | **신지호** | 카메라 → 학습·변환된 비전 모델(`.rknn`) | BOARD-01~04·09, VIS-01~07·09, DOC-01~03·05·07·10 | mAP50, 양자화 전후 mAP |
-| ② 음성 → 명령 AI 서비스 + 공통 런타임 | **이현종** | 음성 → Function Call(JSON) / 서비스 실행 기반 | STT-*, LLM-*, INFRA-03~06·08, BOARD-05~08, VIS-08·10, FUS-02·06, UI-*(선택) | CER, Action Acc, JSON Valid, E2E 지연, NPU 동시 부하 |
-| ③ 상황 인식 + 안전 | **최지환** | 음성·비전·센서 → 주방 상태·위험 판단·차단 명령 | FUS-01·03~05·07~11, INFRA-07 | State F1, 위험 미탐율, 감지→차단 지연 |
-| ④ 제어 하드웨어 + 모형 | **최석진** | 제어 명령 → 장치 동작 / 센서 → 측정값 | HW-*, DOC-04·06 | BLE 성공률·지연, 하트비트 안전 정지 |
+| ① 비전 데이터·모델 + 보드 + 팀 운영 | **신지호** | 카메라 → 학습·변환된 비전 모델(`.rknn`) | BOARD-01~06·09, STT-02, VIS-01~07·09, DOC-01~03·05·07·10 | mAP50, 양자화 전후 mAP |
+| ② 음성 → 명령 AI 서비스 + 공통 런타임 | **이현종** | 음성 → Function Call(JSON) / 서비스 실행 기반 | STT-*(02·05 운영·09 제외), LLM-*(03 검수 제외), INFRA-03~06·08, BOARD-07·08, VIS-08·10, FUS-02·06 | CER, Action Acc, JSON Valid, E2E 지연, NPU 동시 부하 |
+| ③ 상황 인식 + 안전 | **최지환** | 음성·비전·센서 → 주방 상태·위험 판단·차단 명령 | FUS-01·03~05·07~11, INFRA-07, STT-05(녹음 운영), LLM-03(검수), UI-*(선택) | State F1, 위험 미탐율, 감지→차단 지연 |
+| ④ 제어 하드웨어 + 모형 | **최석진** | 제어 명령 → 장치 동작 / 센서 → 측정값 | HW-*, STT-09, DOC-04·06 | BLE 성공률·지연, 하트비트 안전 정지 |
 
-- ①은 **코딩을 최소화**하도록 짰다: 촬영·라벨링(GUI 도구), Colab 노트북 실행(학습·변환), recipe 명령 실행(보드), 제공된 측정 스크립트 실행. 노트북·스크립트는 ②가 만든다 (VIS-10, BOARD-06).
+- ①은 **코딩을 최소화**하도록 짰다: 촬영·라벨링(GUI 도구), Colab 노트북 실행(학습·변환), recipe 명령 실행(보드), 제공된 측정 스크립트 실행. 노트북·스크립트는 ②가 만든다 (VIS-10, BOARD-06 노트북).
+- **2026-10-04 재분배** ([decision](./decisions/2026-10-04-task-rebalance.md)): ②의 기반 작업이 끝나 실행 위주 7건을 ①·③·④로 넘겼다. 넘긴 작업은 Gate 2 작업(FUS-03·04, HW-01~05) **다음** 순서다.
 - ①의 모델을 서비스로 감싸는 코드(VIS-08 `vision_svc`)와 NPU 동시 부하 측정(BOARD-08)은 ②가 맡는다.
 - 공동: INFRA-02(규칙 동의), INFRA-09(정기 통합, ② 주관), DOC-08·09(최종 보고서·리허설).
 
@@ -45,6 +46,7 @@
 - [x] INFRA-13 대용량 파일 공유: 직접 전달 + 산출물 등록부(`docs/artifacts.md`, `scripts/artifact_info.py`), 노트북 Drive 의존 제거 — 저장소에 Drive 경로 없음 | 선행: - | 담당: 이현종 (#27)
 - [x] DOC-12 학교 제공 자료(마음AI 특강2·SUDA 데이터 시트) 반영 — 문서가 학교 환경·방식과 충돌하지 않음 | 선행: - | 담당: 이현종 (#25)
 - [x] DOC-13 README 정리 — 루트 README에 동작 흐름·구성·빠른 시작·폴더 구조, 서비스 README는 사용법 → 동작 → Spec → 확인 기록 순 | 선행: - | 담당: 이현종 (#68)
+- [x] DOC-14 작업 재분배 — ②(이현종)의 실행 위주 7건을 ①·③·④로 이관 ([decision](./decisions/2026-10-04-task-rebalance.md)) | 선행: - | 담당: 이현종 (#71)
 - [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 신지호
 - [x] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환 (#39 — 2026-10-02 결정권자 확정·팀 통보, 상황 인식 구현 중 변경 가능)
 - [x] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 이현종 (#39, `common/function_call.py`)
@@ -79,12 +81,12 @@
 - [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 신지호
 - [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN·RKLLM 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 신지호
 - [ ] BOARD-04 `rknn_model_zoo` YOLOv8 예제를 보드에서 실행 (기본 모델) — 이미지 1장 추론 결과 확인 | 선행: BOARD-03 | 담당: 신지호
-- [ ] BOARD-05 RKLLM 데모를 지원 모델 1개로 보드에서 실행 (학교 도커 `run.sh build-demo`의 `llm_demo`, 클럭 고정 후) — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 이현종
-- [ ] BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북 — 변환 1회 성공 | 선행: BOARD-03 (보드 미수령으로 최신 릴리스 기준 선진행) | 담당: 이현종 (#13) — RKNN 변환 성공(Docker amd64), RKLLM은 Colab 실행 대기
+- [ ] BOARD-05 RKLLM 데모를 지원 모델 1개로 보드에서 실행 (학교 도커 `run.sh build-demo`의 `llm_demo`, 클럭 고정 후) — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 신지호 (#71 이현종에서 이관 — [llm-to-rkllm](../recipes/llm-to-rkllm.md) 절차대로 실행)
+- [ ] BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북 — 변환 1회 성공 | 선행: BOARD-03 (보드 미수령으로 최신 릴리스 기준 선진행) | 담당: 신지호 (#71 이관 — 노트북은 준비됨, 실행만) (#13) — RKNN 변환 성공(Docker amd64), RKLLM은 Colab 실행 대기
 - [x] INFRA-03 `common/` 메시지 봉투 dataclass + 버스 래퍼 (Q-06 결정 방식) — 가짜 publisher/subscriber 예제 동작 | 선행: FUS-01 (v0.1 초안 기준 선진행) | 담당: 이현종 (#20)
 - [x] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종 (#29, `services/simulator`)
 - [x] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 이현종 (#33, `services/audio_svc`)
-- [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 이현종
+- [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 신지호 (#71 이관 — `python -m services.audio_svc.transcribe` 한 줄, [audio_svc](../services/audio_svc/README.md))
 - [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 주방(또는 유사) 영상 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 신지호
 - [ ] HW-03 ESP32 BLE 서버 (cmd write / ack notify) — Pi 또는 Mac의 `bleak`으로 LED on/off | 선행: HW-01 | 담당: 최석진
 - [ ] HW-04 열전대(MAX31855)·INA219 값 시리얼 출력 — 실온·뜨거운 물로 온도 변화 확인 | 선행: HW-02 | 담당: 최석진
@@ -115,14 +117,14 @@
 **Gate 3:** `docs/METRICS.md`의 모든 Baseline 칸이 실측값으로 채워짐 (LLM은 기본 모델+프롬프트, 규칙 파서 포함)
 
 ### 데이터
-- [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 이현종 (#53 — 대본 40문장·녹음 도구·안내 완료. 녹음: spk01 val quiet 40/40 MacBook 마이크 — 나머지 화자·소음 진행)
+- [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 녹음 운영: 화자 섭외·일정·취합, [녹음 안내](../recipes/stt-recording.md)) (#53 — 대본 40문장·녹음 도구·안내 완료. 녹음: spk01 val quiet 40/40 MacBook 마이크 — 나머지 화자·소음 진행)
 - [x] STT-06 CER·RTF·STT→Action 정확도 측정 스크립트 (`jiwer`) | 선행: STT-05 (녹음 전 선진행, 합성 음성으로 동작 확인) | 담당: 이현종 (#49, `bench/stt_eval.py`)
 - [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 신지호
 - [ ] VIS-03 모형 주방 촬영 1차 (세션별 조명·각도·배치 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-07 | 담당: 신지호
 - [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 신지호
 - [x] VIS-10 Colab YOLO 학습·평가 노트북 템플릿 (데이터 경로·클래스만 바꾸면 학습 → mAP 평가 → ONNX export까지) — ①이 코드 수정 없이 VIS-06·07 실행 가능 | 선행: VIS-02 | 담당: 이현종 (#19)
 - [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함, **간접 발화**·**숫자 표기 변형**("3번"/"삼 번") 포함 — SUDA 방식, [school-materials](./school-materials.md)) | 선행: LLM-01 | 담당: 이현종 (#55 — 기획 시트로 627건 생성, 사람 검수 대기)
-- [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 이현종 (#55 — 84건 생성, 사람 검수 대기)
+- [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 검수·보강: 위험 상황 판정이 Guard 규칙과 직결) (#55 — 84건 생성, 사람 검수 대기)
 - [ ] LLM-04 Paraphrase 합성 → 형식 검증·중복 제거·사람 검수 파이프라인 (6단계, 발표 p.9). 생성은 SUDA식 **기획 시트**(기능별 키워드 목록 + 어투 3종 + 데이터 비율 + 생성 프롬프트)로 | 선행: LLM-02 | 담당: 이현종 (#63 — 데이터 v1 2,234건, 사람 검수 대기)
 - [x] LLM-05 템플릿·세션 단위 Train/Val/Test 분할, Test 고정, 캘리브레이션 세트는 Train에서만 | 선행: LLM-04 | 담당: 이현종 (#65, `training/llm/split_dataset.py` — 검수로 데이터가 바뀌면 같은 명령으로 재분할)
 - [ ] FUS-05 센서 시나리오 20~30개 정의 (정상·과열·방치·화구 켜짐 방치) + 기록 — 하드웨어 전에는 [simulator](../services/simulator/README.md) 시나리오 형식으로 먼저 작성 | 선행: HW-04 | 담당: 최지환
@@ -131,7 +133,7 @@
 ### Baseline 측정 (모두 보드 기준)
 - [ ] STT-07 SenseVoice 기본 설정 Baseline (CER by 소음 조건, RTF) | 선행: STT-06 | 담당: 이현종
 - [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 이현종
-- [ ] STT-09 마이크 비교 (핀마이크 vs 웹캠 내장) CER | 선행: STT-06 | 담당: 이현종
+- [ ] STT-09 마이크 비교 (핀마이크 vs 웹캠 내장) CER | 선행: STT-06 | 담당: 최석진 (#71 이관 — 마이크는 부품 담당, [stt_eval](../bench/README.md)로 측정)
 - [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 | 담당: 신지호
 - [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종
 - [ ] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종
@@ -175,8 +177,8 @@
 - [ ] FUS-11 recorder 로그 재생 테스트 (녹화 세션을 다시 흘려 State Machine 회귀 테스트 — `services.recorder.store.read_session`으로 읽기) | 선행: FUS-10 | 담당: 최지환
 - [ ] HW-11 BLE 성공률·지연 개선 (재시도 정책, 연결 끊김 복구) | 선행: HW-08 | 담당: 최석진
 - [ ] HW-12 모형 완성 (발표 시연용) | 선행: HW-07 | 담당: 최석진
-- [ ] UI-01 (선택) 로컬 대시보드 백엔드: 버스 구독 → WebSocket으로 상태·이벤트 전달 (FastAPI, 오프라인) | 선행: Gate 4 | 담당: 이현종
-- [ ] UI-02 (선택) 대시보드 화면: 현재 상태·타이머·위험 경고·판단 근거(evidence) 실시간 표시 — 시연에서 "AI가 왜 그렇게 판단했는지" 보여주기 | 선행: UI-01 | 담당: 이현종
+- [ ] UI-01 (선택) 로컬 대시보드 백엔드: 버스 구독 → WebSocket으로 상태·이벤트 전달 (FastAPI, 오프라인) | 선행: Gate 4 | 담당: 최지환 (#71 이관)
+- [ ] UI-02 (선택) 대시보드 화면: 현재 상태·타이머·위험 경고·판단 근거(evidence) 실시간 표시 — 시연에서 "AI가 왜 그렇게 판단했는지" 보여주기 | 선행: UI-01 | 담당: 최지환 (#71 이관)
 
 ---
 
