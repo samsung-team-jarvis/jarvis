@@ -18,7 +18,7 @@
 ## Architecture
 
 - [Overview (전체 구조·안전 계층·자원 배치)](./architecture/overview.md)
-- [Interfaces (메시지·Function Call·BLE 규격)](./architecture/interfaces.md)
+- [Interfaces (메시지·Function Call·가상 주방 연결)](./architecture/interfaces.md)
 - [Hardware (보드 비교·센서 선택 근거)](./architecture/hardware.md)
 
 ## Conventions

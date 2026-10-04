@@ -10,7 +10,7 @@ PR 본문은 [PR 템플릿](../../.github/pull_request_template.md)의 섹션 �
 | Background | 기존 상태, 바꾸는 이유 (문단형) | 파일 나열 |
 | Tasks | 구현 흐름과 의도 | 커밋 메시지 복붙 |
 | Implementation Notes | 선택한 접근, 제외한 대안, trade-off, 임시 정책 | |
-| Verification | **실제 실행한** 명령과 실행 장소 (Mac / Colab / 보드 / ESP32) | 실행하지 않은 검증 |
+| Verification | **실제 실행한** 명령과 실행 장소 (Mac / Colab / 보드 / 가상 주방) | 실행하지 않은 검증 |
 | Measurement | 측정했다면 수치 + 측정 조건 (보드, 툴 버전, 데이터셋, 커밋). METRICS 갱신 여부 | 추정치, 측정 안 한 수치 |
 | Evidence | 로그, 스크린샷, 시연 영상 링크, 출력 예시 | |
 | PR Point | 리뷰어가 중점적으로 볼 곳 | |
