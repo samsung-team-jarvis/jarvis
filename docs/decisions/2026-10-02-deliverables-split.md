@@ -1,7 +1,7 @@
 # Decision: 작업물 4개 분할과 담당
 
 ## Status
-- Accepted
+- Accepted — 일부 작업의 담당 이동: [2026-10-04 작업 재분배](./2026-10-04-task-rebalance.md)
 
 ## Date
 - 2026-10-02
