@@ -61,7 +61,7 @@ labels:
   - label: 'FUS'
     branch: '(?i)^[a-z]+/(fusion|guard)/'
   - label: 'HW'
-    branch: '(?i)^[a-z]+/(ble|firmware)/'
+    branch: '(?i)^[a-z]+/kitchen/'
   - label: 'UI'
     branch: '(?i)^[a-z]+/dashboard/'
   - label: 'INFRA'

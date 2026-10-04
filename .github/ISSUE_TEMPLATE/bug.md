@@ -17,7 +17,7 @@ assignees: []
 
 ## 환경
 
-- 실행 장소: Mac / Colab / 보드 / ESP32
+- 실행 장소: Mac / Colab / 보드 / 가상 주방
 - 커밋:
 - 관련 툴 버전:
 
@@ -27,4 +27,4 @@ assignees: []
 
 ## 안전 영향
 
-<!-- 장비 제어·Safety Guard·ESP32 안전장치에 영향이 있는지 -->
+<!-- 장비 제어·Safety Guard·가상 주방 안전장치에 영향이 있는지 -->
