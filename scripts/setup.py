@@ -33,17 +33,24 @@ def step(title: str) -> None:
     print(f"\n▶ {title}")
 
 
+# encoding 고정: Windows 기본(cp949)으로 읽으면 한글 git 이름 등에서 UnicodeDecodeError
 def run(args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(args, cwd=ROOT, check=check, text=True, capture_output=not check)
+    return subprocess.run(
+        args, cwd=ROOT, check=check, capture_output=not check, encoding="utf-8", errors="replace"
+    )
 
 
 def git_config(key: str) -> str:
-    result = subprocess.run(["git", "config", key], cwd=ROOT, capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "config", key], cwd=ROOT, capture_output=True, encoding="utf-8", errors="replace"
+    )
     return result.stdout.strip()
 
 
 def main() -> int:
-    sys.stdout.reconfigure(line_buffering=True)  # 하위 명령 출력과 순서가 섞이지 않게
+    # line_buffering: 하위 명령 출력과 순서가 섞이지 않게
+    # encoding: Windows에서 출력을 파일·파이프로 보내면 cp949라 ✅·❌를 못 쓴다
+    sys.stdout.reconfigure(line_buffering=True, encoding="utf-8")
     step("Python 버전 확인")
     current = sys.version.split()[0]
     if sys.version_info < MIN_PYTHON:
