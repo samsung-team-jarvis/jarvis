@@ -69,8 +69,8 @@ fix(ble): #40 ACK 타임아웃 시 재시도 누락 수정
 커밋 수를 1~2개로 제한하지 않는다. 독립적으로 리뷰·revert·검증 가능한 단위로 나눈다.
 아래 중 하나라도 다르면 별도 커밋을 우선 고려한다.
 
-- 변경 surface가 다름: 서비스 코드 / 공통 모듈 / 학습·변환 스크립트 / 펌웨어 / 측정 결과 / 문서 / 설정·CI
-- 검증 방법이 다름 (Mac에서 확인 / 보드에서 확인 / ESP32에서 확인)
+- 변경 surface가 다름: 서비스 코드 / 공통 모듈 / 학습·변환 스크립트 / 가상 주방 / 측정 결과 / 문서 / 설정·CI
+- 검증 방법이 다름 (Mac에서 확인 / 보드에서 확인 / 가상 주방에서 확인)
 - 순수 refactor·rename·remove와 동작 변경이 섞임
 - 측정 결과 기록(`exp`)과 그 측정을 만든 코드 변경
 
@@ -93,11 +93,10 @@ fix(ble): #40 ACK 타임아웃 시 재시도 누락 수정
 | `llm` | `services/llm_svc` (LLM 어댑터, 규칙 파서) |
 | `fusion` | `services/fusion_svc` (State Machine) |
 | `guard` | `services/safety_guard` |
-| `ble` | `services/ble_gw` |
+| `kitchen` | `services/kitchen_gw` (보드 ↔ 가상 주방 연결), 가상 주방 스크립트 |
 | `recorder` | `services/recorder` |
 | `simulator` | `services/simulator` (가짜 메시지 생성기) |
 | `dashboard` | `services/dashboard` (로컬 대시보드, 선택 과제) |
-| `firmware` | `firmware/esp32` |
 | `training` | `training/*` (YOLO·LLM 학습, Colab 노트북, 변환 스크립트) |
 | `bench` | `bench/*` 측정 스크립트 |
 | `data` | `data/*` 매니페스트·split 파일 |

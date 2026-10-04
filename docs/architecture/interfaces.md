@@ -1,6 +1,8 @@
 # 인터페이스 규격 (v0.1)
 
-> 2026-10-02 확정 (결정: 이현종, #39). §1·§2 봉투·토픽·State(FUS-01)와 §3 Function Call(LLM-01)은 확정, §2.1 비전 클래스(VIS-02)·§4 BLE 코드표(HW-01)는 아직 초안. 상황 인식 구현(③) 중 State를 바꿔야 하면 변경 이력에 남기고 바꾼다.
+> 2026-10-02 확정 (결정: 이현종, #39). §1·§2 봉투·토픽·State(FUS-01)와 §3 Function Call(LLM-01)은 확정, §2.1 비전 클래스(VIS-02)·§4 가상 주방 연결(HW-14)은 아직 초안. 상황 인식 구현(③) 중 State를 바꿔야 하면 변경 이력에 남기고 바꾼다.
+
+> **2026-10-05**: 시연 환경을 가상 주방으로 바꾸고 장치를 8종으로 넓히기로 했다 ([decision](../decisions/2026-10-05-virtual-kitchen-demo.md)). 이 문서의 v0.1 규격(봉투·토픽·Function Call)은 코드와 맞춘 상태 그대로 두고, 바뀔 내용은 [§5 v0.2 예정 변경](#5-v02-예정-변경-가상-주방--장치-8종)에 모았다. v0.2는 LLM-13(스키마)·HW-14(연결 규격)에서 코드와 함께 확정한다.
 
 > 이 문서에 없는 필드·토픽은 쓰지 않는다. 바꿀 때는 맨 아래 변경 이력에 기록하고, 코드도 함께 고친다 — 토픽 필수 필드는 [`common/messages.py`](../../common/messages.py)의 `TOPIC_REQUIRED_FIELDS`, §3 명령 스키마는 [`common/function_call.py`](../../common/function_call.py) (코드가 이 문서의 규칙을 검사한다).
 
@@ -33,12 +35,12 @@
 |---|---|---|
 | `stt/text` | audio_svc | `{text, wake: bool, conf?, audio_ms, stt_ms, speech_end_mono}` |
 | `vision/objects` | vision_svc | `{objects:[{cls, conf, bbox:[x1,y1,x2,y2]}], frame_id, pre_ms, npu_ms, post_ms}` |
-| `sensor/reading` | ble_gw | `{device_id, temperature_c, current_a, raw?}` |
+| `sensor/reading` | kitchen_gw (이전 계획: ble_gw) | `{device_id, temperature_c, current_a, raw?}` |
 | `fusion/state` | fusion_svc | `{state, prev_state, evidence:{...}, risk: none\|warn\|danger}` |
 | `llm/function_call` | llm_svc | `{call: <§3>, raw_text, valid: bool, fallback: bool, gen_ms, tokens}` |
 | `guard/decision` | safety_guard | `{call, decision: ALLOW\|REJECT\|ASK, reason}` |
 | `control/command` | safety_guard | `{seq, cmd, target, value}` |
-| `control/result` | ble_gw | `{seq, ok: bool, retries, rtt_ms}` |
+| `control/result` | kitchen_gw (이전 계획: ble_gw) | `{seq, ok: bool, retries, rtt_ms}` |
 | `system/heartbeat` | 각 서비스 | `{alive: true}` |
 
 - `llm/function_call`을 규칙 파서가 만들면(LLM 연결 전, 또는 LLM 출력 검증 실패 시 대체): `fallback: true`, `tokens: 0`, `raw_text`는 파서에 넣은 명령 문장, `gen_ms`는 파싱 시간. `session_id`는 원래 `stt/text`의 것을 이어 쓴다.
@@ -48,15 +50,16 @@
 
 ### 2.2 장치 target (LLM-01 확정)
 
-| target | 장치 | 모형 (④) |
+| target | 장치 | 가상 주방 (④) |
 |---|---|---|
-| `hood` | 후드 (환풍기) | USB 팬, 세기 1~3 (PWM) |
-| `burner_1` | 1번 화구 | LED 또는 릴레이, 세기 1~3 (PWM 밝기) |
+| `hood` | 후드 (환풍기와 같은 장치) | 표시등과 바람, 세기 1~3 |
+| `burner_1` | 1번 화구 | 불꽃 크기, 세기 1~3 |
 | `burner_2` | 2번 화구 | 〃 |
 | `all` | 전체 (끄기·타이머·상태 확인·긴급 정지에만) | — |
 
 - 튀김기는 화구 위에서 쓰는 것으로 보고 따로 두지 않는다. 타이머는 장치가 아니라 Action(`SET_TIMER`)이다.
-- 켤 때(`TURN_ON`) 세기는 1. BLE 코드표 번호는 HW-01에서 정한다.
+- 켤 때(`TURN_ON`) 세기는 1.
+- v0.1은 장치 3종이다. 튀김기는 v0.2에서 따로 둔다 (§5).
 
 ### 2.3 State (FUS-01 확정)
 `IDLE, PREHEAT, COOKING, UNATTENDED, DANGER, SAFE_STOP` — 전이 조건은 상황 인식(FUS-05)에서 정한다.
@@ -140,19 +143,35 @@
 
 학습용 정답 문자열은 `to_tokens(output)`으로 만든다 → `<jarvis_3>(target=hood, level=3)<jarvis_end>`.
 
-## 4. BLE (Pi ↔ ESP32)
+## 4. 보드 ↔ 가상 주방 (HW-14에서 확정)
 
-| 특성 | 방향 | 내용 |
-|---|---|---|
-| `cmd` | Pi → ESP32 (write) | 명령 패킷 |
-| `ack` | ESP32 → Pi (notify) | `seq`, 결과 코드 |
-| `sensor` | ESP32 → Pi (notify) | 온도·전류 |
-| `heartbeat` | Pi → ESP32 (write) | 주기적 생존 신호 |
+이전 계획의 BLE(Pi ↔ ESP32) 규격은 쓰지 않는다 (실물 하드웨어 없음). 가상 주방과는 아래 네 가지를 주고받는다. 전달 방식(프로토콜·주소)은 플랫폼을 정한 뒤 HW-14에서 정한다 ([open-questions](../decisions/open-questions.md) Q-11·12).
 
-명령 패킷 (초안, 바이트):
-`[seq:u16][cmd:u8][target:u8][value:i16][crc8:u8]`
-- 코드표(cmd/target 번호)는 HW-01에서 확정.
-- ACK 미수신 시 재시도 (횟수·타임아웃 HW-01에서 확정). `seq`로 중복 실행 방지.
+| 내용 | 방향 | 버스 토픽 | 비고 |
+|---|---|---|---|
+| 장치 제어 명령 | 보드 → 가상 주방 | `control/command` | `seq`로 중복 실행 방지 |
+| 제어 결과 확인 | 가상 주방 → 보드 | `control/result` | 확인이 없으면 재시도 (횟수·타임아웃은 HW-14) |
+| 가상 온도 | 가상 주방 → 보드 | `sensor/reading` | 1Hz |
+| 인식용 카메라의 캡처 화면 | 가상 주방 → 보드 | (토픽이 아니라 `vision_svc`의 입력) | 3~5fps, 해상도·전달 방식은 HW-14·HW-20 |
+| 보드 생존 신호 | 보드 → 가상 주방 | `system/heartbeat` | 끊기면 가상 주방이 가열 장치를 끈다 (안전 계층 L0) |
+| 화면에 겹쳐 띄울 정보 | 보드 → 가상 주방 | `fusion/state`, `stt/text`, `guard/decision` | 표시만 한다 |
+
+`kitchen_gw`가 버스와 가상 주방 사이에서 이 메시지를 옮긴다.
+
+## 5. v0.2 예정 변경 (가상 주방 · 장치 8종)
+
+아직 코드에 반영하지 않았다. 확정하면 위 본문과 코드를 함께 고치고 이 절을 지운다.
+
+| 항목 | v0.1 (지금 코드) | v0.2 (예정) | 확정 작업 |
+|---|---|---|---|
+| 장치 target | `hood`, `burner_1`, `burner_2`, `all` | + 튀김기, 조명, 에어컨, 선풍기, 음악 (이름은 LLM-13에서. 기존 이름·번호는 바꾸지 않고 덧붙인다) | LLM-13 |
+| 환풍기 | 후드를 부르는 다른 말 | 그대로 (같은 장치) | — |
+| Action | 10개 (§3.1) | + 결제 요청, 금액 확인 (번호 11~). 결제 요청은 Safety Guard가 확인(`ASK`)을 거친 뒤 실행 | LLM-13, FUS-03 |
+| 세기 | 1~3 (후드·화구) | 장치별 값의 범위 추가 (에어컨 온도, 조명 밝기, 음량) | LLM-13 |
+| `sensor/reading` | `{device_id, temperature_c, current_a}` | 전류(`current_a`)는 가상 주방에 없다 → 필수에서 빼거나 0으로 채울지 결정. 가열 장치별 온도를 `device_id`로 구분 | HW-14 |
+| 비전 클래스 (§2.1) | 후보 7개 + person | 가상 주방 장면에서 실제로 보이는 물체로 확정 | VIS-02 |
+
+- v0.1 데이터에서 "조명 켜줘"·"에어컨 꺼줘"·"볼륨 줄여 줘"는 `UNSUPPORTED`가 정답이다. v0.2에서 정답이 바뀌므로 데이터 v2를 다시 만들고 기준선을 다시 잰다 (LLM-14).
 
 ## 변경 이력
 
@@ -163,3 +182,4 @@
 | 2026-10-02 | v0.1 | §2.2 target 확정(hood·burner_1·burner_2·all), §2.3 State 확정, §3 Function Call 확정 — Action별 파라미터·값 범위, `need_confirmation` 삭제(Guard가 판정), `ASK_CLARIFY.question` → `for_action`·`missing`, 함수 토큰 문법, 예시 (#39, LLM-01·FUS-01) | 이현종 |
 | 2026-10-02 | v0.1 | §2 `llm/function_call`을 규칙 파서가 만들 때의 필드 의미 명시 — 필드 변경 없음 (#41) | 이현종 |
 | 2026-10-02 | v0.1 | §1 `session_id` 이어 쓰기 규칙 명시 (지연 분해 연결 기준) — 필드 변경 없음 (#45) | 이현종 |
+| 2026-10-05 | v0.1 | 시연 환경 변경(가상 주방) 반영: §2 발행 서비스 `ble_gw` → `kitchen_gw`, §2.2 모형 설명, §4 BLE 규격 삭제 → 보드 ↔ 가상 주방, §5 v0.2 예정 변경 추가 — **v0.1 필드·코드 변경 없음** (#73) | 이현종 |

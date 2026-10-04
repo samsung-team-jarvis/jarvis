@@ -1,6 +1,7 @@
 # Decision: Function Call 스키마 v0.1 (장치·세기·타이머·함수 토큰 문법)
 
 ## Status
+- 2026-10-05 [가상 주방 결정](./2026-10-05-virtual-kitchen-demo.md)으로 장치를 8종으로 넓히기로 했다 → 스키마 v0.2에서 target·Action을 추가한다 (LLM-13). 아래는 v0.1 결정 기록이다.
 - Accepted
 
 ## Date

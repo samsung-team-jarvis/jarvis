@@ -6,7 +6,7 @@ python -m bench.latency data/sessions/<세션>.jsonl [...] [--csv out.csv]
   stt/text(wake) → llm/function_call → guard/decision → control/command ─seq─ control/result
 그래서 다른 메시지를 받아 만든 메시지는 원래 session_id를 이어 써야 한다 (interfaces §1).
 `mono`는 각 서비스가 발행할 때 찍은 time.monotonic()이고, 같은 기기의 단조 시계라 프로세스가
-달라도 뺄 수 있다. 다른 기기(ESP32)의 시각은 쓰지 않는다.
+달라도 뺄 수 있다. 다른 기기(가상 주방 PC)의 시각은 쓰지 않는다.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ SEGMENTS = [
     ("to_call", "stt/text 발행 → llm/function_call 발행 (전달 + 파서/LLM)"),
     ("to_guard", "llm/function_call → guard/decision"),
     ("to_command", "guard/decision → control/command"),
-    ("to_ack", "control/command → control/result (BLE 왕복 + ESP32)"),
+    ("to_ack", "control/command → control/result (가상 주방 왕복)"),
     ("e2e", "발화 끝 → 기록된 마지막 단계"),
 ]
 STAGES = ["stt/text", "llm/function_call", "guard/decision", "control/command", "control/result"]

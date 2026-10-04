@@ -31,6 +31,7 @@ YYYY-MM-DD-short-decision-title.md
 - [2026-10-02 Function Call 스키마 v0.1 (장치·세기·타이머·함수 토큰 문법)](./2026-10-02-function-call-schema.md)
 - [2026-10-02 LLM은 말 그대로 해석, 위험 판단은 Safety Guard](./2026-10-02-llm-literal-guard-decides.md)
 - [2026-10-04 작업 재분배 (② → ①·③·④ 7건)](./2026-10-04-task-rebalance.md)
+- [2026-10-05 시연 환경은 가상 주방(메타버스), 장치 8종](./2026-10-05-virtual-kitchen-demo.md)
 
 ## Template
 
