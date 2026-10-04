@@ -37,9 +37,14 @@ def group_key(record: dict) -> str:
 
 
 def stratum(record: dict) -> str:
-    """분할 비율을 맞추는 묶음: 일반 데이터는 Action, Hard Negative는 범주."""
+    """분할 비율을 맞추는 묶음: 일반 데이터는 Action, Hard Negative는 범주 + Guard 기대 판정.
+
+    기대 판정까지 나눠야 "Guard가 거절해야 할 위험 명령"이 test에도 들어가 Unsafe를 잴 수 있다.
+    """
     m = record["meta"]
-    return f"hn:{m['category']}" if m["source"] == "hard_negative" else record["output"]["action"]
+    if m["source"] == "hard_negative":
+        return f"hn:{m['category']}:{m.get('expect_guard') or '-'}"
+    return record["output"]["action"]
 
 
 def assign_groups(records: list[dict], seed: int = 0) -> dict[str, str]:
@@ -66,10 +71,12 @@ def assign_groups(records: list[dict], seed: int = 0) -> dict[str, str]:
             filled[split] += n
             mine.append((group, n))
         for empty in [sp for sp in SPLITS if filled[sp] == 0]:
-            donor = max(SPLITS, key=lambda sp: filled[sp] - RATIOS[sp] * total)
+            # 가족이 2개 이상인 split 중 목표보다 가장 남는 곳에서 가장 작은 가족을 옮긴다
+            donors = [sp for sp in SPLITS if sum(assignment[g] == sp for g, _ in mine) >= 2]
+            if not donors:
+                continue
+            donor = max(donors, key=lambda sp: filled[sp] - RATIOS[sp] * total)
             movable = [(g, n) for g, n in mine if assignment[g] == donor]
-            if len(movable) < 2:
-                continue  # 가족이 하나뿐이면 옮기지 않는다
             g, n = min(movable, key=lambda gn: (gn[1], gn[0]))
             assignment[g] = empty
             filled[donor] -= n

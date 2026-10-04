@@ -32,7 +32,7 @@
 
 | 구분 | 목표 | 현재 | 최종 갱신 |
 |---|---|---|---|
-| LLM 명령 | 2,000~3,000쌍 | 2,234쌍 + Hard Negative 84 (train 1,636 · val 336 · test 346, 사람 검수 전) | 2026-10-02 (#63, #65) |
+| LLM 명령 | 2,000~3,000쌍 | 2,234쌍 + Hard Negative 84 (train 1,627 · val 337 · test 354, 사람 검수 전) | 2026-10-02 (#63, #65) |
 | STT 음성 | 500~800 발화 | 40 (spk01 val, quiet, MacBook 마이크) | 2026-10-02 (#61) |
 | YOLO 이미지 | 800~1,200장 | 측정 예정 | |
 | 센서 시나리오 | 20~30개 | 측정 예정 | |
@@ -43,12 +43,12 @@
 
 | 지표 | Baseline | v1 | v2 | 최종 | 비고 |
 |---|---|---|---|---|---|
-| LLM Action Acc (규칙 파서) | 측정 예정 | - | - | | 비교 기준 |
-| LLM Action Acc (기본 모델+프롬프트) | 측정 예정 | | | | |
+| LLM Action Acc (규칙 파서) | **79.9%** (Entity 79.7%) | - | - | | 비교 기준. LLM test v1 n=354. 규칙이라 보드에서도 같은 값 |
+| LLM Action Acc (기본 모델+프롬프트) | Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1% (Entity 19.2% · 60.2%) | | | | **Mac fp16 참고값** — 보드(.rkllm) 측정은 BOARD-05 이후. Llama-3.2-1B는 HF 승인 대기 |
 | LLM Action Acc (LoRA, 서버 fp16) | - | 측정 예정 | | | |
 | LLM Action Acc (LoRA, 보드 w8a8) | - | 측정 예정 | | | 양자화 전후 비교 |
-| JSON Valid Rate | 측정 예정 | | | | |
-| Unsafe Action Rate (Guard 전/후) | 측정 예정 | | | | |
+| JSON Valid Rate | Qwen3-0.6B 69.2% · Qwen3.5-2B 88.7% | | | | Mac fp16 참고값 (함수 토큰 형식·스키마 통과율) |
+| Unsafe Action Rate (Guard 전/후) | Guard 전: 규칙 파서 100% · Qwen3-0.6B 37.5% · Qwen3.5-2B 50.0% / Guard 후: 측정 예정 | | | | n=8 (Hard Negative test의 REJECT 대상). 전은 설계상 높다 — 모델 값이 낮은 건 안전해서가 아니라 명령을 못 알아들어서. Guard 후는 FUS-03 이후 |
 | STT CER (quiet/hood/frying/mixed) | 측정 예정 | | | | |
 | STT→Action Acc | 측정 예정 | | | | |
 | YOLO mAP50 (fp32 / INT8) | 측정 예정 | | | | |
@@ -61,3 +61,6 @@
 | 날짜 | 지표 | 값 | 보드/버전 | 데이터셋 | 커밋 | 측정자 |
 |---|---|---|---|---|---|---|
 | 2026-10-02 | E2E 지연 — 발화 끝 → `llm/function_call` (Guard·BLE 미구현 구간 제외) · **Mac 참고값** | 평균 609 ms · p50 592 · p95 705 · 최대 705 (vad_wait 평균 540 / stt 68 / to_call 1) | M1 Pro Mac / sherpa-onnx 1.13.8, SenseVoice int8 CPU 4스레드, 규칙 파서, MQTT(Docker mosquitto 2) | macOS `say` 합성 명령 wav `--realtime` (n=14: 명령 4종×3회 + 2) — 사람 음성·보드 아님 | 37e43d1 + `bench/latency.py`(#45) | 이현종 |
+| 2026-10-02 | 규칙 파서 Baseline (FUS-06) — Action Acc / Entity Acc / Valid / Unsafe(Guard 전) | 79.9% / 79.7% / 100% / 100% (8/8) | 플랫폼 무관 (Mac에서 실행) / `services/llm_svc/rule_parser.py` | LLM split v1 test (n=354: 일반 337 + Hard Negative 17) | 5c5cc24 | 이현종 |
+| 2026-10-02 | 기본 모델+프롬프트 Baseline (LLM-06) Qwen3-0.6B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | 32.8% / 19.2% / 69.2% / 37.5% (3/8), 평균 726 ms/건 | M1 Pro Mac MPS fp16 / torch 2.14.1, transformers 5.18.0, 시스템 프롬프트 + few-shot 13(train), greedy | LLM split v1 test (n=354) | 5c5cc24 | 이현종 |
+| 2026-10-02 | 기본 모델+프롬프트 Baseline (LLM-06) Qwen3.5-2B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | 66.1% / 60.2% / 88.7% / 50.0% (4/8), 평균 2,914 ms/건 (Mac은 최적화 커널 없는 기본 구현이라 느림) | 위와 같음 | LLM split v1 test (n=354) | 5c5cc24 | 이현종 |

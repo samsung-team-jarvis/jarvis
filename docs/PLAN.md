@@ -133,8 +133,8 @@
 - [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 이현종
 - [ ] STT-09 마이크 비교 (핀마이크 vs 웹캠 내장) CER | 선행: STT-06 | 담당: 이현종
 - [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 | 담당: 신지호
-- [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종
-- [ ] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종
+- [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종 (#67 — Mac 정확도: Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1%. 남음: Llama-3.2-1B(HF 승인), 보드 tok/s·RAM)
+- [x] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종 (#67 — Action Acc 79.9%, `bench/llm_eval.py`)
 - [ ] FUS-07 단일 조건 판단 Baseline (State F1, 위험 미탐율) | 선행: FUS-05 | 담당: 최지환
 - [ ] HW-08 BLE 제어 Baseline (성공률, 왕복 지연) — 단순 전달 vs ACK·재시도 | 선행: HW-05 | 담당: 최석진
 
