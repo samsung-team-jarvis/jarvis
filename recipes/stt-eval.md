@@ -121,7 +121,7 @@ MacBook 내장 마이크, 30cm 이내, `quiet`, 40문장 (명령 34 + 호출어 
 
 - 모델: SenseVoice vs Whisper(small/base) — 정확도는 Mac, **속도는 보드**
 - 실행 장치: SenseVoice CPU vs NPU(RKNN 빌드) — NPU는 YOLO·LLM과 코어를 나눠 쓰므로 동시 구동 부하까지 측정 (BOARD-08)
-- 마이크: 핀마이크 vs 웹캠 내장
+- 마이크: 핀마이크 vs 노트북 내장
 - 결과는 [METRICS](../docs/METRICS.md)에 기록
 
 ## 출처 (2026-10-02 확인)
