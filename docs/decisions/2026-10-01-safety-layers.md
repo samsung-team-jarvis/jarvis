@@ -1,7 +1,7 @@
 # Decision: 안전 3계층
 
 ## Status
-- Accepted
+- Accepted — 2026-10-05 [가상 주방 결정](./2026-10-05-virtual-kitchen-demo.md)으로 **L0의 위치만** 바뀌었다: ESP32 펌웨어 → 가상 주방 쪽 안전장치. 3계층 정책은 그대로다. 아래 본문은 당시 기록이다.
 
 ## Date
 - 2026-10-01
