@@ -15,7 +15,8 @@ def run_guard(event: object) -> int:
         [sys.executable, str(GUARD)],
         input=json.dumps(event),
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",  # 출력은 안 본다. Windows(cp949)에서 읽기 오류만 막는다
     )
     return result.returncode
 

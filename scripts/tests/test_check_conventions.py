@@ -13,8 +13,12 @@ SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "check_conventions.py"
 
 
 def run(*args: str) -> int:
+    # 출력은 안 본다. errors="replace"로 Windows(cp949)에서 읽기 오류만 막는다
     return subprocess.run(
-        [sys.executable, str(SCRIPT), *args], capture_output=True, text=True
+        [sys.executable, str(SCRIPT), *args],
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
     ).returncode
 
 
