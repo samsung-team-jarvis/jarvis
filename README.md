@@ -32,7 +32,7 @@
 | `services/audio_svc` | 마이크 → VAD → STT → 호출어, 음성 응답(TTS) | 이현종 ② | [README](services/audio_svc/README.md) |
 | `services/llm_svc` | 받아쓴 문장 → 명령 (규칙 파서, LLM 연결 예정) | 이현종 ② | [README](services/llm_svc/README.md) |
 | `services/safety_guard` · `fusion_svc` | 상황 인식(State Machine), 위험 판단·차단 | 최지환 ③ | (예정) |
-| `services/kitchen_gw` · 가상 주방 | 보드 ↔ 가상 주방 연결(제어·결과·온도·캡처 화면), 가상 주방 장면 | 최석진 ④ | (예정, 플랫폼 미정) |
+| `services/kitchen_gw` · 가상 주방 | 보드 ↔ 가상 주방 연결(제어·결과·온도·캡처 화면), 가상 주방 장면 | 최석진 ④ | (예정, Unity — [결정](docs/decisions/2026-10-05-unity-virtual-kitchen.md)) |
 | `services/vision_svc` · `training/yolo` | YOLOv8 RKNN 객체 인식, 데이터·학습 | 신지호 ① · 이현종 | [training](training/README.md) |
 | `services/recorder` · `simulator` | 모든 메시지 녹화 / 가상 주방 없이 가짜 메시지 재생 | 이현종 ② | [recorder](services/recorder/README.md) · [simulator](services/simulator/README.md) |
 | `training/llm` | LLM 데이터(기획 시트 → Seed·Paraphrase·분할) | 이현종 ② | [README](training/llm/README.md) |

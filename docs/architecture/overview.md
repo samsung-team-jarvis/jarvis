@@ -1,6 +1,6 @@
 # 시스템 아키텍처 (v0.2 초안)
 
-> 2026-10-05 시연 환경을 **가상 주방(메타버스)** 으로 바꿨다 ([decision](../decisions/2026-10-05-virtual-kitchen-demo.md)). 실물 제어 하드웨어는 없다. 플랫폼은 미정이라, 가상 주방과 잇는 부분은 방향만 적었다.
+> 2026-10-05 시연 환경을 **가상 주방(메타버스)** 으로 바꿨다 ([decision](../decisions/2026-10-05-virtual-kitchen-demo.md)). 실물 제어 하드웨어는 없다. 플랫폼은 Unity로 정했다 ([decision](../decisions/2026-10-05-unity-virtual-kitchen.md)). 가상 주방과 잇는 방식은 HW-14에서 정하므로 방향만 적었다.
 
 ## 1. 전체 흐름
 
@@ -31,7 +31,7 @@ recorder : 모든 토픽 구독 → data/sessions/<session_id>.jsonl
 
 - **보드(Orange Pi)**: 음성 인식, 물체 인식, 명령 해석, 상황 인식, 안전 판단 — 추론은 모두 보드에서, 인터넷 없이 한다.
 - **가상 주방(PC)**: 장면을 그리고, 인식용 카메라의 화면과 계산한 온도를 보드로 보내고, 보드의 제어 명령을 받아 장치를 바꾼다.
-- `kitchen_gw`는 보드의 버스와 가상 주방을 잇는 서비스다 (이전 계획의 `ble_gw` 자리). 연결 방식은 플랫폼을 정한 뒤 확정한다 ([open-questions](../decisions/open-questions.md) Q-11·12).
+- `kitchen_gw`는 보드의 버스와 가상 주방을 잇는 서비스다 (이전 계획의 `ble_gw` 자리). 연결 방식은 HW-14에서 확정한다 ([open-questions](../decisions/open-questions.md) Q-12).
 
 ## 2. 안전 계층
 
