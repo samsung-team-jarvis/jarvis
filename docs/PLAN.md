@@ -45,6 +45,7 @@
 - [x] DOC-02 수행계획서·발표자료 불일치 정리 (Orange Pi 5 vs 5 Plus, STT/NLU vs 소형 LLM 표현, "조리 동작 감지" → "물체+시간 기반 상태 추론", WER→CER 병기) — 수정 목록을 open-questions에 기록 | 선행: DOC-01 | 담당: 신지호
 - [x] DOC-11 기술 스택·문서 사실 검증 — recipe·환경·버전 문서의 "(확인 필요)"를 공식 자료로 확인하고 출처 기록 | 선행: - | 담당: 이현종 (#11)
 - [x] INFRA-13 대용량 파일 공유: 직접 전달 + 산출물 등록부(`docs/artifacts.md`, `scripts/artifact_info.py`), 노트북 Drive 의존 제거 — 저장소에 Drive 경로 없음 | 선행: - | 담당: 이현종 (#27)
+- [x] INFRA-14 Windows 개발 환경 호환 (setup.py·테스트의 하위 프로세스 출력·파일을 UTF-8로, Windows에 없는 SIGTERM 무시 테스트는 건너뜀, `.gitattributes`로 텍스트 파일 LF 고정) — Windows에서 환경 변수 없이 `setup.py` ✅, 테스트 전체 통과 | 선행: INFRA-11 | 담당: 최석진 (#77)
 - [x] DOC-12 학교 제공 자료(마음AI 특강2·SUDA 데이터 시트) 반영 — 문서가 학교 환경·방식과 충돌하지 않음 | 선행: - | 담당: 이현종 (#25)
 - [x] DOC-13 README 정리 — 루트 README에 동작 흐름·구성·빠른 시작·폴더 구조, 서비스 README는 사용법 → 동작 → Spec → 확인 기록 순 | 선행: - | 담당: 이현종 (#68)
 - [x] DOC-14 작업 재분배 — ②(이현종)의 실행 위주 7건을 ①·③·④로 이관 ([decision](./decisions/2026-10-04-task-rebalance.md)) | 선행: - | 담당: 이현종 (#71)
