@@ -32,8 +32,8 @@ git diff --cached --name-only
 
 아래 중 하나라도 다르면 별도 커밋을 우선 고려한다.
 
-- 변경 surface: 서비스 코드 / `common` / 학습·변환 스크립트 / 펌웨어 / 측정 결과 / 문서 / 설정·CI
-- 검증 방법 (Mac / 보드 / ESP32)
+- 변경 surface: 서비스 코드 / `common` / 학습·변환 스크립트 / 가상 주방 / 측정 결과 / 문서 / 설정·CI
+- 검증 방법 (Mac / 보드 / 가상 주방)
 - 순수 refactor·rename·remove와 동작 변경
 - 측정 결과 기록(`exp`)과 측정을 만든 코드 변경
 

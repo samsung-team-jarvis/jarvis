@@ -4,8 +4,8 @@ agent용 허브 문서다. 상세 규칙을 여기에 복붙하지 말고, 작�
 
 ## 저장소 정체
 
-- Product: JARVIS — 1인 주방용 온디바이스 상황 인식 어시스턴트 (2026-2 모바일시스템응용프로젝트, 삼성팀, 멘토 마음AI)
-- 구조: 음성·비전·온도/전류 → Orange Pi(RK3588 NPU) 오프라인 추론 → State Machine + Safety Guard → BLE → ESP32(저전압 모형)
+- Product: JARVIS — 혼자 가게를 운영하는 자영업자를 위한 온디바이스 상황 인식 어시스턴트 (등록명 "스마트 자영업 서비스 어시스턴스: 자비스", 2026-2 모바일시스템응용프로젝트, 삼성팀, 멘토 마음AI)
+- 구조: 음성(실제 마이크)·가상 주방의 캡처 화면·온도 → Orange Pi(RK3588 NPU) 오프라인 추론 → State Machine + Safety Guard → 가상 주방(메타버스)의 장치. 실물 제어 하드웨어는 없다 ([decision](./docs/decisions/2026-10-05-virtual-kitchen-demo.md))
 - 작업 키: GitHub 이슈 번호 `#N` (이슈 제목에 PLAN ID, 예: `[STT-01]`)
 - 개발 PC는 M1 Mac — 일부 변환·학습은 Colab/보드에서만 가능 ([local-development](./docs/workflows/local-development.md))
 
@@ -45,7 +45,7 @@ agent용 허브 문서다. 상세 규칙을 여기에 복붙하지 말고, 작�
 - **Walking Skeleton 우선**: 끝까지 연결된 단순 버전이 먼저, 고도화는 나중 ([decision](./docs/decisions/2026-10-01-walking-skeleton-first.md)).
 - **인터페이스 먼저**: 모듈 간 데이터는 interfaces 문서에 정의된 형식만 쓴다. 바꾸려면 문서부터.
 - **실측만 기록**: 추정 수치를 문서·PR에 쓰지 않는다. 미측정은 `측정 예정`. 최종 수치는 보드 기준.
-- **안전 규칙 위반 금지**: LLM 출력은 Safety Guard를 거친다. 위험 감지는 LLM을 거치지 않는다. ESP32는 자체 안전장치를 가진다. 실물 가스·220V는 다루지 않는다.
+- **안전 규칙 위반 금지**: LLM 출력은 Safety Guard를 거친다. 위험 감지는 LLM을 거치지 않는다. 가상 주방은 자체 안전장치(생존 신호 끊김·온도 상한 → 가열 장치 OFF)를 가진다. 실물 가스·220V·가열 장치는 다루지 않는다.
 - **버전 고정**: 변환 툴·보드 런타임은 `docs/conventions/versions.md`의 버전만 쓴다.
 - **확실하지 않은 기술 정보는 "(확인 필요)"** 로 표시하고 공식 저장소·문서로 확인한 뒤 지운다.
 - 요청 범위 밖 기능·추상화·refactor를 추가하지 않는다.
@@ -63,7 +63,7 @@ pre-commit run --all-files                      # 설치한 경우
 
 브랜치·커밋·PR 형식은 로컬 훅과 CI가 검사한다 ([자동 검사](./docs/conventions/git.md)). 검사가 실패하면 우회(`--no-verify`, force push)하지 말고 형식을 고친다. 작업 시작 전 git 훅 설치 여부를 확인하고, 없으면 `python3 scripts/setup.py` 실행을 안내한다.
 
-보드·ESP32가 필요한 검증을 못 했으면 "미검증"으로 남기고 이유를 적는다.
+보드·가상 주방이 필요한 검증을 못 했으면 "미검증"으로 남기고 이유를 적는다.
 
 ## 완료 후 확인
 

@@ -29,7 +29,7 @@ description: PLAN 작업 ID(예: STT-01) 또는 새 작업을 시작할 때 사�
 3. **브랜치 생성**: `main` 최신화 후 `prefix/{scope}/{이슈번호}-work-summary`.
 4. **스펙 판단**: 새 서비스는 `templates/service.spec.md`, 측정·학습은 `templates/experiment.spec.md`를 먼저 채운다. 단순 수정은 생략한다.
 5. **구현**: 요청 범위 밖 기능·추상화를 추가하지 않는다. 하드웨어 없이도 돌 수 있게 입력을 교체 가능하게 만든다.
-6. **검증**: 실제로 실행한 검증만 기록한다. 실행 장소(Mac / Colab / 보드 / ESP32)를 함께 적는다. 보드가 필요한데 접근할 수 없으면 "보드 미검증"으로 남긴다.
+6. **검증**: 실제로 실행한 검증만 기록한다. 실행 장소(Mac / Colab / 보드 / 가상 주방)를 함께 적는다. 보드가 필요한데 접근할 수 없으면 "보드 미검증"으로 남긴다.
 7. **문서 갱신**: PLAN 체크(완료 시), METRICS(측정 시), interfaces 변경 이력(규격 변경 시), decision log(결정 시).
 8. **커밋**: `commit-planning-workflow`로 단위를 나눠 커밋한다.
 9. **PR**: `pr-prep-workflow`로 본문 작성, `Closes #N` 포함.

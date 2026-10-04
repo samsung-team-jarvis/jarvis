@@ -1,7 +1,7 @@
-# JARVIS — 온디바이스 스마트 주방 어시스턴트
+# JARVIS — 스마트 자영업 서비스 어시스턴스: 자비스
 
-손을 쓰기 어려운 1인 주방에서 **"자비스, 후드 켜줘"** 한마디로 주방 장비를 제어하고, 과열·방치 같은 위험을 먼저 알아채는 음성 비서.
-음성·비전·온도/전류를 Orange Pi 5 Plus(RK3588 NPU)에서 **인터넷 없이** 처리하고, 결정론적 Safety Guard를 거쳐 ESP32(BLE)로 저전압 모형 장비를 움직인다.
+혼자 가게를 운영하는 자영업자가 **"자비스, 후드 켜줘"** 한마디로 주방과 매장의 장치를 제어하고, 과열·방치 같은 위험을 먼저 알아채는 온디바이스 음성 비서.
+음성·화면 인식·온도를 Orange Pi 5 Plus(RK3588 NPU)에서 **인터넷 없이** 처리하고, 결정론적 Safety Guard를 거쳐 **가상 주방(메타버스)** 의 장치를 움직인다. 실물 제어 하드웨어는 쓰지 않는다 ([결정](docs/decisions/2026-10-05-virtual-kitchen-demo.md)).
 
 2026-2 모바일시스템응용프로젝트 · 삼성팀 · 산업체 멘토 마음AI
 
@@ -15,13 +15,14 @@
                                                    │
  llm_svc ──── STT 오인식 사전 → 규칙 파서 (→ LLM) ──▶ llm/function_call  {"action":"TURN_ON","target":"hood"}
                                                    │
- 📷 vision_svc · 🌡 ble_gw(센서) ─▶ fusion_svc ─▶ safety_guard ──▶ control/command ─▶ ble_gw ─▶ ESP32 모형
+ 🖥 가상 주방 ─캡처 화면→ vision_svc · ─온도→ kitchen_gw ─▶ fusion_svc ─▶ safety_guard ──▶ control/command ─▶ kitchen_gw ─▶ 가상 주방 장치
                                                    │
  audio_svc(TTS) ◀── guard/decision ── "후드를 켰습니다"
 ```
 
 - 서비스는 프로세스마다 따로 돌고, **로컬 MQTT**로 [정해진 형식](docs/architecture/interfaces.md)의 메시지만 주고받는다.
-- **안전은 LLM에 맡기지 않는다**: LLM은 명령을 해석만 하고, 위험 판단은 규칙 기반 Safety Guard, 마지막 차단은 ESP32 자체 안전장치가 한다 ([안전 3계층](docs/decisions/2026-10-01-safety-layers.md)).
+- **안전은 LLM에 맡기지 않는다**: LLM은 명령을 해석만 하고, 위험 판단은 규칙 기반 Safety Guard, 마지막 차단은 가상 주방 쪽 자체 안전장치가 한다 ([안전 3계층](docs/decisions/2026-10-01-safety-layers.md)).
+- 지금 동작하는 장치는 3종(후드, 1·2번 화구)이다. 8종(튀김기·조명·에어컨·선풍기·음악·결제 추가)으로 넓히는 중이다 (PLAN LLM-13·14).
 - 진행 상황은 [PLAN](docs/PLAN.md)의 Phase·Gate가 기준이다.
 
 ## 구성 요소
@@ -31,9 +32,9 @@
 | `services/audio_svc` | 마이크 → VAD → STT → 호출어, 음성 응답(TTS) | 이현종 ② | [README](services/audio_svc/README.md) |
 | `services/llm_svc` | 받아쓴 문장 → 명령 (규칙 파서, LLM 연결 예정) | 이현종 ② | [README](services/llm_svc/README.md) |
 | `services/safety_guard` · `fusion_svc` | 상황 인식(State Machine), 위험 판단·차단 | 최지환 ③ | (예정) |
-| `services/ble_gw` · `firmware/esp32` | BLE 게이트웨이, ESP32 제어·센서 | 최석진 ④ | (예정) |
+| `services/kitchen_gw` · 가상 주방 | 보드 ↔ 가상 주방 연결(제어·결과·온도·캡처 화면), 가상 주방 장면 | 최석진 ④ | (예정, 플랫폼 미정) |
 | `services/vision_svc` · `training/yolo` | YOLOv8 RKNN 객체 인식, 데이터·학습 | 신지호 ① · 이현종 | [training](training/README.md) |
-| `services/recorder` · `simulator` | 모든 메시지 녹화 / 하드웨어 없이 가짜 메시지 재생 | 이현종 ② | [recorder](services/recorder/README.md) · [simulator](services/simulator/README.md) |
+| `services/recorder` · `simulator` | 모든 메시지 녹화 / 가상 주방 없이 가짜 메시지 재생 | 이현종 ② | [recorder](services/recorder/README.md) · [simulator](services/simulator/README.md) |
 | `training/llm` | LLM 데이터(기획 시트 → Seed·Paraphrase·분할) | 이현종 ② | [README](training/llm/README.md) |
 | `bench` | 지연 분해, STT·LLM 평가, 녹음 도구 | 이현종 ② | [README](bench/README.md) |
 
