@@ -3,9 +3,12 @@
 호출어가 있는 발화(`stt/text`, `wake: true`)를 명령([interfaces](../../docs/architecture/interfaces.md) §3)으로 바꿔 `llm/function_call`로 발행한다. **v0는 규칙 파서만** 있다 (PLAN FUS-02). LLM 연결은 LLM-09에서 붙이고, 그때 규칙 파서는 LLM 출력 검증이 실패할 때의 대체 경로이자 비교 기준선이 된다 ([decision](../../docs/decisions/2026-10-01-rule-parser-baseline.md)).
 
 ```text
-stt/text (wake=true) ──split_wake──▶ STT 오인식 사전 ──▶ "후드 켜 줘." ──rule_parser──▶ {"action":"TURN_ON","target":"hood"} ──▶ llm/function_call
-stt/text (wake=false) ──▶ 무시 (개수만 셈)
+stt/text (wake=true)  ─▶ 호출어 떼기 ─▶ STT 오인식 사전 ─▶ 규칙 파서 ─▶ llm/function_call
+                         "자비스 후드 켜 줘."  →  "후드 켜 줘."  →  {"action":"TURN_ON","target":"hood"}
+stt/text (wake=false) ─▶ 무시 (개수만 셈)
 ```
+
+해석 경로(호출어 → 사전 → 파서)는 `interpret.py` 하나이고, 측정(`bench.stt_eval`)도 같은 함수를 쓴다.
 
 ## 실행
 
@@ -14,12 +17,10 @@ python -m services.llm_svc                          # 버스는 JARVIS_BUS (기�
 python -m services.llm_svc parse "3분 뒤에 2번 불 꺼"  # 버스 없이 결과만 (JSON + 함수 토큰)
 ```
 
-음성부터 명령까지 (Mac, 브로커 필요 — [local-development](../../docs/workflows/local-development.md)):
+음성부터 명령까지 한 번에 (브로커 필요 — [local-development](../../docs/workflows/local-development.md)):
 
 ```bash
-python -m services.recorder                                         # 터미널 1: 녹화
-python -m services.llm_svc                                          # 터미널 2
-python -m services.audio_svc --input data/stt/cmds.wav --realtime   # 터미널 3 (또는 마이크)
+python3 scripts/launch.py                                           # recorder → llm_svc → audio_svc(마이크)
 ```
 
 ## 발행 내용 (규칙 파서일 때)
