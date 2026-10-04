@@ -17,23 +17,24 @@
 
 | 작업물 | 담당 | 입력 → 출력 | 주요 작업 ID | 대표 지표 |
 |---|---|---|---|---|
-| ① 비전 데이터·모델 + 보드 + 팀 운영 | **신지호** | 카메라 → 학습·변환된 비전 모델(`.rknn`) | BOARD-01~06·09, STT-02, VIS-01~07·09, DOC-01~03·05·07·10 | mAP50, 양자화 전후 mAP |
+| ① 비전 데이터·모델 + 보드 + 팀 운영 | **신지호** | 가상 주방 캡처 화면 → 학습·변환된 비전 모델(`.rknn`) | BOARD-01~06·09, STT-02, VIS-01~07·09, DOC-01~03·05·07·10 | mAP50, 양자화 전후 mAP |
 | ② 음성 → 명령 AI 서비스 + 공통 런타임 | **이현종** | 음성 → Function Call(JSON) / 서비스 실행 기반 | STT-*(02·05 운영·09 제외), LLM-*(03 검수 제외), INFRA-03~06·08, BOARD-07·08, VIS-08·10, FUS-02·06 | CER, Action Acc, JSON Valid, E2E 지연, NPU 동시 부하 |
-| ③ 상황 인식 + 안전 | **최지환** | 음성·비전·센서 → 주방 상태·위험 판단·차단 명령 | FUS-01·03~05·07~11, INFRA-07, STT-05(녹음 운영), LLM-03(검수), UI-*(선택) | State F1, 위험 미탐율, 감지→차단 지연 |
-| ④ 제어 하드웨어 + 모형 | **최석진** | 제어 명령 → 장치 동작 / 센서 → 측정값 | HW-*, STT-09, DOC-04·06 | BLE 성공률·지연, 하트비트 안전 정지 |
+| ③ 상황 인식 + 안전 | **최지환** | 음성·화면 인식·온도 → 주방 상태·위험 판단·차단 명령 | FUS-01·03~05·07~11, INFRA-07, STT-05(녹음 운영), LLM-03(검수), UI-*(선택) | State F1, 위험 미탐율, 감지→차단 지연 |
+| ④ 가상 주방 + 연결 | **최석진** | 제어 명령 → 가상 장치 동작 / 가상 주방 → 캡처 화면·온도 | HW-13~23, STT-09, DOC-04·06 | 제어 성공률·지연, 생존 신호 끊김 안전 정지 |
 
-- ①은 **코딩을 최소화**하도록 짰다: 촬영·라벨링(GUI 도구), Colab 노트북 실행(학습·변환), recipe 명령 실행(보드), 제공된 측정 스크립트 실행. 노트북·스크립트는 ②가 만든다 (VIS-10, BOARD-06 노트북).
+- **2026-10-05 시연 환경 변경** ([decision](./decisions/2026-10-05-virtual-kitchen-demo.md)): 시연은 가상 주방(메타버스)에서 하고 실물 제어 하드웨어는 없다. 장치는 8종으로 넓힌다. 작업물 ④는 "제어 하드웨어 + 모형"에서 "가상 주방 + 연결"로 바뀌었고(HW-01~12 취소 → HW-13~23), ②에 스키마 v0.2·데이터 v2(LLM-13·14)가 추가됐다. 플랫폼은 미정이다(HW-13).
+- ①은 **코딩을 최소화**하도록 짰다: 화면 캡처·라벨링(GUI 도구), Colab 노트북 실행(학습·변환), recipe 명령 실행(보드), 제공된 측정 스크립트 실행. 노트북·스크립트는 ②가 만든다 (VIS-10, BOARD-06 노트북).
 - **2026-10-04 재분배** ([decision](./decisions/2026-10-04-task-rebalance.md)): ②의 기반 작업이 끝나 실행 위주 7건을 ①·③·④로 넘겼다. 넘긴 작업은 Gate 2 작업(FUS-03·04, HW-01~05) **다음** 순서다.
 - ①의 모델을 서비스로 감싸는 코드(VIS-08 `vision_svc`)와 NPU 동시 부하 측정(BOARD-08)은 ②가 맡는다.
 - 공동: INFRA-02(규칙 동의), INFRA-09(정기 통합, ② 주관), DOC-08·09(최종 보고서·리허설).
 
-워크스트림 코드(라벨·작업 ID 접두사): INFRA 공통 · BOARD 보드·NPU · STT 음성 · VIS 비전 · LLM 명령 해석 · FUS 상황 인식·안전 · HW 하드웨어 · UI 대시보드 · DOC 문서·발표
+워크스트림 코드(라벨·작업 ID 접두사): INFRA 공통 · BOARD 보드·NPU · STT 음성 · VIS 비전 · LLM 명령 해석 · FUS 상황 인식·안전 · HW 가상 주방·연결 (2026-10-05 이전: 하드웨어) · UI 화면 · DOC 문서·발표
 
 ---
 
 ## Phase 0 — 착수 준비 (결정·환경·규격)
 
-**Gate 0:** `docs/decisions/open-questions.md`의 질문이 모두 확정 또는 정보 대기(사유 명시) · `docs/conventions/versions.md` 고정 · `docs/architecture/interfaces.md` v0.1 팀 합의 · 부품 주문 완료
+**Gate 0:** `docs/decisions/open-questions.md`의 질문이 모두 확정 또는 정보 대기(사유 명시) · `docs/conventions/versions.md` 고정 · `docs/architecture/interfaces.md` v0.1 팀 합의 · 메타버스 플랫폼 선정
 
 - [ ] INFRA-01 GitHub 저장소 생성, 팀원 초대, `main` 보호, 이 harness(CLAUDE.md·docs) 푸시 — 4명 모두 clone 성공 | 선행: - | 담당: 이현종 (#7, 팀원 온보딩 진행 중)
 - [ ] INFRA-02 `.gitignore`(가중치·원본 데이터 제외), 브랜치·커밋 규칙 공유 — CLAUDE.md 협업 규칙에 모두 동의 | 선행: INFRA-01 | 담당: 공동
@@ -47,36 +48,35 @@
 - [x] DOC-12 학교 제공 자료(마음AI 특강2·SUDA 데이터 시트) 반영 — 문서가 학교 환경·방식과 충돌하지 않음 | 선행: - | 담당: 이현종 (#25)
 - [x] DOC-13 README 정리 — 루트 README에 동작 흐름·구성·빠른 시작·폴더 구조, 서비스 README는 사용법 → 동작 → Spec → 확인 기록 순 | 선행: - | 담당: 이현종 (#68)
 - [x] DOC-14 작업 재분배 — ②(이현종)의 실행 위주 7건을 ①·③·④로 이관 ([decision](./decisions/2026-10-04-task-rebalance.md)) | 선행: - | 담당: 이현종 (#71)
+- [ ] DOC-15 시연 환경 변경 반영 (가상 주방·장치 8종·실물 하드웨어 없음) — 결정 문서, 구조·인터페이스·PLAN·METRICS·budget 갱신 | 선행: - | 담당: 이현종 (#73)
 - [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 신지호
 - [x] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환 (#39 — 2026-10-02 결정권자 확정·팀 통보, 상황 인식 구현 중 변경 가능)
 - [x] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 이현종 (#39, `common/function_call.py`)
-- [ ] HW-01 BLE GATT·패킷 규격 v0.1 확정 — interfaces §4 확정 | 선행: FUS-01 | 담당: 최석진
-- [ ] HW-02 부품 목록(BOM) 확정·주문 — 아래 BOM 표 기준, 수량·구매처 기록 | 선행: - | 담당: 최석진
+- [x] ~~HW-01 BLE GATT·패킷 규격 v0.1 확정~~ — 취소 (2026-10-05 실물 하드웨어 없음 → HW-14)
+- [x] ~~HW-02 부품 목록(BOM) 확정·주문~~ — 취소 (2026-10-05, 아래 BOM은 보드 주변 장치만 남김)
+- [ ] HW-13 메타버스 플랫폼 선정 — 보드와 메시지 주고받기, 인식용 카메라 화면 캡처, 장치 상태를 스크립트로 바꾸기, 비용을 확인해 open-questions Q-11 답 | 선행: - | 담당: 최석진
+- [ ] HW-14 보드 ↔ 가상 주방 연결 규격 v0.1 (제어 명령·결과 확인·온도·캡처 화면·생존 신호의 전달 방식) — interfaces §4 확정 | 선행: HW-13, FUS-01 | 담당: 최석진
+- [ ] LLM-13 Function Call 스키마 v0.2 (장치 8종: 튀김기·조명·에어컨·선풍기·음악 target 추가, 결제 요청·금액 확인 Action, 장치별 값의 범위) — interfaces §3·§5 확정, `common/function_call.py`·규칙 파서·응답 문장·테스트 반영 | 선행: LLM-01 | 담당: 이현종
 - [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 신지호
 
-### BOM (초안)
+### BOM (2026-10-05 갱신)
 
-구매·무료 대안·유료 서비스 정리: [budget](./budget.md)
+실물 제어 하드웨어를 쓰지 않으므로 보드와 음성 입출력만 남는다. 구매·무료 대안·유료 서비스 정리: [budget](./budget.md)
 
 | 품목 | 용도 | 비고 |
 |---|---|---|
-| Orange Pi 5 / 5 Plus + 전원 어댑터 + **방열판·팬** | 메인 추론 | 주방 환경·장시간 구동이라 방열 필수. 두 보드 차이: [hardware](./architecture/hardware.md) |
+| Orange Pi 5 / 5 Plus + 전원 어댑터 + **방열판·팬** | 메인 추론 | 장시간 구동이라 방열 필수. 두 보드 차이: [hardware](./architecture/hardware.md) |
 | microSD 또는 NVMe/eMMC | OS·모델 저장 | 모델 여러 개 보관 → 64GB 이상 권장 |
-| USB 웹캠 (UVC) | 비전 입력 | MIPI 카메라보다 드라이버 이슈 적음 |
-| USB 핀마이크 또는 USB 사운드카드 + 핀마이크 | 음성 입력 | 웹캠 내장 마이크와 비교 측정 예정 |
+| USB 핀마이크 또는 USB 사운드카드 + 핀마이크 | 음성 입력 | 노트북 내장 마이크와 비교 측정 예정 |
 | 소형 스피커 (USB 또는 3.5mm) | TTS 음성 응답·경고 | STT-12 |
-| ESP32 DevKit × 1~2 | 제어·센서 단말 | |
-| **Bluetooth 모듈 또는 USB BT 동글 (보드용)** | Pi ↔ ESP32 BLE | Orange Pi 5 / 5 Plus 모두 기본 BT 없음. 호환 모델은 보드 수령 후 확인 |
-| **K타입 열전대 + MAX31855** | 고온 측정 | DS18B20은 125°C 한계라 조리 온도 불가, MAX6675는 단종 정보가 있어 비권장 ([hardware](./architecture/hardware.md)) |
-| INA219 | DC 부하 전류 측정 | 220V 계측 금지 |
-| 릴레이 모듈(저전압), LED, USB 팬, 부저 | 화구·후드·알림 모형 | |
-| 브레드보드·점퍼·저항 | 배선 | |
+| 랜선 (또는 보드용 Wi-Fi 모듈) | 보드 ↔ 가상 주방 PC | 유선을 기본으로 한다 |
+| PC (팀원 노트북) | 가상 주방 실행 | 플랫폼 사양은 HW-13에서 확인 |
 
 ---
 
 ## Phase 1 — Hello World (각 모듈 단독 동작)
 
-**Gate 1:** 아래 5개가 각각 단독으로 시연 가능 — ① 보드에서 기본 YOLOv8 RKNN 예제 실행 ② 보드에서 RKLLM 기본 모델 대화 ③ SenseVoice 한국어 받아쓰기 ④ ESP32 BLE 에코 + LED 제어 ⑤ 버스로 가짜 메시지 송수신
+**Gate 1:** 아래 5개가 각각 단독으로 시연 가능 — ① 보드에서 기본 YOLOv8 RKNN 예제 실행 ② 보드에서 RKLLM 기본 모델 대화 ③ SenseVoice 한국어 받아쓰기 ④ 가상 주방의 장치 1개를 메시지로 켜고 끄기 ⑤ 버스로 가짜 메시지 송수신
 
 - [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 신지호
 - [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN·RKLLM 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 신지호
@@ -87,15 +87,17 @@
 - [x] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종 (#29, `services/simulator`)
 - [x] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 이현종 (#33, `services/audio_svc`)
 - [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 신지호 (#71 이관 — `python -m services.audio_svc.transcribe` 한 줄, [audio_svc](../services/audio_svc/README.md))
-- [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 주방(또는 유사) 영상 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 신지호
-- [ ] HW-03 ESP32 BLE 서버 (cmd write / ack notify) — Pi 또는 Mac의 `bleak`으로 LED on/off | 선행: HW-01 | 담당: 최석진
-- [ ] HW-04 열전대(MAX31855)·INA219 값 시리얼 출력 — 실온·뜨거운 물로 온도 변화 확인 | 선행: HW-02 | 담당: 최석진
+- [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 가상 주방 캡처 화면(장면이 없으면 비슷한 주방 영상) 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 신지호
+- [x] ~~HW-03 ESP32 BLE 서버~~ — 취소 (2026-10-05 → HW-16)
+- [x] ~~HW-04 열전대·INA219 값 시리얼 출력~~ — 취소 (2026-10-05 → HW-19)
+- [ ] HW-15 가상 주방 장면 1차 (화구 2개·후드·튀김기, 조리 구역, 인식용 카메라 고정) — 화면을 캡처할 수 있는 상태 | 선행: HW-13 | 담당: 최석진
+- [ ] HW-16 가상 장치 제어 hello: Mac에서 메시지 하나로 가상 주방의 후드를 켜고 끄기 | 선행: HW-14, HW-15 | 담당: 최석진
 
 ---
 
-## Phase 2 — Walking Skeleton (말 → LED, 끝까지 연결)
+## Phase 2 — Walking Skeleton (말 → 가상 장치, 끝까지 연결)
 
-**Gate 2:** "자비스, 후드 켜줘" 발화 → STT → 규칙 파서 → Safety Guard → BLE → ESP32 LED 점등이 보드에서 동작하고, 전 구간 지연이 레코더 로그로 측정됨
+**Gate 2:** "자비스, 후드 켜줘" 발화 → STT → 규칙 파서 → Safety Guard → `kitchen_gw` → 가상 주방의 후드가 켜짐이 보드에서 동작하고, 전 구간 지연이 레코더 로그로 측정됨
 
 - [x] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 (보드 미수령으로 Mac 기준 선진행) | 담당: 이현종 (#35 — wav·MQTT 확인, 2026-10-02 MacBook 마이크로 사람 음성 확인 #57)
 - [x] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 이현종 (#37, `services/audio_svc/wake.py`)
@@ -103,10 +105,12 @@
 - [x] FUS-02 규칙 기반 파서 v0 (키워드 → Function Call) — Action 10개 중 최소 TURN_ON/TURN_OFF/EMERGENCY_STOP | 선행: LLM-01 | 담당: 이현종 (#41, `services/llm_svc` — 10개 모두)
 - [ ] FUS-03 `safety_guard` v0: 화이트리스트·스키마 검증, 위험 상태에서 REJECT — 단위 테스트 통과 | 선행: LLM-01 | 담당: 최지환
 - [ ] FUS-04 긴급 빠른 경로: "정지/멈춰/그만" 등은 LLM 없이 즉시 EMERGENCY_STOP | 선행: FUS-03 | 담당: 최지환
-- [ ] HW-05 `ble_gw` 서비스: 버스 `control/command` → BLE write, ACK(seq) 수신·재시도, `control/result` 발행 | 선행: HW-03, INFRA-03 | 담당: 최석진
-- [ ] HW-06 ESP32 하트비트 감시: Pi 하트비트 N초 끊기면 모든 출력 OFF | 선행: HW-03 | 담당: 최석진
+- [x] ~~HW-05 `ble_gw` 서비스~~ — 취소 (2026-10-05 → HW-17)
+- [x] ~~HW-06 ESP32 하트비트 감시~~ — 취소 (2026-10-05 → HW-18)
+- [ ] HW-17 `kitchen_gw` 서비스: 버스 `control/command` → 가상 주방 장치, 결과 확인(seq) 수신·재시도, `control/result` 발행 | 선행: HW-16, INFRA-03 | 담당: 최석진
+- [ ] HW-18 가상 주방 안전장치 (안전 계층 L0): 보드 생존 신호가 N초 끊기면 가열 장치 OFF | 선행: HW-16 | 담당: 최석진
 - [x] INFRA-05 `recorder`: 모든 토픽을 세션별 JSONL로 저장 | 선행: INFRA-03 | 담당: 이현종 (#31, `services/recorder`)
-- [x] INFRA-06 지연 분해 스크립트: 발화 끝 → STT → 파서 → Guard → BLE ACK 구간별 ms — METRICS E2E 항목 첫 기록 | 선행: INFRA-05 | 담당: 이현종 (#45, `bench/latency.py` — 첫 기록은 Mac·명령 발행까지, Guard·BLE 구간은 해당 서비스가 생기면 같은 명령으로)
+- [x] INFRA-06 지연 분해 스크립트: 발화 끝 → STT → 파서 → Guard → 제어 결과 확인 구간별 ms — METRICS E2E 항목 첫 기록 | 선행: INFRA-05 | 담당: 이현종 (#45, `bench/latency.py` — 첫 기록은 Mac·명령 발행까지, Guard·가상 주방 구간은 해당 서비스가 생기면 같은 명령으로)
 - [x] BOARD-07 서비스 일괄 기동/종료 스크립트 (systemd 또는 단일 런처) | 선행: INFRA-03 | 담당: 이현종 (#47, `scripts/launch.py` — Mac 확인, systemd 예시는 보드 미검증)
 - [ ] DOC-04 Skeleton 시연 영상 1편 녹화 | 선행: Gate 2 항목 전부 | 담당: 최석진
 
@@ -120,25 +124,27 @@
 - [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 녹음 운영: 화자 섭외·일정·취합, [녹음 안내](../recipes/stt-recording.md)) (#53 — 대본 40문장·녹음 도구·안내 완료. 녹음: spk01 val quiet 40/40 MacBook 마이크 — 나머지 화자·소음 진행)
 - [x] STT-06 CER·RTF·STT→Action 정확도 측정 스크립트 (`jiwer`) | 선행: STT-05 (녹음 전 선진행, 합성 음성으로 동작 확인) | 담당: 이현종 (#49, `bench/stt_eval.py`)
 - [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 신지호
-- [ ] VIS-03 모형 주방 촬영 1차 (세션별 조명·각도·배치 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-07 | 담당: 신지호
+- [ ] VIS-03 가상 주방 화면 캡처 1차 (세션별 조명·배치·아바타 위치·장치 상태 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-15 | 담당: 신지호
 - [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 신지호
 - [x] VIS-10 Colab YOLO 학습·평가 노트북 템플릿 (데이터 경로·클래스만 바꾸면 학습 → mAP 평가 → ONNX export까지) — ①이 코드 수정 없이 VIS-06·07 실행 가능 | 선행: VIS-02 | 담당: 이현종 (#19)
 - [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함, **간접 발화**·**숫자 표기 변형**("3번"/"삼 번") 포함 — SUDA 방식, [school-materials](./school-materials.md)) | 선행: LLM-01 | 담당: 이현종 (#55 — 기획 시트로 627건 생성, 사람 검수 대기)
 - [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 검수·보강: 위험 상황 판정이 Guard 규칙과 직결) (#55 — 84건 생성, 사람 검수 대기)
 - [ ] LLM-04 Paraphrase 합성 → 형식 검증·중복 제거·사람 검수 파이프라인 (6단계, 발표 p.9). 생성은 SUDA식 **기획 시트**(기능별 키워드 목록 + 어투 3종 + 데이터 비율 + 생성 프롬프트)로 | 선행: LLM-02 | 담당: 이현종 (#63 — 데이터 v1 2,234건, 사람 검수 대기)
+- [ ] LLM-14 LLM 데이터 v2: 기획 시트에 장치 8종과 결제 문장 추가 → 재생성·재분할 → 규칙 파서·기본 모델 기준선 재측정 (v1에서 "지원 외"였던 조명·에어컨·음악 문장의 정답이 바뀜) | 선행: LLM-13 | 담당: 이현종
 - [x] LLM-05 템플릿·세션 단위 Train/Val/Test 분할, Test 고정, 캘리브레이션 세트는 Train에서만 | 선행: LLM-04 | 담당: 이현종 (#65, `training/llm/split_dataset.py` — 검수로 데이터가 바뀌면 같은 명령으로 재분할)
-- [ ] FUS-05 센서 시나리오 20~30개 정의 (정상·과열·방치·화구 켜짐 방치) + 기록 — 하드웨어 전에는 [simulator](../services/simulator/README.md) 시나리오 형식으로 먼저 작성 | 선행: HW-04 | 담당: 최지환
-- [ ] HW-07 모형 1차 (화구 LED·후드 팬·부저, 열전대 장착 위치) — 촬영 가능한 상태 | 선행: HW-02 | 담당: 최석진
+- [ ] FUS-05 온도 시나리오 20~30개 정의 (정상·과열·방치·가열 장치 켜짐 방치) + 기록 — 가상 주방 전에는 [simulator](../services/simulator/README.md) 시나리오 형식으로 먼저 작성 | 선행: HW-19 (simulator로 선진행 가능) | 담당: 최지환
+- [x] ~~HW-07 모형 1차~~ — 취소 (2026-10-05 → HW-15)
 
 ### Baseline 측정 (모두 보드 기준)
 - [ ] STT-07 SenseVoice 기본 설정 Baseline (CER by 소음 조건, RTF) | 선행: STT-06 | 담당: 이현종
 - [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 이현종
-- [ ] STT-09 마이크 비교 (핀마이크 vs 웹캠 내장) CER | 선행: STT-06 | 담당: 최석진 (#71 이관 — 마이크는 부품 담당, [stt_eval](../bench/README.md)로 측정)
+- [ ] STT-09 마이크 비교 (핀마이크 vs 노트북 내장) CER | 선행: STT-06 | 담당: 최석진 (#71 이관 — 마이크는 부품 담당, [stt_eval](../bench/README.md)로 측정)
 - [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 | 담당: 신지호
 - [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종 (#67 — Mac 정확도: Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1%. 남음: Llama-3.2-1B(HF 승인), 보드 tok/s·RAM)
 - [x] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종 (#67 — Action Acc 79.9%, `bench/llm_eval.py`)
 - [ ] FUS-07 단일 조건 판단 Baseline (State F1, 위험 미탐율) | 선행: FUS-05 | 담당: 최지환
-- [ ] HW-08 BLE 제어 Baseline (성공률, 왕복 지연) — 단순 전달 vs ACK·재시도 | 선행: HW-05 | 담당: 최석진
+- [x] ~~HW-08 BLE 제어 Baseline~~ — 취소 (2026-10-05 → HW-21)
+- [ ] HW-21 가상 주방 제어 Baseline (성공률, 왕복 지연) — 단순 전달 vs 결과 확인·재시도 | 선행: HW-17 | 담당: 최석진
 
 ---
 
@@ -147,15 +153,17 @@
 **Gate 4:** 실제 모델(STT·YOLO RKNN·LLM .rkllm)이 Skeleton에 들어가 동시에 구동되고, 동시 구동 시 지연·RAM·온도가 측정됨
 
 - [ ] VIS-06 YOLOv8n 파인튜닝 v1 (Colab) | 선행: VIS-04, VIS-10 | 담당: 신지호
-- [ ] VIS-07 ONNX → RKNN INT8 변환 (실제 주방 이미지로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06, BOARD-06 | 담당: 신지호
-- [ ] VIS-08 `vision_svc`: 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, INFRA-03 | 담당: 이현종
+- [ ] VIS-07 ONNX → RKNN INT8 변환 (가상 주방 캡처 화면으로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06, BOARD-06 | 담당: 신지호
+- [ ] VIS-08 `vision_svc`: 가상 주방 캡처 화면을 받아 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, HW-20, INFRA-03 | 담당: 이현종
 - [ ] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 이현종
 - [ ] LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정 (서버 기본/서버 학습/보드 양자화 3단계 비교) | 선행: LLM-07, BOARD-06 | 담당: 이현종
 - [ ] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-08, FUS-02 | 담당: 이현종
-- [ ] FUS-08 State Machine v1 (센서+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환
+- [ ] FUS-08 State Machine v1 (온도+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환
 - [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 최지환
-- [ ] HW-09 ESP32 자체 하드 리밋 (온도 상한 → 출력 OFF, Pi 무관) | 선행: HW-04 | 담당: 최석진
-- [ ] HW-10 센서값 BLE notify → `ble_gw` → `sensor/reading` | 선행: HW-05, HW-04 | 담당: 최석진
+- [x] ~~HW-09 ESP32 자체 하드 리밋~~ — 취소 (2026-10-05 → HW-18·HW-19)
+- [x] ~~HW-10 센서값 BLE notify~~ — 취소 (2026-10-05 → HW-19)
+- [ ] HW-19 가상 온도: 가열 장치(화구·튀김기)의 세기와 시간으로 온도 계산 → `kitchen_gw` → `sensor/reading` (1Hz). 온도 상한을 넘으면 가상 주방이 스스로 가열 장치 OFF | 선행: HW-17 | 담당: 최석진
+- [ ] HW-20 인식용 카메라 캡처 화면을 보드로 전달 (3~5fps) — `vision_svc`가 받을 수 있는 형식 | 선행: HW-15, HW-14 | 담당: 최석진
 - [ ] BOARD-08 NPU 코어 배치 (YOLO core0 / LLM 나머지) 및 동시 구동 부하 측정 (tok/s 변화, fps, RAM, SoC 온도) | 선행: VIS-08, LLM-09 | 담당: 이현종
 - [ ] BOARD-09 장시간(30분+) 구동 발열·스로틀링 확인 | 선행: BOARD-08 | 담당: 신지호
 
@@ -175,10 +183,12 @@
 - [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 신지호
 - [ ] FUS-10 통합 멀티모달 시나리오 20~30개 녹화 (recorder) → State F1·위험 미탐율 | 선행: FUS-08, INFRA-05 | 담당: 최지환
 - [ ] FUS-11 recorder 로그 재생 테스트 (녹화 세션을 다시 흘려 State Machine 회귀 테스트 — `services.recorder.store.read_session`으로 읽기) | 선행: FUS-10 | 담당: 최지환
-- [ ] HW-11 BLE 성공률·지연 개선 (재시도 정책, 연결 끊김 복구) | 선행: HW-08 | 담당: 최석진
-- [ ] HW-12 모형 완성 (발표 시연용) | 선행: HW-07 | 담당: 최석진
-- [ ] UI-01 (선택) 로컬 대시보드 백엔드: 버스 구독 → WebSocket으로 상태·이벤트 전달 (FastAPI, 오프라인) | 선행: Gate 4 | 담당: 최지환 (#71 이관)
-- [ ] UI-02 (선택) 대시보드 화면: 현재 상태·타이머·위험 경고·판단 근거(evidence) 실시간 표시 — 시연에서 "AI가 왜 그렇게 판단했는지" 보여주기 | 선행: UI-01 | 담당: 최지환 (#71 이관)
+- [x] ~~HW-11 BLE 성공률·지연 개선~~ — 취소 (2026-10-05 → HW-22)
+- [x] ~~HW-12 모형 완성~~ — 취소 (2026-10-05 → HW-23)
+- [ ] HW-22 제어 성공률·지연 개선 (재시도 정책, 연결 끊김 복구) | 선행: HW-21 | 담당: 최석진
+- [ ] HW-23 가상 주방 완성 (발표 시연용): 장치 8종(조명·에어컨·선풍기·음악·결제 포함), 장치 상태가 화면에서 보임 | 선행: HW-15, LLM-13 | 담당: 최석진
+- [ ] UI-01 화면에 띄울 정보 전달: 버스의 상태·들은 말·판단 근거·경고를 가상 주방(또는 로컬 화면)으로 보냄 | 선행: Gate 4, HW-14 | 담당: 최지환 (#71 이관)
+- [ ] UI-02 가상 주방 화면에 겹쳐 띄우는 정보: 현재 상태·장치 이름표·타이머·위험 경고·판단 근거·AI가 본 화면 — 시연에서 "AI가 왜 그렇게 판단했는지" 보여주기 (시안: 6주차 UI/UX 과제) | 선행: UI-01 | 담당: 최지환 (#71 이관)
 
 ---
 
@@ -210,5 +220,7 @@
 | NPU 동시 구동 경합 | BOARD-08에서 tok/s 급락 | YOLO fps 하향, 발화 처리 중 YOLO 일시정지 |
 | 발열 스로틀링 | BOARD-09 성능 저하 | 방열판·팬 강화, 부하 분산 |
 | 보드 도착/고장 지연 | BOARD-01 | Mac·Colab에서 ONNX/CPU로 개발 지속 |
+| 메타버스 플랫폼이 보드와 연결되지 않거나 화면 캡처가 안 됨 | HW-13·HW-16 실패 | 다른 플랫폼 → 직접 만든 간단한 3D/2D 장면 → [simulator](../services/simulator/README.md)의 가짜 메시지 + 로컬 화면으로 시연 |
+| 장치 확장으로 데이터·기준선을 다시 만들어야 함 | LLM-13 지연 | 화구·후드 3종(v1)으로 Gate 2를 먼저 통과하고, 나머지 장치는 뒤에 붙인다 |
 | 통합 막판 실패 | Gate 2 지연 | Phase 2를 최우선, 정기 통합(INFRA-09) |
 | 시연 당일 실패 | — | DOC-06 영상 백업 |
