@@ -65,3 +65,13 @@ python -m bench.llm_eval --engine rule --data v1                                
 
 - HF 엔진: 함수 토큰을 설명하는 시스템 프롬프트(지시문 v0.2) + **train에서만** 고른 few-shot 17개(되묻기를 뺀 함수 13개에 하나씩 + 되묻기 2개·대명사·장치 타이머), greedy, `<jarvis_end>`에서 자른다. HF 모델은 분리된 가상환경(`.venv-llm`)에서 돌린다.
 - 지시문은 v0.2 하나뿐이다. 2026-10-02의 v1 수치는 지시문 v0.1(함수 10개 · few-shot 13개)로 잰 것이라, 지금 `--data v1`로 모델을 다시 재도 같은 조건이 아니다 (규칙 파서는 지시문을 쓰지 않는다).
+
+## llm_errors.py — 명령 해석 오류 유형 분류 (LLM-10)
+
+`llm_eval.py --csv`로 만든 예측 CSV를 받아 틀린 예측을 유형별로 센다 (형식 깨짐 · 규칙 위반 · 빠진 값 채움 · 불필요한 되묻기 · 지원 외를 실행 · 지원 외로 거절 · 다른 함수 · 장치 틀림 · 값 틀림, 겹쳐 세는 표시: 대명사 실패 · 긴급 정지 오판 · 틀린 실행). 많이 틀린 가족(템플릿)도 보여 줘서 어느 문장을 보강할지 바로 이어진다. **val로만 쓴다.**
+
+```bash
+python -m bench.llm_eval --engine rule --split val --csv rule_val.csv
+.venv-llm/bin/python -m bench.llm_eval --engine hf --finetuned --model runs/llm/<이름> --split val --csv lora_val.csv
+python -m bench.llm_errors rule_val.csv lora_val.csv     # 나란히 비교 (열 이름 = 파일 이름)
+```
