@@ -1,0 +1,58 @@
+# LLM 보강 시트 v1 (LLM-11) — LoRA v1의 val 오류 유형(LLM-10)을 보고 train에만 더하는 문장
+#
+# - 데이터 v2(plan_sheet·paraphrase_sheet)는 고치지 않는다. 고치면 val·test가 바뀌어 v1과 같은 test로
+#   비교할 수 없다. 여기 문장은 모두 train에 들어간다.
+# - 템플릿 형식은 plan_sheet와 같고, text에 paraphrase_sheet처럼 "(a|b)" 선택지를 쓸 수 있다.
+#   devices를 생략하면 그 Action이 받는 장치 전부.
+# - val·test·STT 대본과 같거나 너무 비슷한 문장은 build_augment.py가 뺀다 (누수 방지).
+# - error: 이 템플릿이 겨냥하는 LLM-10 오류 유형 (training/llm/README.md "val 오류 유형")
+#
+# 생성: Claude (Claude Code, claude-opus-5-5), 2026-10-06, 사람 검수 전. val 오류 예시의 문장을
+# 베끼지 않고, 같은 뜻을 다른 말로 쓰도록 했다.
+
+seed: 0
+# 템플릿 하나에서 최대 이만큼 (장치·값을 돌아가며). 슬롯이 많은 템플릿이 보강을 다 차지하지 않게
+max_per_template: 12
+
+templates:
+  CANCEL_TIMER:
+    # 타이머 취소의 다른 말투·"알람" — LoRA v1이 긴급 정지·위험 확인·지원 외로 냄 (다른 함수, 규칙 위반)
+    - {id: aug_ct_01, error: wrong_action, tone: 명령, text: "(타이머|알람) (해제해 줘|해제|없애 버려|안 울려도 돼)", output: {action: CANCEL_TIMER}}
+    - {id: aug_ct_02, error: wrong_action, tone: 명령, text: "(걸어 둔|맞춰 놓은|돌아가는) (알람|타이머) (해제해|지워 줘|안 써도 돼|일단 멈춰 놔)", output: {action: CANCEL_TIMER}}
+    - {id: aug_ct_03, error: invented, tone: 요청, text: "{device} (알람|타이머) (해제해 줄래|안 해도 될 것 같아|지워 줄래)", output: {action: CANCEL_TIMER, target: "{device}"}, devices: [hood, burner_1, burner_2, fryer]}
+    - {id: aug_ct_04, error: wrong_action, tone: 평서, text: "(알람|타이머) (울리지 않게 해 줘|끝내 줘|이제 꺼 둬도 돼)", output: {action: CANCEL_TIMER}}
+  SET_TIMER:
+    # "알람 N분"은 타이머다 ("알람 7시"는 시각이라 지원 외 — 아래 UNSUPPORTED)
+    - {id: aug_tm_01, error: invented, tone: 명령, text: "알람 {time} (걸어 줘|설정해 줘|맞춰 줄래)", output: {action: SET_TIMER, duration_s: "{time}"}}
+  TURN_OFF:
+    # 매장 장치를 멈추라는 말은 긴급 정지가 아니라 그 장치 끄기 — LoRA v1이 긴급 정지로 냄
+    - {id: aug_nu_01, error: wrong_action, tone: 요청, text: "{device} (좀 멈춰 줘|멈춰 줄래|정지시켜 줘|그만 돌려)", output: {action: TURN_OFF, target: "{device}"}, devices: [aircon, fan]}
+    - {id: aug_nu_02, error: wrong_action, tone: 요청, text: "{device} (잠깐 멈춰 줘|그만 나오게 해 줘|정지시켜 줄래|이제 그만 틀어)", output: {action: TURN_OFF, target: "{device}"}, devices: [music]}
+  TURN_ON:
+    # 처음 보는 동사 — LoRA v1이 지원 외로 거절하거나 세기 함수로 냄
+    - {id: aug_on_01, error: refused, tone: 명령, text: "{device} (작동시켜 줘|작동 시작해|가동 좀 해 줄래)", output: {action: TURN_ON, target: "{device}"}, devices: [hood, fryer, aircon, fan]}
+    - {id: aug_on_02, error: refused, tone: 명령, text: "{device} (돌려 줄래|좀 돌려 봐|한번 돌려 줘)", output: {action: TURN_ON, target: "{device}"}, devices: [hood, aircon, fan]}
+  CHECK_STATUS:
+    # 장치 없이 전체 상태를 묻는 말 — LoRA v1이 장치를 되물음
+    - {id: aug_st_01, error: needless_ask, tone: 명령, text: "(켜 놓은 거|켜져 있는 장치|돌아가는 거) (뭐뭐야|다 알려 줘|있나 봐 줘)", output: {action: CHECK_STATUS}}
+    - {id: aug_st_02, error: needless_ask, tone: 요청, text: "지금 (뭐가|어떤 게|무슨 장치가) 켜져 있지", output: {action: CHECK_STATUS}}
+  CHECK_RISK:
+    # 안전을 살펴 달라는 말 — LoRA v1이 긴급 정지로 냄
+    - {id: aug_rk_01, error: wrong_action, tone: 요청, text: "(주방|가게|불 쓰는 데) (위험한 데 없는지|괜찮은지) (살펴봐 줘|한번 봐 줄래|점검해 줄래)", output: {action: CHECK_RISK}}
+  UNSUPPORTED:
+    # 하지 말라는 말 → 실행할 명령 없음 — LoRA v1이 끄기·켜기로 실행함
+    - {id: aug_ng_01, error: unsupported_executed, tone: 명령, text: "{device} (건드리지 마|그냥 둬|그대로 놔둬)", output: {action: UNSUPPORTED}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+    - {id: aug_ng_02, error: unsupported_executed, tone: 명령, text: "{device} (아직 끄면 안 돼|켜면 안 돼|틀지 마)", output: {action: UNSUPPORTED}, devices: [hood, aircon, fan, music]}
+    - {id: aug_ng_03, error: unsupported_executed, tone: 평서, text: "{device} (끄지 말고 둬|켜지 말자|그대로 두자)", output: {action: UNSUPPORTED}, devices: [burner_1, burner_2, fryer, light]}
+    # 인사·칭찬 — LoRA v1이 "네"로 냄
+    - {id: aug_un_01, error: unsupported_executed, tone: 평서, text: "(감사합니다|땡큐|수고 많았어|고생했어|오늘도 고마웠어|잘하네)", output: {action: UNSUPPORTED}}
+    # 가게 일 — LoRA v1이 결제 요청으로 냄
+    - {id: aug_un_02, error: unsupported_executed, tone: 명령, text: "(재고|발주|배달 기사|단골 손님|예약 명단) (확인해 줘|불러 줘|알려 줘)", output: {action: UNSUPPORTED}}
+    - {id: aug_un_03, error: unsupported_executed, tone: 명령, text: "(메뉴판|가격표|영업시간) (바꿔 줘|보여 줘|수정해 줘)", output: {action: UNSUPPORTED}}
+    # 시각 알람은 지원 외 ("알람 N분"은 타이머)
+    - {id: aug_un_04, error: unsupported_executed, tone: 명령, text: "알람 (아침 일곱 시에|여덟 시 반에|오후 세 시에) (맞춰 줘|걸어 줘)", output: {action: UNSUPPORTED}}
+  ASK_CLARIFY:
+    # 머뭇거림 — LoRA v1이 "네"·지원 외로 냄
+    - {id: aug_ask_01, error: unsupported_executed, tone: 평서, text: "(뭐였지|뭐라고 하려 했더라|까먹었다|그러니까 그게|아 그거 뭐더라)", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    # 장치 없이 상대 조절 — LoRA v1이 세기를 되물음 (장치를 되물어야 함)
+    - {id: aug_ask_02, error: wrong_value, tone: 명령, text: "(조금만|살짝|한 단계) (더 세게|더 약하게|올려 줘|내려 줘)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [target]}}
