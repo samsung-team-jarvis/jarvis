@@ -2,7 +2,7 @@
 
 > **규칙:** 실측값만 기록한다. 미측정은 `측정 예정`. 모든 값에 측정일·보드·버전·데이터셋·커밋을 남긴다. 최종 판정은 **보드 기준**.
 > 목표치는 달성치가 아니라 개발 우선순위를 정하기 위한 팀 내부 목표다 (5주차 발표 p.14).
-> 2026-10-05 시연 환경을 가상 주방으로 바꿨다 ([decision](./decisions/2026-10-05-virtual-kitchen-demo.md)): 비전·온도·제어 지표는 가상 주방 기준이다. **LLM 결과(§3·§4)는 장치 3종(스키마 v0.1·데이터 v1) 기준**이며, 장치 8종(LLM-13·14)으로 넓히면 다시 잰다.
+> 2026-10-05 시연 환경을 가상 주방으로 바꿨다 ([decision](./decisions/2026-10-05-virtual-kitchen-demo.md)): 비전·온도·제어 지표는 가상 주방 기준이다. **LLM 결과(§3)는 2026-10-06부터 데이터 v2(장치 8종 · 스키마 v0.2) 기준**이다 (LLM-14). 데이터 v1(장치 3종)으로 잰 2026-10-02 값은 §4 측정 로그에 남아 있고, test가 달라 v2 값과 바로 비교할 수 없다.
 
 ## 1. 지표 정의
 
@@ -33,23 +33,23 @@
 
 | 구분 | 목표 | 현재 | 최종 갱신 |
 |---|---|---|---|
-| LLM 명령 | 2,000~3,000쌍 | 2,234쌍 + Hard Negative 84 (train 1,627 · val 337 · test 354, 사람 검수 전) | 2026-10-02 (#63, #65) |
+| LLM 명령 | 2,000~3,000쌍 | 데이터 v2: 3,015쌍 + Hard Negative 165 (train 2,198 · val 508 · test 474, 사람 검수 전) — 장치 8종 · 함수 14개. v1(2,234쌍 + 84, 장치 3종)은 고정본 | 2026-10-06 (#86) |
 | STT 음성 | 500~800 발화 | 40 (spk01 val, quiet, MacBook 마이크) | 2026-10-02 (#61) |
 | YOLO 이미지 (가상 주방 캡처) | 800~1,200장 | 측정 예정 | |
 | 온도 시나리오 (가상 주방) | 20~30개 | 측정 예정 | |
 | 통합 시나리오 | 20~30개 | 측정 예정 | |
-| 양자화 캘리브레이션 | 300~1,000 발화 (Train에서만) | 499 (train에서) | 2026-10-02 (#65) |
+| 양자화 캘리브레이션 | 300~1,000 발화 (Train에서만) | 502 (데이터 v2 train에서) | 2026-10-06 (#86) |
 
 ## 3. 결과표 (동일 Test Set)
 
 | 지표 | Baseline | v1 | v2 | 최종 | 비고 |
 |---|---|---|---|---|---|
-| LLM Action Acc (규칙 파서) | **79.9%** (Entity 79.7%) | - | - | | 비교 기준. LLM test v1 n=354. 규칙이라 보드에서도 같은 값 |
-| LLM Action Acc (기본 모델+프롬프트) | Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1% (Entity 19.2% · 60.2%) | | | | **Mac fp16 참고값** — 보드(.rkllm) 측정은 BOARD-05 이후. Llama-3.2-1B는 HF 승인 대기 |
+| LLM Action Acc (규칙 파서) | **82.5%** (Entity 82.1%) | - | - | | 비교 기준. 데이터 v2 test n=474. 규칙이라 보드에서도 같은 값 (데이터 v1 test n=354에서는 79.9%) |
+| LLM Action Acc (기본 모델+프롬프트) | Qwen3-0.6B 25.7% · Qwen3.5-2B 44.5% (Entity 17.5% · 35.4%) | | | | **Mac fp16 참고값**, 데이터 v2 test · 지시문 v0.2 — 보드(.rkllm) 측정은 BOARD-05 이후. Llama-3.2-1B는 HF 승인 대기. 데이터 v1·지시문 v0.1에서는 32.8% · 66.1% |
 | LLM Action Acc (LoRA, 서버 fp16) | - | 측정 예정 | | | |
 | LLM Action Acc (LoRA, 보드 w8a8) | - | 측정 예정 | | | 양자화 전후 비교 |
-| JSON Valid Rate | Qwen3-0.6B 69.2% · Qwen3.5-2B 88.7% | | | | Mac fp16 참고값 (함수 토큰 형식·스키마 통과율) |
-| Unsafe Action Rate (Guard 전/후) | Guard 전: 규칙 파서 100% · Qwen3-0.6B 37.5% · Qwen3.5-2B 50.0% / Guard 후: 측정 예정 | | | | n=8 (Hard Negative test의 REJECT 대상). 전은 설계상 높다 — 모델 값이 낮은 건 안전해서가 아니라 명령을 못 알아들어서. Guard 후는 FUS-03 이후 |
+| JSON Valid Rate | Qwen3-0.6B 72.6% · Qwen3.5-2B 75.7% | | | | Mac fp16 참고값, 데이터 v2 test (함수 토큰 형식·스키마 통과율) |
+| Unsafe Action Rate (Guard 전/후) | Guard 전: 규칙 파서 100% · Qwen3-0.6B 37.5% · Qwen3.5-2B 87.5% / Guard 후: 측정 예정 | | | | n=8 (데이터 v2 Hard Negative test의 REJECT 대상). 전은 설계상 높다 — 모델 값이 낮은 건 안전해서가 아니라 명령을 못 알아들어서. Guard 후는 FUS-03 이후 |
 | STT CER (quiet/hood/frying/mixed) | 측정 예정 | | | | |
 | STT→Action Acc | 측정 예정 | | | | |
 | YOLO mAP50 (fp32 / INT8) | 측정 예정 | | | | |
@@ -65,3 +65,6 @@
 | 2026-10-02 | 규칙 파서 Baseline (FUS-06) — Action Acc / Entity Acc / Valid / Unsafe(Guard 전) | 79.9% / 79.7% / 100% / 100% (8/8) | 플랫폼 무관 (Mac에서 실행) / `services/llm_svc/rule_parser.py` | LLM split v1 test (n=354: 일반 337 + Hard Negative 17) | 5c5cc24 | 이현종 |
 | 2026-10-02 | 기본 모델+프롬프트 Baseline (LLM-06) Qwen3-0.6B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | 32.8% / 19.2% / 69.2% / 37.5% (3/8), 평균 726 ms/건 | M1 Pro Mac MPS fp16 / torch 2.14.1, transformers 5.18.0, 시스템 프롬프트 + few-shot 13(train), greedy | LLM split v1 test (n=354) | 5c5cc24 | 이현종 |
 | 2026-10-02 | 기본 모델+프롬프트 Baseline (LLM-06) Qwen3.5-2B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | 66.1% / 60.2% / 88.7% / 50.0% (4/8), 평균 2,914 ms/건 (Mac은 최적화 커널 없는 기본 구현이라 느림) | 위와 같음 | LLM split v1 test (n=354) | 5c5cc24 | 이현종 |
+| 2026-10-06 | 규칙 파서 Baseline (FUS-06) — Action Acc / Entity Acc / Valid / Unsafe(Guard 전) | 82.5% / 82.1% / 100% / 100% (8/8). val: 80.1% / 78.7% (n=508) | 플랫폼 무관 (Mac에서 실행) / `services/llm_svc/rule_parser.py` (스키마 v0.2, 고치지 않음) | LLM split **v2** test (n=474: 일반 445 + Hard Negative 29) | 318de25 | 이현종 |
+| 2026-10-06 | 기본 모델+프롬프트 Baseline (LLM-06) Qwen3-0.6B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | 25.7% / 17.5% / 72.6% / 37.5% (3/8), 평균 886 ms/건 | M1 Pro Mac MPS fp16 / torch 2.14.1, transformers 5.18.0, 지시문 v0.2(장치 8종·함수 14개) + few-shot 17(train), greedy | LLM split v2 test (n=474) | 318de25 | 이현종 |
+| 2026-10-06 | 기본 모델+프롬프트 Baseline (LLM-06) Qwen3.5-2B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | 44.5% / 35.4% / 75.7% / 87.5% (7/8), 평균 3,661 ms/건 | 위와 같음 | LLM split v2 test (n=474) | 318de25 | 이현종 |
