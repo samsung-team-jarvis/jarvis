@@ -1,15 +1,18 @@
-"""규칙 기반 파서 v0 (FUS-02): 호출어 뒤 명령 문장 → Function Call (interfaces §3).
+"""규칙 기반 파서 (FUS-02, 스키마 v0.2): 호출어 뒤 명령 문장 → Function Call (interfaces §3).
 
 키워드 규칙만 쓴다. LLM이 생기면 LLM 출력 검증 실패 시 대체 경로이자 비교 기준선이다
 (docs/decisions/2026-10-01-rule-parser-baseline.md).
 
 판단 순서 (앞에서 정해지면 끝):
   1. 빈 문장(호출어만)            → ASK_CLARIFY (의도 불명)
-  2. 긴급어 (타이머 이야기가 아닐 때) → EMERGENCY_STOP
-  3. 타이머                      → CANCEL_TIMER / SET_TIMER / 시간 되묻기
-  4. 위험 확인 → CHECK_RISK,  5. 상태 확인 → CHECK_STATUS
-  6. 세기 → SET_LEVEL,  7. 켜기/끄기 → TURN_ON / TURN_OFF
-  8. 장치만 말함 → ASK_CLARIFY (의도 불명),  그 외 → UNSUPPORTED
+  2. "네"·"아니요"만 말함          → CONFIRM / DENY
+  3. 긴급어 (타이머 이야기가 아닐 때) → EMERGENCY_STOP
+     (조명·에어컨·선풍기·음악을 멈추라는 말이면 그 장치의 TURN_OFF)
+  4. 결제                        → CHECK_AMOUNT (금액을 물음) / REQUEST_PAYMENT
+  5. 타이머                      → CANCEL_TIMER / SET_TIMER / 시간 되묻기
+  6. 위험 확인 → CHECK_RISK,  7. 상태 확인 → CHECK_STATUS
+  8. 세기 → SET_LEVEL,  9. 켜기/끄기 → TURN_ON / TURN_OFF
+  10. 장치만 말함 → ASK_CLARIFY (의도 불명),  그 외 → UNSUPPORTED
 필요한 장치가 빠졌으면 ASK_CLARIFY {for_action, missing: ["target"]}.
 """
 
@@ -18,7 +21,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from common.function_call import DEVICES, MAX_DURATION_S, validate
+from common.function_call import DEVICES, MAX_DURATION_S, TARGETS, TIMER_TARGETS, validate
 
 # 비교는 띄어쓰기·문장부호를 지운 문장으로 한다 ("2 화국 꺼줘." → "2화국꺼줘")
 _NOT_WORD = re.compile(r"[^0-9A-Za-z가-힣]")
@@ -34,17 +37,31 @@ STATUS = re.compile(r"(켜져|꺼져)있|상태")
 STATUS_WITH_DEVICE = re.compile(
     r"어때|확인|어떻게됐"
 )  # 장치 이름과 같이 나올 때만 ("날씨 어때"는 아님)
+# 조명은 밝기(어둡게·밝게), 음악은 음량(작게·크게)으로 말한다 — 모두 세기 1~3
 LEVEL_WORDS = [
-    (re.compile(r"세게|강하게|강으로|강하|최대|제일세"), 3),
+    (re.compile(r"세게|강하게|강으로|강하|최대|제일세|밝게|환하게|크게"), 3),
     (re.compile(r"중간|보통|중으로"), 2),
-    (re.compile(r"약하게|약으로|약하|최소|살살|약불"), 1),
+    (re.compile(r"약하게|약으로|약하|최소|살살|약불|어둡게|작게|조용히"), 1),
 ]
 LEVEL_NUMBER = re.compile(r"([1-3]|일|이|삼|한|두|세)단")
-LEVEL_RELATIVE = re.compile(r"더|올려|높여|줄여|낮춰|내려")
-TURN_ON = re.compile(r"켜|틀어|작동|돌려")
+LEVEL_RELATIVE = re.compile(r"더|올려|높여|줄여|낮춰|내려|키워")
+TURN_ON = re.compile(r"켜|틀어|작동|돌려|재생")
 TURN_OFF = re.compile(r"꺼|끄|중지")
+YES = re.compile(r"(네|예|응|그래|맞아|좋아|오케이|확인)+요?")
+NO = re.compile(r"아니|아니요|아니오|아니야|아냐|싫어|하지마|안해|취소|취소해|취소해줘|됐어")
+# "계산"은 문장 맨 앞에 올 때만 결제로 본다 ("칼로리 계산해 줘"는 결제가 아니다)
+PAYMENT = re.compile(r"결제|^(?:손님|카드로|현금으로)?계산")
+AMOUNT = re.compile(r"금액|가격|합계|총액|얼마(?!나)|얼마나?나왔")
+PAYMENT_CANCEL = re.compile(r"취소|하지마|안해|말고")
 
-HOOD = re.compile(r"후드|환풍기|환기|팬")
+HOOD = re.compile(r"후드|환풍기|환기|팬")  # 환풍기는 후드와 같은 장치다
+FRYER = re.compile(r"튀김기|프라이어")
+LIGHT = re.compile(r"조명|전등|형광등|불빛|라이트")
+AIRCON = re.compile(r"에어컨|에어콘|냉방")
+FAN = re.compile(r"선풍기")
+MUSIC = re.compile(r"음악|노래|뮤직|볼륨|음량|소리")
+# 긴급어("멈춰", "정지")와 같이 나와도 긴급 정지가 아니라 그 장치를 끄는 것으로 보는 장치
+NOT_URGENT = ("light", "aircon", "fan", "music")
 # "화국"은 SenseVoice가 "화구"를 받아쓴 실제 출력 (Mac, 합성 음성 — audio_svc README)
 BURNER_WORD = r"(?:화구|화국|버너|가스|불)"
 BURNER_NUMBERED = re.compile(
@@ -111,8 +128,17 @@ def find_target(text: str) -> str | None:
     """장치 이름. 화구인데 번호가 없거나 없는 번호면 '?' (되물어야 함)."""
     if ALL.search(text):
         return "all"
-    if HOOD.search(text):
-        return "hood"
+    # 조명은 화구보다 먼저 본다 ("불빛"의 '불'이 화구로 읽히지 않게)
+    for pattern, name in (
+        (LIGHT, "light"),
+        (FRYER, "fryer"),
+        (AIRCON, "aircon"),
+        (FAN, "fan"),
+        (MUSIC, "music"),
+        (HOOD, "hood"),
+    ):
+        if pattern.search(text):
+            return name
     m = BURNER_NUMBERED.search(text)
     if m:
         n = _NUM_WORD.get(m.group(1) or m.group(2))
@@ -155,14 +181,26 @@ def parse(command: str) -> dict[str, Any]:
 def _parse(text: str) -> dict[str, Any]:
     if not text:
         return _ask(None)
+    if YES.fullmatch(text):
+        return {"action": "CONFIRM"}
+    if NO.fullmatch(text):
+        return {"action": "DENY"}
 
     timer = bool(TIMER.search(text))
-    if EMERGENCY.search(text) and not timer:
-        return {"action": "EMERGENCY_STOP", "target": "all"}
-
     target = find_target(text)
+    if EMERGENCY.search(text) and not timer:
+        if target in NOT_URGENT:  # "음악 멈춰", "선풍기 정지"
+            return {"action": "TURN_OFF", "target": target}
+        return {"action": "EMERGENCY_STOP", "target": "all"}
+    if not timer and (PAYMENT.search(text) or AMOUNT.search(text)):
+        if PAYMENT_CANCEL.search(text):  # "결제 취소", "결제하지 마"
+            return {"action": "DENY"}
+        return {"action": "CHECK_AMOUNT" if AMOUNT.search(text) else "REQUEST_PAYMENT"}
+
     seconds = duration_s(text)
     if timer or (seconds is not None and TIMER_LATER.search(text)):
+        if target not in (None, "?") and target not in TIMER_TARGETS:
+            return {"action": "UNSUPPORTED"}  # 조명·에어컨·선풍기·음악에는 타이머가 없다
         if timer and TIMER_CANCEL.search(text) and seconds is None:
             call: dict[str, Any] = {"action": "CANCEL_TIMER"}
             if target not in (None, "?"):
@@ -194,7 +232,7 @@ def _parse(text: str) -> dict[str, Any]:
         return {"action": "SET_LEVEL", "target": target, "level": level}
 
     if TURN_OFF.search(text):
-        return _with_target("TURN_OFF", target, ("hood", "burner_1", "burner_2", "all"))
+        return _with_target("TURN_OFF", target, TARGETS)
     if TURN_ON.search(text):
         return _with_target("TURN_ON", target, DEVICES)
     if level is not None:  # "세게 해 줘"처럼 장치 없이 세기만

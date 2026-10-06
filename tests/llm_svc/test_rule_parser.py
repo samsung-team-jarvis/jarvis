@@ -60,8 +60,42 @@ CASES = [
     ("후드", ask(None)),
     ("오늘 날씨 어때?", {"action": "UNSUPPORTED"}),
     ("냉장고 문 닫았어?", {"action": "UNSUPPORTED"}),
-    # v0 한계: 모르는 대상 + 켜기 동사는 장치를 되묻는다 (LLM과 비교할 지점, FUS-06)
-    ("노래 틀어 줘", ask("TURN_ON", "target")),
+    # 한계: 모르는 대상 + 켜기 동사는 장치를 되묻는다 (LLM과 비교할 지점, FUS-06)
+    ("커피 머신 켜 줘", ask("TURN_ON", "target")),
+    # 스키마 v0.2 — 새 장치 (LLM-13)
+    ("튀김기 켜 줘", {"action": "TURN_ON", "target": "fryer"}),
+    ("튀김기 세게", {"action": "SET_LEVEL", "target": "fryer", "level": 3}),
+    ("튀김기 5분 뒤에 꺼 줘", {"action": "SET_TIMER", "target": "fryer", "duration_s": 300}),
+    ("조명 켜줘", {"action": "TURN_ON", "target": "light"}),
+    ("조명 좀 어둡게 해줘", {"action": "SET_LEVEL", "target": "light", "level": 1}),
+    (
+        "불빛 밝게",
+        {"action": "SET_LEVEL", "target": "light", "level": 3},
+    ),  # '불'이 화구로 읽히지 않는다
+    ("에어컨 꺼줘", {"action": "TURN_OFF", "target": "aircon"}),
+    ("에어컨 켜져 있어?", {"action": "CHECK_STATUS", "target": "aircon"}),
+    ("에어컨 10분 뒤에 꺼 줘", {"action": "UNSUPPORTED"}),  # 타이머는 가열 장치·후드에만
+    ("선풍기 약하게", {"action": "SET_LEVEL", "target": "fan", "level": 1}),
+    ("선풍기 정지", {"action": "TURN_OFF", "target": "fan"}),  # 긴급 정지가 아니라 선풍기 끄기
+    ("노래 틀어 줘", {"action": "TURN_ON", "target": "music"}),
+    ("음악 멈춰", {"action": "TURN_OFF", "target": "music"}),
+    ("소리 크게 해 줘", {"action": "SET_LEVEL", "target": "music", "level": 3}),
+    ("볼륨 줄여 줘", ask("SET_LEVEL", "level")),  # 상대 조절은 되묻기
+    ("환풍기 세게", {"action": "SET_LEVEL", "target": "hood", "level": 3}),  # 환풍기 = 후드
+    ("전부 정지", {"action": "EMERGENCY_STOP", "target": "all"}),
+    # 결제 — 금액은 말로 받지 않는다
+    ("얼마야?", {"action": "CHECK_AMOUNT"}),
+    ("결제 금액 확인해 줘", {"action": "CHECK_AMOUNT"}),
+    ("결제해 줘", {"action": "REQUEST_PAYMENT"}),
+    ("카드로 계산해 줘", {"action": "REQUEST_PAYMENT"}),
+    ("결제 취소", {"action": "DENY"}),
+    ("칼로리 계산해 줘", {"action": "UNSUPPORTED"}),  # 문장 맨 앞의 "계산"만 결제로 본다
+    # 확인에 대한 답 — 그 말만 했을 때
+    ("네", {"action": "CONFIRM"}),
+    ("그래요.", {"action": "CONFIRM"}),
+    ("아니요", {"action": "DENY"}),
+    ("취소", {"action": "DENY"}),
+    ("아니 후드 꺼", {"action": "TURN_OFF", "target": "hood"}),  # 다른 말이 붙으면 그 명령
 ]
 
 
