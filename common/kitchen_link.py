@@ -23,7 +23,7 @@ TOPIC_HEARTBEAT = "kitchen/heartbeat"  # 보드 → 가상 주방: 생존 신호
 TOPIC_STATE = "kitchen/state"  # 가상 주방 → 보드: 장치 상태
 
 CMDS = ("ON", "OFF", "LEVEL")
-HEATERS = ("burner_1", "burner_2")  # 온도를 가진 가열 장치 (v0.2에서 튀김기 추가)
+HEATERS = ("burner_1", "burner_2", "fryer")  # 온도를 가진 가열 장치
 
 ACK_TIMEOUT_S = 0.5  # 이 안에 확인이 없으면 다시 보낸다
 MAX_RETRIES = 1  # 다시 보내는 횟수

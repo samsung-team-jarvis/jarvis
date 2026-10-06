@@ -40,7 +40,7 @@ Unity 없이 보드 쪽을 개발할 때는 브로커 → 가짜 가상 주방 �
 Unity 쪽이 맞춰야 할 동작([Unity 안내](../../recipes/unity-kitchen-link.md))을 Python으로 옮긴 기준 구현이다. 화면(`kitchen/frame`)은 없다.
 
 - 명령을 적용하고 `kitchen/ack`를 보낸다. 같은 `seq`는 한 번만 실행하고 확인만 다시 보낸다 (최근 64개 기억).
-- 가열 장치(`burner_1`, `burner_2`)의 온도를 규칙대로 바꿔 1초마다 `kitchen/temp`로 보낸다 (`common.kitchen_link.next_temperature`).
+- 가열 장치(`burner_1`, `burner_2`, `fryer`)의 온도를 규칙대로 바꿔 1초마다 `kitchen/temp`로 보낸다 (`common.kitchen_link.next_temperature`).
 - 자체 안전장치: 생존 신호가 3초 끊기면 가열 장치를 끄고, 끊긴 동안에는 가열 장치를 켜는 명령을 거절한다 (`reason: "no_heartbeat"`). 온도가 265°C에 닿은 가열 장치는 스스로 끈다. 둘 다 `kitchen/state`의 `safe_stop`이 `true`가 된다.
 - `kitchen/state`는 상태가 바뀔 때와 5초마다 보낸다.
 
