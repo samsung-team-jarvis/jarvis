@@ -1,7 +1,7 @@
 import json
 
 from bench import llm_eval as le
-from common.function_call import to_tokens
+from common.function_call import ACTIONS, DEVICES, parse_tokens, to_tokens
 
 SPLIT = le.SPLIT_DIR
 
@@ -64,7 +64,7 @@ def test_few_shot_comes_only_from_train_and_covers_actions() -> None:
     keys = {(r["instruction"], json.dumps(r["context"])) for r in train}
     assert all((r["instruction"], json.dumps(r["context"])) in keys for r in examples)
     actions = {r["output"]["action"] for r in examples}
-    assert {"TURN_ON", "SET_TIMER", "EMERGENCY_STOP", "ASK_CLARIFY", "UNSUPPORTED"} <= actions
+    assert actions == set(ACTIONS)  # 함수 14개가 예시에 한 번씩은 나온다
     test_texts = {r["instruction"] for r in load("test")}
     assert not [r for r in examples if r["instruction"] in test_texts]
 
@@ -74,3 +74,11 @@ def test_user_message_includes_context() -> None:
     r["context"]["last_target"] = "hood"
     assert "마지막 장치=hood" in le.user_message(r) and "그거 꺼줘" in le.user_message(r)
     assert to_tokens(r["output"]) == "<jarvis_2>(target=hood)<jarvis_end>"
+
+
+def test_system_prompt_lists_every_device_and_function() -> None:
+    for device in DEVICES:
+        assert device in le.SYSTEM_PROMPT
+    for number in range(1, len(ACTIONS) + 1):
+        assert f"\n{number} " in le.SYSTEM_PROMPT
+    assert parse_tokens("<jarvis_12>()<jarvis_end>") == {"action": "REQUEST_PAYMENT"}
