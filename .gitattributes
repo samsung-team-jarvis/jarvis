@@ -1,0 +1,3 @@
+# 텍스트 파일은 OS와 git 설정(Windows 기본 core.autocrlf=true)에 상관없이 LF로 꺼낸다.
+# 대본 CSV처럼 LF를 검사하는 파일이 있다 (#53, #77).
+* text=auto eol=lf

@@ -2,10 +2,13 @@
 
 import importlib.util
 import io
+import os
 import pathlib
 import subprocess
 import sys
 import threading
+
+import pytest
 
 LAUNCH = pathlib.Path(__file__).resolve().parents[1] / "launch.py"
 _spec = importlib.util.spec_from_file_location("launch", LAUNCH)
@@ -61,6 +64,8 @@ def test_restart_failed_service_up_to_limit() -> None:
     assert "fail 종료 (code 3)" in out
 
 
+# Windows의 send_signal(SIGTERM)은 TerminateProcess라 SIGTERM을 무시하는 프로세스가 없다
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows는 SIGTERM이 곧 강제 종료")
 def test_stop_kills_service_ignoring_sigterm() -> None:
     launcher = launch.Launcher([spec("stubborn", STUBBORN)], stop_timeout_s=0.5, out=io.StringIO())
     out = run(launcher, seconds=1.0)
@@ -77,7 +82,10 @@ def test_config_loads_modules_in_order() -> None:
 
 def test_cli_rejects_unknown_service() -> None:
     result = subprocess.run(
-        [sys.executable, str(LAUNCH), "--only", "nope"], capture_output=True, text=True
+        [sys.executable, str(LAUNCH), "--only", "nope"],
+        capture_output=True,
+        encoding="utf-8",
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},  # Windows 기본 인코딩(cp949)과 무관하게
     )
     assert result.returncode == 1
     assert "설정에 없는 서비스" in result.stderr

@@ -1,13 +1,17 @@
 import hashlib
+import os
 import pathlib
 import subprocess
 import sys
 
 SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "artifact_info.py"
+UTF8_ENV = {**os.environ, "PYTHONIOENCODING": "utf-8"}  # Windows 기본 인코딩(cp949)과 무관하게
 
 
 def run(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True)
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), *args], capture_output=True, encoding="utf-8", env=UTF8_ENV
+    )
 
 
 def test_prints_registry_row(tmp_path: pathlib.Path) -> None:

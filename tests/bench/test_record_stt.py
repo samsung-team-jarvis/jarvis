@@ -63,7 +63,7 @@ def test_resume_skips_recorded_unless_redo(tmp_path: pathlib.Path) -> None:
     assert again.run() == 0 and "0/2문장 남음" in said[0]
     redo, _ = session(tmp_path, ["s", "s"], [], redo=True)
     assert redo.run() == 0  # 건너뛰기만 해도 기존 매니페스트는 그대로
-    assert len(list(csv.DictReader((tmp_path / "stt/manifest.csv").open()))) == 2
+    assert len(list(csv.DictReader((tmp_path / "stt/manifest.csv").open(encoding="utf-8")))) == 2
 
 
 def test_rerecord_on_r(tmp_path: pathlib.Path) -> None:
