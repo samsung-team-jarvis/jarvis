@@ -32,6 +32,20 @@ DATA_DIR = pathlib.Path(__file__).resolve().parents[1] / "data/llm"
 DATA_VERSION = "v2"
 SPLIT_DIR = DATA_DIR / f"split_{DATA_VERSION}"
 UNSAFE_ACTIONS = {"TURN_ON", "SET_LEVEL"}
+# 예측 CSV 열 (bench/llm_errors.py가 읽는다). 가족·범주는 오류를 데이터와 잇는 데 쓴다
+CSV_COLUMNS = [
+    "instruction",
+    "state",
+    "last_target",
+    "expected",
+    "raw",
+    "valid",
+    "correct",
+    "ms",
+    "template_id",
+    "group",
+    "category",
+]
 
 PROMPT_VERSION = "v0.2"  # 스키마 v0.2 (장치 8종 · 함수 14개)
 SYSTEM_PROMPT = "\n".join(
@@ -272,9 +286,7 @@ def main() -> int:
     if args.csv:
         with open(args.csv, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(
-                ["instruction", "state", "last_target", "expected", "raw", "valid", "correct", "ms"]
-            )
+            w.writerow(CSV_COLUMNS)
             for x in rows:
                 r = x["record"]
                 w.writerow(
@@ -287,6 +299,9 @@ def main() -> int:
                         x["valid"],
                         x["pred"] == r["output"],
                         f"{x['ms']:.0f}",
+                        r["meta"].get("template_id", ""),
+                        r["meta"].get("group") or r["meta"].get("template_id", ""),
+                        r["meta"].get("category") or "",
                     ]
                 )
         print(f"\nCSV: {args.csv}")
