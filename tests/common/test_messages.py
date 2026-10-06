@@ -31,7 +31,7 @@ def test_json_keeps_korean_text() -> None:
     [
         ("unknown/topic", {}, "없는 토픽"),
         ("system/heartbeat", {}, "필수 필드"),
-        ("sensor/reading", {"device_id": "x", "temperature_c": 1}, "current_a"),
+        ("sensor/reading", {"device_id": "x"}, "temperature_c"),
     ],
 )
 def test_rejects_invalid_payload(type_: str, payload: dict, error: str) -> None:

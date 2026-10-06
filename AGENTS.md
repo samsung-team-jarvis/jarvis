@@ -32,6 +32,7 @@ agent용 허브 문서다. 상세 규칙을 여기에 복붙하지 말고, 작�
 | YOLO 학습·RKNN 변환 | `recipes/yolo-to-rknn.md`, `.claude/skills/experiment-workflow/SKILL.md` |
 | LLM 데이터·학습·RKLLM 변환 | `recipes/llm-to-rkllm.md`, `docs/architecture/interfaces.md` §3, `.claude/skills/experiment-workflow/SKILL.md` |
 | STT 평가 | `recipes/stt-eval.md`, `.claude/skills/experiment-workflow/SKILL.md` |
+| 가상 주방 연결 (`kitchen_gw`·Unity) | `docs/architecture/interfaces.md` §4, `recipes/unity-kitchen-link.md`, `common/kitchen_link.py` |
 | 측정·실험 기록 | `docs/workflows/experiment.md`, `docs/METRICS.md`, `templates/experiment.spec.md` |
 | 안전 규칙 (Guard·ESP32) | `docs/decisions/2026-10-01-safety-layers.md`, `docs/architecture/overview.md` §2 |
 | 결정 기록 | `docs/decisions/index.md`, `docs/decisions/open-questions.md` |
