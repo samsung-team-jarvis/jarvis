@@ -105,3 +105,18 @@ v1의 가족 181개 중 175개가 v2에 남았고 모두 v1과 같은 split에 �
 ```bash
 python3.11 -m venv .venv-llm && .venv-llm/bin/pip install -r training/llm/requirements-eval.txt
 ```
+
+## 학습 (LLM-07)
+
+LoRA로 학습해 베이스에 병합하고 fp16 HF 모델로 저장한다. 같은 가상환경(`.venv-llm`)을 쓴다.
+
+```bash
+.venv-llm/bin/python -m training.llm.train_lora --limit 32 --epochs 1        # 먼저 끝까지 도는지 (1분 안쪽)
+.venv-llm/bin/python -m training.llm.train_lora                              # Qwen3-0.6B, 데이터 v2 → runs/llm/llm_qwen3-0.6b_jarvis_v1/
+.venv-llm/bin/python -m bench.llm_eval --engine hf --finetuned --model runs/llm/llm_qwen3-0.6b_jarvis_v1 --split val
+```
+
+- **입력 형식**: 짧은 지시문 + 사용자 메시지, 예시 없음. 정답은 함수 토큰 + 모델의 끝 토큰이고 loss는 정답에만 건다 ([decision](../../docs/decisions/2026-10-06-llm-input-format.md), 문장은 [`services/llm_svc/prompt.py`](../../services/llm_svc/prompt.py)). 평가할 때는 `--finetuned`로 같은 입력을 준다.
+- **설정**: LoRA r=16 · alpha=32 · dropout 0.05, attention·MLP의 선형층 7종, lr 2e-4 (warmup 5% → cosine), 배치 16(4×4), 3 epoch, seed 0. 2026-10-05 Mac 시험 학습과 같은 값이다.
+- **저장물** `runs/llm/<이름>/`: 병합된 fp16 모델, 토크나이저, `train_log.json`(설정·epoch별 loss·실제 입력 예시·끝 토큰). git에 넣지 않고 [등록부](../../docs/artifacts.md)에 한 줄 남긴다.
+- **어디서**: Mac(16GB, MPS)에서는 Qwen3-0.6B까지 확인했다 (fp32 학습). 더 큰 베이스는 [`train_lora.ipynb`](../colab/train_lora.ipynb) (Colab GPU, 미검증).
