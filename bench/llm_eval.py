@@ -26,6 +26,7 @@ import time
 from collections import defaultdict
 
 from common.function_call import FunctionCallError, parse_tokens, to_tokens
+from services.llm_svc import prompt
 
 DATA_DIR = pathlib.Path(__file__).resolve().parents[1] / "data/llm"
 DATA_VERSION = "v2"
@@ -64,9 +65,7 @@ SYSTEM_PROMPT = "\n".join(
 
 
 def user_message(record: dict) -> str:
-    ctx = record["context"]
-    last = ctx.get("last_target") or "없음"
-    return f"상황: state={ctx['state']}, 마지막 장치={last}\n말: {record['instruction']}"
+    return prompt.user_message(record["instruction"], record["context"])
 
 
 def few_shot(train: list[dict]) -> list[dict]:
@@ -127,7 +126,13 @@ class RuleEngine:
 
 
 class HFEngine:
-    def __init__(self, model_id: str, examples: list[dict], device: str | None = None) -> None:
+    def __init__(
+        self,
+        model_id: str,
+        examples: list[dict],
+        device: str | None = None,
+        system_prompt: str = SYSTEM_PROMPT,
+    ) -> None:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -145,7 +150,7 @@ class HFEngine:
 
             model = AutoModelForImageTextToText.from_pretrained(model_id, dtype=torch.float16)
         self.model = model.to(self.device).eval()
-        self.prefix = [{"role": "system", "content": SYSTEM_PROMPT}]
+        self.prefix = [{"role": "system", "content": system_prompt}]
         for r in examples:
             self.prefix += [
                 {"role": "user", "content": user_message(r)},
@@ -211,7 +216,7 @@ def report(rows: list[dict], name: str) -> str:
 
     m = metrics(rows)
     lines = [
-        f"### {name} (n={m['n']}, 지시문 {PROMPT_VERSION})",
+        f"### {name} (n={m['n']})",
         "",
         "| Action Acc | Entity Acc | Valid Rate | Unsafe (Guard 전) | 평균 ms |",
         "|---|---|---|---|---|",
@@ -233,7 +238,12 @@ def report(rows: list[dict], name: str) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="명령 해석(규칙 파서·LLM)을 test로 평가한다")
     parser.add_argument("--engine", choices=["rule", "hf"], required=True)
-    parser.add_argument("--model", default=None, help="hf 엔진의 Hugging Face 모델 id")
+    parser.add_argument("--model", default=None, help="hf 엔진의 Hugging Face 모델 id 또는 폴더")
+    parser.add_argument(
+        "--finetuned",
+        action="store_true",
+        help="학습한 모델: 짧은 지시문만, 예시 없음 (services/llm_svc/prompt.py)",
+    )
     parser.add_argument("--data", choices=["v1", "v2"], default=DATA_VERSION, help="데이터 버전")
     parser.add_argument("--split", default="test")
     parser.add_argument("--limit", type=int, default=None, help="앞에서 N개만 (빠른 확인용)")
@@ -249,10 +259,16 @@ def main() -> int:
     else:
         if not args.model:
             parser.error("--engine hf에는 --model이 필요합니다")
-        train = [json.loads(line) for line in (split_dir / "train.jsonl").open(encoding="utf-8")]
-        engine = HFEngine(args.model, few_shot(train))
+        if args.finetuned:
+            engine = HFEngine(args.model, [], system_prompt=prompt.FINETUNED_SYSTEM_PROMPT)
+        else:
+            train = [
+                json.loads(line) for line in (split_dir / "train.jsonl").open(encoding="utf-8")
+            ]
+            engine = HFEngine(args.model, few_shot(train))
     rows = evaluate(records, engine, args.limit)
-    print(report(rows, f"{engine.name} · split_{args.data}/{args.split}"))
+    setting = "학습 모델용 짧은 지시문" if args.finetuned else f"지시문 {PROMPT_VERSION} + few-shot"
+    print(report(rows, f"{engine.name} · split_{args.data}/{args.split} · {setting}"))
     if args.csv:
         with open(args.csv, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)

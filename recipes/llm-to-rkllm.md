@@ -35,6 +35,7 @@
 - 전체 / LoRA / QLoRA 중 선택. **LoRA·QLoRA는 반드시 병합해서 fp16/fp32 HF 모델 디렉터리로 저장** (QLoRA는 4bit 베이스를 fp16으로 복원 → 병합 → 저장). 툴킷 API에는 LoRA 분리 변환 인자(`model_lora`)가 있지만, 학교 도커 절차는 병합 모델을 입력으로 한다.
 - 시작값은 선정 모델의 권장 예제 설정. learning rate·epoch·scheduler·warmup·seed를 기록.
 - 소량 시험 학습(로딩 → 학습 → 저장 → 재로딩)을 먼저 끝까지 돌린다.
+- 우리 스크립트: [`training/llm/train_lora.py`](../training/llm/train_lora.py) (LoRA → 병합 → fp16 저장), 입력 형식은 [decision](../docs/decisions/2026-10-06-llm-input-format.md). 변환의 `system_prompt`·`prompt_template`은 저장물의 `train_log.json` `prompt_example`과 글자까지 같아야 한다.
 - 최저 loss만으로 고르지 말고 검증 문항의 실제 답을 본다.
 
 ## 3. 변환 준비물 (특강 p.23~26)

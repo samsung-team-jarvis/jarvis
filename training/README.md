@@ -16,6 +16,8 @@
 | `llm/plan_sheet.yaml` · `llm/build_seed.py` | LLM 기획 시트 → Seed·Hard Negative 데이터 (`data/llm/`) — [llm](./llm/README.md) | 어디서나 |
 | `llm/paraphrase_sheet.yaml` · `llm/build_dataset.py` | Seed + Paraphrase → 데이터 v2 (`data/llm/dataset_v2.jsonl`) | 어디서나 |
 | `llm/split_dataset.py` | 가족 단위 Train/Val/Test + 캘리브레이션 (`data/llm/split_v2/`) | 어디서나 |
+| `llm/train_lora.py` | LoRA 학습 → 병합 → fp16 저장 (`runs/llm/`) — [llm](./llm/README.md#학습-llm-07) | Mac(0.6B) · GPU |
+| `colab/train_lora.ipynb` | 위 스크립트를 Colab GPU에서 (더 큰 베이스) | Colab (GPU, 미검증) |
 
 ## 주의
 

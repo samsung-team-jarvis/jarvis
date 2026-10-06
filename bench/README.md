@@ -53,6 +53,7 @@ python -m bench.llm_eval --engine rule                                          
 python -m bench.llm_eval --engine rule --split val --csv val.csv                # 오류 분석은 val로
 .venv-llm/bin/python -m bench.llm_eval --engine hf --model Qwen/Qwen3-0.6B      # 기본 모델 + 프롬프트
 python -m bench.llm_eval --engine rule --data v1                                # 데이터 v1 (장치 3종 고정본)
+.venv-llm/bin/python -m bench.llm_eval --engine hf --finetuned --model runs/llm/<이름>   # 학습한 모델 (짧은 지시문, 예시 없음)
 ```
 
 | 지표 | 정의 |

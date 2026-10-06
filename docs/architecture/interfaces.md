@@ -133,7 +133,7 @@
 - 값: target 이름, 숫자(아라비아 숫자, "삼 분" → `min=3`), 또는 `?`.
 - 시간은 `min`·`sec`로 쓰고 `llm_svc`가 `duration_s = min×60 + sec`로 바꾼다 (작은 모델에게 곱셈을 시키지 않는다).
 - **`?` = 말에 빠진 값** (SUDA의 -1). 하려는 Action 번호에 `?`를 넣으면 `ASK_CLARIFY {for_action, missing}`이 된다. 무엇을 하려는지도 모르면 `<jarvis_9>()`.
-- 끝 토큰 `<jarvis_end>`는 생성 종료·캘리브레이션 절단(`calib_stop_at`) 기준이다. 토크나이저에 특수 토큰으로 넣을지는 LLM 학습 단계에서 정한다.
+- 끝 토큰 `<jarvis_end>`까지가 명령이다 (`llm_svc`는 그 뒤를 읽지 않는다). 함수 토큰은 토크나이저에 특수 토큰으로 넣지 않고, 학습한 모델은 `<jarvis_end>` 뒤에 모델의 대화 끝 토큰을 내고 멈춘다 ([decision](../decisions/2026-10-06-llm-input-format.md), LLM-07).
 
 ### 3.3 예시
 
@@ -269,3 +269,4 @@
 | 2026-10-06 | v0.1 | §4 보드 ↔ 가상 주방 확정: `kitchen/*` 연결 토픽 6개, 재시도·중복 방지, 자체 안전장치, 가상 온도 규칙. §2 `control/command` 값(`ON`·`OFF`·`LEVEL`) 확정, `sensor/reading`의 `current_a`를 선택 필드로 (#80, HW-14) | 이현종 |
 | 2026-10-06 | v0.1 | §4.3 `control/result`의 `reason`, §4.4 생존 신호가 끊긴 동안 가열 장치 켜기 거절 — `kitchen_gw` 구현하며 명시 (#82, HW-17) | 이현종 |
 | 2026-10-06 | **v0.2** | §2.2 target에 `fryer`·`light`·`aircon`·`fan`·`music` 추가(세기 1~3 통일, 타이머는 가열 장치·후드·전체), §3.1 Action 11~14(`CHECK_AMOUNT`·`REQUEST_PAYMENT`·`CONFIRM`·`DENY`) 추가, §3.3 예시, §5를 남은 변경으로 정리. 기존 이름·번호는 그대로 (#84, LLM-13) | 이현종 |
+| 2026-10-06 | v0.2 | §3.2 함수 토큰은 특수 토큰으로 넣지 않고, 학습한 모델은 `<jarvis_end>` 뒤에 모델의 대화 끝 토큰을 낸다 — **필드·문법 변경 없음** (#88, LLM-07) | 이현종 |
