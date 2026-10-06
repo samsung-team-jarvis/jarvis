@@ -18,8 +18,8 @@
 | Q-09 | 비전 라벨링 도구 | **Roboflow 무료 플랜** 기본 (웹 GUI, 세트 분할, YOLOv8 zip export가 `train_yolo.ipynb` 입력 형식과 같음 → 코딩 없이 가능). 무료 플랜의 조건(데이터셋 공개 여부·이미지 수 한도)은 가입 시 확인 필요 — 공개 조건이면 **사람 얼굴이 찍히지 않게** 촬영한다. 조건이 맞지 않으면 무료·로컬인 Label Studio 또는 CVAT로 대체 | ✅ (조건 확인은 VIS-04 시작 시) |
 | Q-10 | LLM 출력 형식 | **SUDA식 함수 토큰 형식**으로 출력시키고 `llm_svc`가 파싱해 interfaces §3의 Function Call(JSON)로 바꿔 버스에 발행한다. 예: `<jarvis_3>(target=hood, level=3)<jarvis_end>` (문법은 LLM-01에서 확정 → [interfaces](../architecture/interfaces.md) §3.2, [decision](./2026-10-02-function-call-schema.md)). 이유: JSON보다 출력 토큰이 적어 생성 지연이 줄고(소형 모델 tok/s가 낮음), 끝 토큰으로 생성 종료·캘리브레이션 절단(`calib_stop_at`)이 확실하다. 버스·Safety Guard가 보는 형식(JSON)은 바뀌지 않는다 | ✅ (문법 확정 #39) |
 | Q-11 | 메타버스 플랫폼 | **Unity 6.3 LTS** (Unity Personal, 무료) ([decision](./2026-10-05-unity-virtual-kitchen.md)). 선택 기준 ① 보드와 메시지(Unity 안의 MQTT 클라이언트, MQTTnet 4.3.7) ② 인식용 카메라 화면 캡처(RenderTexture → JPEG) ③ 장치 상태 스크립트(C#) ④ 비용([budget](../budget.md))을 2026-10-05 공식 문서로 확인했다. 실제 동작은 HW-16·HW-20에서 확인한다 (그 전까지는 [simulator](../../services/simulator/README.md)의 가짜 메시지로 개발) | ✅ (실동작 미검증) |
-| Q-12 | 보드 ↔ 가상 주방 연결 방식 | HW-14에서 확정. 기본 방향: 보드의 버스(MQTT) 메시지를 그대로 쓰고, 가상 주방(Unity) 쪽에 메시지를 주고받는 연결 부분만 둔다 ([interfaces](../architecture/interfaces.md) §4) | ⏳ HW-14 |
-| Q-13 | 가상 온도 계산 규칙 | 가열 장치의 세기와 켜 둔 시간으로 오르내리게 한다. 수치(오르는 속도, 위험 구간)는 HW-19·FUS-05에서 정한다 | ⏳ HW-19·FUS-05 |
+| Q-12 | 보드 ↔ 가상 주방 연결 방식 | Unity가 보드의 MQTT 브로커에 접속해 **봉투 없는 연결 토픽(`kitchen/*`)** 으로 주고받고, 보드의 `kitchen_gw`가 버스 메시지로 옮기며 보드 시계로 시각을 찍는다. 캡처 화면은 `kitchen/frame`(JPEG 640×360, 1초에 4장) ([decision](./2026-10-06-kitchen-link.md), [interfaces](../architecture/interfaces.md) §4) | ✅ (Unity와의 실동작은 HW-16·20) |
+| Q-13 | 가상 온도 계산 규칙 | 1초마다 목표 온도와의 차이의 5%씩 이동. 목표: 꺼짐 25 · 세기 1 → 120 · 2 → 180 · 3 → 270°C. 265°C에 닿으면 가상 주방이 스스로 끈다. **시연용 설계값** ([decision](./2026-10-06-kitchen-link.md), 기준 구현 `common.kitchen_link.next_temperature`). 주의·위험 구간과 방치 기준은 FUS-05 | ✅ (조정은 HW-19·FUS-05) |
 | Q-14 | 장치 8종의 세부 명령 | 장치: 화구(2)·튀김기·후드(환풍기와 같음)·조명·에어컨·선풍기·음악·결제시스템. 켜기·끄기·세기·타이머·상태 확인은 지금 Action에 target만 추가, 결제는 결제 요청·금액 확인 Action 추가. 값의 범위(에어컨 온도, 밝기, 음량)와 결제 확인 절차는 LLM-13에서 확정 | ⏳ LLM-13 |
 
 ## 문서 불일치 정리 (DOC-02)

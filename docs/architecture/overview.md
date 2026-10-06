@@ -55,11 +55,11 @@ recorder : 모든 토픽 구독 → data/sessions/<session_id>.jsonl
 - 모듈마다 별도 프로세스. 통신은 **로컬 MQTT(mosquitto)** ([decision](../decisions/2026-10-02-message-bus-mqtt.md)). MQTT 토픽 = 봉투의 `type`.
 - 구현: [`common/`](../../common/) — `Envelope`(봉투), `connect()`(버스). 버스 주소는 `JARVIS_BUS` 환경변수 (`mqtt://localhost:1883` 기본, 테스트는 `memory://`).
 - 어떤 방식이든 메시지는 [interfaces](./interfaces.md)의 봉투 형식을 따른다 → 나중에 방식을 바꿔도 모듈 코드는 그대로.
-- 가상 주방은 보드 밖(PC)에 있다. 보드와 같은 네트워크에서 메시지를 주고받는다 (방식은 Q-12).
+- 가상 주방은 보드 밖(PC)에 있다. 랜선으로 이어 보드의 브로커에 접속하고, 봉투 없는 연결 토픽(`kitchen/*`)으로 주고받는다. `kitchen_gw`가 버스 메시지로 옮긴다 ([interfaces](./interfaces.md) §4).
 
 ## 5. 시간 동기화
 
-- 모든 `ts`는 **Orange Pi 한 대의 시계**로 찍는다 (수신 시각 기준). 가상 주방이 보낸 온도·화면도 보드가 받은 시각으로 기록.
+- 모든 `ts`는 **Orange Pi 한 대의 시계**로 찍는다 (수신 시각 기준). 가상 주방이 보낸 온도·화면도 보드가 받은 시각으로 기록한다 — 그래서 가상 주방은 버스에 직접 쓰지 않고 `kitchen_gw`·`vision_svc`가 받아서 시각을 찍는다.
 - 지연 측정용 구간 계산은 단조 시계(monotonic) 값 `mono`를 별도 필드로 함께 기록.
 
 ## 6. NPU · 자원 배치 (초안, 측정 후 확정)

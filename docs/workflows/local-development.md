@@ -53,6 +53,8 @@ mosquitto_sub -t '#' -v                                       # 모든 메시지
 
 브로커 없이 개발·테스트할 때는 `JARVIS_BUS=memory://` (한 프로세스 안에서만 전달).
 
+다른 PC(가상 주방)가 접속해야 할 때는 브로커가 같은 네트워크의 접속을 받도록 설정한다 — mosquitto 2는 기본 설정에서 같은 기기의 접속만 받는다. 설정 예시: [`scripts/mosquitto/jarvis.conf`](../../scripts/mosquitto/jarvis.conf) (보드 미검증, [interfaces](../architecture/interfaces.md) §4.6).
+
 하드웨어 없이 입력을 만들려면 시뮬레이터로 시나리오를 재생한다 ([simulator](../../services/simulator/README.md)):
 
 ```bash
