@@ -1,8 +1,8 @@
-# 인터페이스 규격 (v0.1)
+# 인터페이스 규격 (v0.2)
 
-> 2026-10-02 확정 (결정: 이현종, #39). §1·§2 봉투·토픽·State(FUS-01)와 §3 Function Call(LLM-01)은 확정, §2.1 비전 클래스(VIS-02)는 아직 초안. §4 가상 주방 연결은 2026-10-06 확정 (HW-14, #80). 상황 인식 구현(③) 중 State를 바꿔야 하면 변경 이력에 남기고 바꾼다.
+> 2026-10-02 확정 (결정: 이현종, #39). §1·§2 봉투·토픽·State(FUS-01)와 §3 Function Call(LLM-01)은 확정, §2.1 비전 클래스(VIS-02)는 아직 초안. §4 가상 주방 연결은 2026-10-06 확정 (HW-14, #80). §2.2 장치와 §3 Function Call은 2026-10-06 v0.2로 넓혔다 (장치 8종·결제, LLM-13, #84). 상황 인식 구현(③) 중 State를 바꿔야 하면 변경 이력에 남기고 바꾼다.
 
-> **2026-10-05**: 시연 환경을 가상 주방으로 바꾸고 장치를 8종으로 넓히기로 했다 ([decision](../decisions/2026-10-05-virtual-kitchen-demo.md)). 이 문서의 v0.1 규격(봉투·토픽·Function Call)은 코드와 맞춘 상태 그대로 두고, 바뀔 내용은 [§5 v0.2 예정 변경](#5-v02-예정-변경-가상-주방--장치-8종)에 모았다. v0.2는 LLM-13(스키마)·HW-14(연결 규격)에서 코드와 함께 확정한다.
+> **2026-10-05**: 시연 환경을 가상 주방으로 바꾸고 장치를 8종으로 넓혔다 ([decision](../decisions/2026-10-05-virtual-kitchen-demo.md)). 아직 코드에 없는 내용은 [§5 남은 변경](#5-남은-변경)에 모았다.
 
 > 이 문서에 없는 필드·토픽은 쓰지 않는다. 바꿀 때는 맨 아래 변경 이력에 기록하고, 코드도 함께 고친다 — 토픽 필수 필드는 [`common/messages.py`](../../common/messages.py)의 `TOPIC_REQUIRED_FIELDS`, §3 명령 스키마는 [`common/function_call.py`](../../common/function_call.py) (코드가 이 문서의 규칙을 검사한다).
 
@@ -52,31 +52,38 @@
   | `LEVEL` | 개별 장치 | `1`·`2`·`3` | `SET_LEVEL` |
 
   `seq`는 0 이상의 정수이고 `safety_guard`가 세션 안에서 하나씩 올린다. 타이머는 보드가 세고, 끝났을 때 `OFF`를 보낸다 (가상 주방은 타이머를 모른다).
-- `sensor/reading`의 `device_id`는 가열 장치 이름(`burner_1`, `burner_2`)이다. 전류(`current_a`)는 가상 주방에 없어 선택 필드로 바꿨다.
+- `sensor/reading`의 `device_id`는 가열 장치 이름(`burner_1`, `burner_2`, `fryer`)이다. 전류(`current_a`)는 가상 주방에 없어 선택 필드로 바꿨다.
 - `llm/function_call`을 규칙 파서가 만들면(LLM 연결 전, 또는 LLM 출력 검증 실패 시 대체): `fallback: true`, `tokens: 0`, `raw_text`는 파서에 넣은 명령 문장, `gen_ms`는 파싱 시간. `session_id`는 원래 `stt/text`의 것을 이어 쓴다.
 
 ### 2.1 비전 클래스 (VIS-02에서 확정)
 후보: `pan, pot, burner_on, burner_off, fryer_basket, spatula, hand` + COCO 기본 `person` 활용 검토
 
-### 2.2 장치 target (LLM-01 확정)
+### 2.2 장치 target (v0.2, LLM-13)
 
-| target | 장치 | 가상 주방 (④) |
-|---|---|---|
-| `hood` | 후드 (환풍기와 같은 장치) | 표시등과 바람, 세기 1~3 |
-| `burner_1` | 1번 화구 | 불꽃 크기, 세기 1~3 |
-| `burner_2` | 2번 화구 | 〃 |
-| `all` | 전체 (끄기·타이머·상태 확인·긴급 정지에만) | — |
+| target | 장치 | 세기 1 · 2 · 3 | 타이머 | 가상 주방 (④) |
+|---|---|---|---|---|
+| `hood` | 후드 (환풍기와 같은 장치) | 약 · 중 · 강 | 가능 | 표시등과 바람 |
+| `burner_1` | 1번 화구 | 약 · 중 · 강 | 가능 | 불꽃 크기 |
+| `burner_2` | 2번 화구 | 〃 | 가능 | 〃 |
+| `fryer` | 튀김기 | 약 · 중 · 강 | 가능 | 표시등, 온도 |
+| `light` | 조명 | 어둡게 · 보통 · 밝게 | — | 밝기 |
+| `aircon` | 에어컨 | 약 · 중 · 강 | — | 표시 |
+| `fan` | 선풍기 | 약 · 중 · 강 | — | 날개 속도 |
+| `music` | 음악 | 음량 작게 · 보통 · 크게 | — | 화면 표시 (소리는 작게 — 마이크로 들어가면 음성 인식을 방해한다) |
+| `all` | 전체 (끄기·타이머·상태 확인·긴급 정지에만) | — | 가능 | — |
 
-- 튀김기는 화구 위에서 쓰는 것으로 보고 따로 두지 않는다. 타이머는 장치가 아니라 Action(`SET_TIMER`)이다.
-- 켤 때(`TURN_ON`) 세기는 1.
-- v0.1은 장치 3종이다. 튀김기는 v0.2에서 따로 둔다 (§5).
+- 앞의 셋(`hood`, `burner_1`, `burner_2`)이 v0.1, 뒤의 다섯이 v0.2에서 추가됐다. 기존 이름은 바꾸지 않는다.
+- **세기는 모든 장치에서 1~3이다.** 조명의 밝기와 음악의 음량도 같은 `level`을 쓴다. 에어컨 온도를 숫자로 받지 않는다 (값의 종류가 장치마다 달라지지 않게).
+- 가열 장치는 `burner_1`, `burner_2`, `fryer`다 (온도를 가진다, §4).
+- 타이머는 가열 장치와 후드, 전체에만 걸 수 있다. 타이머는 장치가 아니라 Action(`SET_TIMER`)이다.
+- 켤 때(`TURN_ON`) 세기는 1. 결제시스템은 장치(target)가 아니라 Action으로 다룬다 (§3.1).
 
 ### 2.3 State (FUS-01 확정)
 `IDLE, PREHEAT, COOKING, UNATTENDED, DANGER, SAFE_STOP` — 전이 조건은 상황 인식(FUS-05)에서 정한다.
 
 ## 3. Function Call 스키마 (LLM 출력)
 
-명령은 두 가지로 표현한다. 코드: [`common/function_call.py`](../../common/function_call.py) (`validate`, `parse_tokens`, `to_tokens`). 결정 배경: [decision](../decisions/2026-10-02-function-call-schema.md).
+명령은 두 가지로 표현한다. 코드: [`common/function_call.py`](../../common/function_call.py) (`validate`, `parse_tokens`, `to_tokens`). 결정 배경: [v0.1](../decisions/2026-10-02-function-call-schema.md), [v0.2](../decisions/2026-10-06-function-call-schema-v02.md).
 
 - **버스 JSON** — `llm/function_call`의 `call`, 규칙 파서 출력, Safety Guard 입력. `action`과 그 Action의 파라미터만 넣는다 (없는 파라미터는 키를 빼고, `null`로 채우지 않는다).
   ```json
@@ -91,23 +98,30 @@
 
 | 번호 | Action | 의미 | 파라미터 (JSON) | 함수 토큰 인자 |
 |---|---|---|---|---|
-| 1 | `TURN_ON` | 켜기 | `target`: hood · burner_1 · burner_2 (all 불가) | `target` |
-| 2 | `TURN_OFF` | 끄기 | `target`: hood · burner_1 · burner_2 · all | `target` |
-| 3 | `SET_LEVEL` | 세기 조절 | `target`: hood · burner_1 · burner_2, `level`: 1 · 2 · 3 (약·중·강) | `target`, `level` |
-| 4 | `SET_TIMER` | 타이머 | `duration_s`: 1~3600 정수, `target`?: hood · burner_1 · burner_2 · all | `min`, `sec`, `target`? |
-| 5 | `CANCEL_TIMER` | 타이머 취소 | `target`? (없으면 모든 타이머) | `target`? |
+| 1 | `TURN_ON` | 켜기 | `target`: 개별 장치 8종 (all 불가) | `target` |
+| 2 | `TURN_OFF` | 끄기 | `target`: 개별 장치 8종 · all | `target` |
+| 3 | `SET_LEVEL` | 세기 조절 | `target`: 개별 장치 8종, `level`: 1 · 2 · 3 | `target`, `level` |
+| 4 | `SET_TIMER` | 타이머 | `duration_s`: 1~3600 정수, `target`?: hood · burner_1 · burner_2 · fryer · all | `min`, `sec`, `target`? |
+| 5 | `CANCEL_TIMER` | 타이머 취소 | `target`? (없으면 모든 타이머. 값은 타이머와 같다) | `target`? |
 | 6 | `CHECK_STATUS` | 상태 확인 | `target`? (없으면 전체) | `target`? |
 | 7 | `CHECK_RISK` | 위험 확인 | — | — |
 | 8 | `EMERGENCY_STOP` | 긴급 정지 | `target`: all 고정 | 없음 (`llm_svc`가 all을 채움) |
 | 9 | `ASK_CLARIFY` | 되묻기 | `for_action`: Action 또는 `null`, `missing`: target · level · duration 목록 | 아래 3.2 |
 | 10 | `UNSUPPORTED` | 지원 외 요청 | — | — |
+| 11 | `CHECK_AMOUNT` | 금액 확인 | — | — |
+| 12 | `REQUEST_PAYMENT` | 결제 요청 | — | — |
+| 13 | `CONFIRM` | "네" (확인에 대한 답) | — | — |
+| 14 | `DENY` | "아니요" | — | — |
 
+- 1~10이 v0.1, 11~14가 v0.2에서 추가됐다 (LLM-13). LLM 데이터 v1은 1~10만 다룬다.
 - LLM은 한 번에 **하나만** 출력한다. 번호는 바꾸지 않는다 (학습 데이터·변환 모델이 번호를 쓴다).
 - **타이머**: `target`이 있으면 끝날 때 그 장치를 끈다(Safety Guard를 거친 `TURN_OFF`). 없으면 알림(부저·음성)만. 장치마다 타이머 1개, 같은 장치에 다시 맞추면 덮어쓴다.
 - **세기**: "약하게/중간/세게·최대" → 1/2/3. "조금 더"처럼 지금 세기 기준의 상대 조절은 v0에서 다루지 않고 `level=?`로 되묻는다.
 - **`TURN_OFF all`과 `EMERGENCY_STOP`의 차이**: 앞은 평소 끄기, 뒤는 위험 상황의 즉시 차단(긴급 빠른 경로 FUS-04, `SAFE_STOP` 상태로).
 - 확인이 필요한 명령인지는 LLM이 아니라 **Safety Guard가 판정**한다 (`guard/decision`의 `ASK`). 그래서 명령에 `need_confirmation`을 두지 않는다.
 - `REJECT`는 LLM Action이 아니라 Safety Guard의 판정이다.
+- **결제**: 금액을 말로 받지 않는다 (숫자를 잘못 들어 틀린 금액을 결제하지 않게). 금액은 가상 결제 단말이 가진 현재 금액이다. `CHECK_AMOUNT`는 그 금액을 읽어 주고, `REQUEST_PAYMENT`는 **Safety Guard가 항상 `ASK`로 확인을 받은 뒤** 실행한다.
+- **`CONFIRM`·`DENY`**: Safety Guard가 `ASK`로 물은 뒤의 대답이다. LLM은 "네"·"아니요"를 말 그대로 이 Action으로 내고, 기다리는 질문이 있는지는 Safety Guard가 판단한다 (없으면 실행할 것이 없다). 기다리는 시간과 그동안 호출어 없이 받는 방법은 FUS-03에서 정한다.
 
 ### 3.2 함수 토큰 문법
 
@@ -139,6 +153,16 @@
 | 타이머 맞춰 줘 | `<jarvis_4>(min=?)<jarvis_end>` | `{"action":"ASK_CLARIFY","for_action":"SET_TIMER","missing":["duration"]}` |
 | 그거 해 줘 | `<jarvis_9>()<jarvis_end>` | `{"action":"ASK_CLARIFY","for_action":null,"missing":[]}` |
 | 오늘 날씨 어때? | `<jarvis_10>()<jarvis_end>` | `{"action":"UNSUPPORTED"}` |
+| 튀김기 켜 줘 | `<jarvis_1>(target=fryer)<jarvis_end>` | `{"action":"TURN_ON","target":"fryer"}` |
+| 조명 좀 어둡게 | `<jarvis_3>(target=light, level=1)<jarvis_end>` | `{"action":"SET_LEVEL","target":"light","level":1}` |
+| 노래 틀어 줘 | `<jarvis_1>(target=music)<jarvis_end>` | `{"action":"TURN_ON","target":"music"}` |
+| 소리 크게 해 줘 | `<jarvis_3>(target=music, level=3)<jarvis_end>` | `{"action":"SET_LEVEL","target":"music","level":3}` |
+| 에어컨 꺼 줘 | `<jarvis_2>(target=aircon)<jarvis_end>` | `{"action":"TURN_OFF","target":"aircon"}` |
+| 5분 뒤에 튀김기 꺼 줘 | `<jarvis_4>(target=fryer, min=5)<jarvis_end>` | `{"action":"SET_TIMER","target":"fryer","duration_s":300}` |
+| 얼마야? | `<jarvis_11>()<jarvis_end>` | `{"action":"CHECK_AMOUNT"}` |
+| 결제해 줘 | `<jarvis_12>()<jarvis_end>` | `{"action":"REQUEST_PAYMENT"}` |
+| 네 | `<jarvis_13>()<jarvis_end>` | `{"action":"CONFIRM"}` |
+| 아니요 | `<jarvis_14>()<jarvis_end>` | `{"action":"DENY"}` |
 
 같은 표가 [`tests/common/test_function_call.py`](../../tests/common/test_function_call.py)의 `EXAMPLES`로 검사된다.
 
@@ -178,7 +202,7 @@
 |---|---|---|---|
 | `kitchen/cmd` | 보드 → 가상 주방 | 명령이 있을 때 | `{"seq": 12, "cmd": "LEVEL", "target": "burner_2", "value": 3}` |
 | `kitchen/ack` | 가상 주방 → 보드 | 명령마다 1번 | `{"seq": 12, "ok": true}` |
-| `kitchen/temp` | 가상 주방 → 보드 | 가열 장치마다 1초에 1번 | `{"device_id": "burner_1", "temperature_c": 175.2}` |
+| `kitchen/temp` | 가상 주방 → 보드 | 가열 장치(화구 2개·튀김기)마다 1초에 1번 | `{"device_id": "burner_1", "temperature_c": 175.2}` |
 | `kitchen/heartbeat` | 보드 → 가상 주방 | 1초에 1번 | `{"alive": true}` |
 | `kitchen/state` | 가상 주방 → 보드 | 상태가 바뀔 때 + 5초에 1번 | `{"devices": {"hood": {"on": true, "level": 2}, "burner_1": {"on": false, "level": 0}, "burner_2": {"on": false, "level": 0}}, "safe_stop": false}` |
 | `kitchen/frame` | 가상 주방 → 보드 | 1초에 4장 | JPEG 바이트 그대로 (JSON 아님). 640×360 |
@@ -221,20 +245,17 @@
 - mosquitto 2는 기본 설정에서 같은 기기의 접속만 받는다. 설정 예시: [`scripts/mosquitto/jarvis.conf`](../../scripts/mosquitto/jarvis.conf) (**보드 미검증**). 인터넷에 연결된 망에서는 쓰지 않는다.
 - 화면에 겹쳐 띄울 정보(상태·들은 말·판단 이유)의 전달은 UI-01에서 정한다.
 
-## 5. v0.2 예정 변경 (가상 주방 · 장치 8종)
+## 5. 남은 변경
 
-아직 코드에 반영하지 않았다. 확정하면 위 본문과 코드를 함께 고치고 이 절을 지운다.
+규격의 방향은 정했지만 아직 코드에 없는 것. 반영하면 위 본문과 코드를 함께 고치고 여기서 지운다.
 
-| 항목 | v0.1 (지금 코드) | v0.2 (예정) | 확정 작업 |
+| 항목 | 지금 | 남은 일 | 작업 |
 |---|---|---|---|
-| 장치 target | `hood`, `burner_1`, `burner_2`, `all` | + 튀김기, 조명, 에어컨, 선풍기, 음악 (이름은 LLM-13에서. 기존 이름·번호는 바꾸지 않고 덧붙인다) | LLM-13 |
-| 환풍기 | 후드를 부르는 다른 말 | 그대로 (같은 장치) | — |
-| Action | 10개 (§3.1) | + 결제 요청, 금액 확인 (번호 11~). 결제 요청은 Safety Guard가 확인(`ASK`)을 거친 뒤 실행 | LLM-13, FUS-03 |
-| 세기 | 1~3 (후드·화구) | 장치별 값의 범위 추가 (에어컨 온도, 조명 밝기, 음량) | LLM-13 |
-| 캡처 화면 | — | `kitchen/frame` (§4.2)를 `vision_svc`가 직접 구독해 받은 시각을 찍는다 | HW-20·VIS-08 |
+| 결제의 연결 | `CHECK_AMOUNT`·`REQUEST_PAYMENT`는 명령으로만 있다 | 가상 결제 단말의 금액을 받아 오고 결제를 실행하는 연결 메시지(`kitchen/*`) | HW-23, FUS-03 |
+| 확인을 기다리는 흐름 | `CONFIRM`·`DENY`는 명령으로만 있다 | Safety Guard가 `ASK` 뒤의 대답을 기다리는 시간, 그동안 호출어 없이 받기 | FUS-03, STT |
+| 캡처 화면 | `kitchen/frame` 규격만 있다 (§4.2) | `vision_svc`가 구독해 받은 시각을 찍는다 | HW-20·VIS-08 |
 | 비전 클래스 (§2.1) | 후보 7개 + person | 가상 주방 장면에서 실제로 보이는 물체로 확정 | VIS-02 |
-
-- v0.1 데이터에서 "조명 켜줘"·"에어컨 꺼줘"·"볼륨 줄여 줘"는 `UNSUPPORTED`가 정답이다. v0.2에서 정답이 바뀌므로 데이터 v2를 다시 만들고 기준선을 다시 잰다 (LLM-14).
+| LLM 데이터 | v1은 스키마 v0.1(장치 3종, Action 1~10) | v1의 "조명 켜줘"·"에어컨 꺼줘"·"볼륨 줄여 줘"는 `UNSUPPORTED`가 정답이라 v0.2와 어긋난다 → 데이터 v2로 다시 만들고 기준선을 다시 잰다 | LLM-14 |
 
 ## 변경 이력
 
@@ -248,3 +269,4 @@
 | 2026-10-05 | v0.1 | 시연 환경 변경(가상 주방) 반영: §2 발행 서비스 `ble_gw` → `kitchen_gw`, §2.2 모형 설명, §4 BLE 규격 삭제 → 보드 ↔ 가상 주방, §5 v0.2 예정 변경 추가 — **v0.1 필드·코드 변경 없음** (#73) | 이현종 |
 | 2026-10-06 | v0.1 | §4 보드 ↔ 가상 주방 확정: `kitchen/*` 연결 토픽 6개, 재시도·중복 방지, 자체 안전장치, 가상 온도 규칙. §2 `control/command` 값(`ON`·`OFF`·`LEVEL`) 확정, `sensor/reading`의 `current_a`를 선택 필드로 (#80, HW-14) | 이현종 |
 | 2026-10-06 | v0.1 | §4.3 `control/result`의 `reason`, §4.4 생존 신호가 끊긴 동안 가열 장치 켜기 거절 — `kitchen_gw` 구현하며 명시 (#82, HW-17) | 이현종 |
+| 2026-10-06 | **v0.2** | §2.2 target에 `fryer`·`light`·`aircon`·`fan`·`music` 추가(세기 1~3 통일, 타이머는 가열 장치·후드·전체), §3.1 Action 11~14(`CHECK_AMOUNT`·`REQUEST_PAYMENT`·`CONFIRM`·`DENY`) 추가, §3.3 예시, §5를 남은 변경으로 정리. 기존 이름·번호는 그대로 (#84, LLM-13) | 이현종 |
