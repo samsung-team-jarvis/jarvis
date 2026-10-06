@@ -1,6 +1,6 @@
 import json
 
-from common.function_call import PARAMS
+from common.function_call import V01_ACTIONS
 from training.llm import build_seed as bs
 from training.llm import split_dataset as sd
 
@@ -19,7 +19,7 @@ def test_every_action_in_every_split_and_ratio() -> None:
     splits = committed()
     total = sum(len(rows) for rows in splits.values())
     for s, rows in splits.items():
-        assert {r["output"]["action"] for r in rows} == set(PARAMS), s
+        assert {r["output"]["action"] for r in rows} == set(V01_ACTIONS), s
         assert abs(len(rows) / total - sd.RATIOS[s]) < 0.05, s
         assert all(r["meta"]["split"] == s for r in rows)
 

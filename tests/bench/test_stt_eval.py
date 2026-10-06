@@ -76,7 +76,7 @@ def test_split_filter_and_label_validation(tmp_path: pathlib.Path) -> None:
     write_manifest(manifest, [{**ROWS[0], "split": "train"}, ROWS[1]])
     assert [i["utt_id"] for i in load_manifest(manifest, "test")] == ["u2"]
 
-    write_manifest(manifest, [{**ROWS[0], "action_label": "<jarvis_1>(target=fryer)<jarvis_end>"}])
+    write_manifest(manifest, [{**ROWS[0], "action_label": "<jarvis_1>(target=fridge)<jarvis_end>"}])
     with pytest.raises(ValueError, match="target"):
         load_manifest(manifest, None)
 

@@ -1,6 +1,6 @@
 """Function Call(명령) 스키마 — LLM·규칙 파서 출력, Safety Guard 입력.
 
-규격: docs/architecture/interfaces.md §3 (v0.1, LLM-01). 이 파일과 문서가 다르면 문서를 먼저 고친다.
+규격: docs/architecture/interfaces.md §3 (v0.2, LLM-13). 이 파일과 문서가 다르면 문서를 먼저 고친다.
 
 두 가지 표현이 있다.
 - 버스(JSON, dict): {"action": "SET_LEVEL", "target": "hood", "level": 3}
@@ -13,9 +13,11 @@ from __future__ import annotations
 import re
 from typing import Any
 
-TARGETS = ("hood", "burner_1", "burner_2", "all")
-DEVICES = ("hood", "burner_1", "burner_2")  # all 제외 (개별 장치)
-LEVELS = (1, 2, 3)  # 약 / 중 / 강
+# 개별 장치. 앞의 셋이 v0.1, 뒤의 다섯이 v0.2에서 추가됐다 (이름은 바꾸지 않고 덧붙인다)
+DEVICES = ("hood", "burner_1", "burner_2", "fryer", "light", "aircon", "fan", "music")
+TARGETS = (*DEVICES, "all")
+TIMER_TARGETS = ("hood", "burner_1", "burner_2", "fryer", "all")  # 타이머로 끌 수 있는 것
+LEVELS = (1, 2, 3)  # 약 / 중 / 강 (조명은 밝기, 음악은 음량)
 MAX_DURATION_S = 3600  # 타이머 최대 60분
 
 # 함수 토큰 번호 → Action (번호는 바꾸지 않는다. 학습 데이터·변환 모델이 이 번호를 쓴다)
@@ -30,8 +32,13 @@ ACTION_IDS: dict[int, str] = {
     8: "EMERGENCY_STOP",
     9: "ASK_CLARIFY",
     10: "UNSUPPORTED",
+    11: "CHECK_AMOUNT",  # 금액 확인 — 금액은 가상 결제 단말이 가진 값을 쓴다 (말로 받지 않는다)
+    12: "REQUEST_PAYMENT",  # 결제 요청 — Safety Guard가 확인을 받은 뒤 실행한다
+    13: "CONFIRM",  # "네" — 확인을 기다리는 질문에 대한 답
+    14: "DENY",  # "아니요"
 }
 ACTIONS = tuple(ACTION_IDS.values())
+V01_ACTIONS = ACTIONS[:10]  # 스키마 v0.1의 Action — LLM 데이터 v1이 다루는 범위
 _ID_OF = {name: i for i, name in ACTION_IDS.items()}
 
 # Action별 (필수 파라미터, 선택 파라미터). JSON 기준 이름.
@@ -46,14 +53,18 @@ PARAMS: dict[str, tuple[frozenset[str], frozenset[str]]] = {
     "EMERGENCY_STOP": (frozenset({"target"}), frozenset()),  # target은 all 고정
     "ASK_CLARIFY": (frozenset({"for_action", "missing"}), frozenset()),
     "UNSUPPORTED": (frozenset(), frozenset()),
+    "CHECK_AMOUNT": (frozenset(), frozenset()),
+    "REQUEST_PAYMENT": (frozenset(), frozenset()),
+    "CONFIRM": (frozenset(), frozenset()),
+    "DENY": (frozenset(), frozenset()),
 }
 # Action별 target 허용값 (target을 받는 Action만)
 _TARGETS_OF = {
     "TURN_ON": DEVICES,  # 한 번에 모두 켜기는 지원하지 않음
     "TURN_OFF": TARGETS,
     "SET_LEVEL": DEVICES,
-    "SET_TIMER": TARGETS,
-    "CANCEL_TIMER": TARGETS,
+    "SET_TIMER": TIMER_TARGETS,
+    "CANCEL_TIMER": TIMER_TARGETS,
     "CHECK_STATUS": TARGETS,
     "EMERGENCY_STOP": ("all",),
 }
