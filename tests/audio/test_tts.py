@@ -45,9 +45,23 @@ def allow(call: dict) -> str | None:
         ),
         ({"action": "ASK_CLARIFY", "for_action": None, "missing": []}, "네, 말씀하세요."),
         ({"action": "UNSUPPORTED"}, "그건 아직 할 수 없어요."),
+        # 스키마 v0.2 (LLM-13)
+        ({"action": "TURN_ON", "target": "fryer"}, "튀김기를 켰습니다."),
+        ({"action": "TURN_OFF", "target": "aircon"}, "에어컨을 껐습니다."),
+        ({"action": "SET_LEVEL", "target": "fan", "level": 1}, "선풍기 세기를 약으로 바꿨습니다."),
+        ({"action": "SET_LEVEL", "target": "light", "level": 3}, "조명 밝기를 밝게 바꿨습니다."),
+        ({"action": "SET_LEVEL", "target": "music", "level": 1}, "음악 음량을 작게 바꿨습니다."),
+        (
+            {"action": "SET_TIMER", "duration_s": 300, "target": "fryer"},
+            "5분 뒤에 튀김기를 끕니다.",
+        ),
+        ({"action": "REQUEST_PAYMENT"}, "결제를 요청했습니다."),
+        ({"action": "CHECK_AMOUNT"}, "금액 확인은 아직 준비 중이에요."),
+        ({"action": "DENY"}, "알겠습니다. 취소했습니다."),
+        ({"action": "CONFIRM"}, None),
     ],
 )
-def test_allowed_command_replies(call: dict, text: str) -> None:
+def test_allowed_command_replies(call: dict, text: str | None) -> None:
     assert allow(call) == text
 
 
@@ -60,6 +74,8 @@ def test_reject_and_ask_replies() -> None:
     assert reply_for_decision({"call": call, "decision": "ASK", "reason": ""}) == (
         "정말 1번 화구를 제어할까요?"
     )
+    pay = {"call": {"action": "REQUEST_PAYMENT"}, "decision": "ASK", "reason": ""}
+    assert reply_for_decision(pay) == "결제할까요?"
 
 
 def test_object_particle() -> None:

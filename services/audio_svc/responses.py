@@ -7,8 +7,23 @@ from __future__ import annotations
 
 from typing import Any
 
-DEVICE_NAMES = {"hood": "후드", "burner_1": "1번 화구", "burner_2": "2번 화구", "all": "전체"}
+DEVICE_NAMES = {
+    "hood": "후드",
+    "burner_1": "1번 화구",
+    "burner_2": "2번 화구",
+    "fryer": "튀김기",
+    "light": "조명",
+    "aircon": "에어컨",
+    "fan": "선풍기",
+    "music": "음악",
+    "all": "전체",
+}
 LEVEL_NAMES = {1: "약", 2: "중", 3: "강"}
+# 세기를 다른 말로 부르는 장치: (무엇을, 1·2·3을 읽는 말)
+LEVEL_PHRASES = {
+    "light": ("밝기", {1: "어둡게", 2: "보통으로", 3: "밝게"}),
+    "music": ("음량", {1: "작게", 2: "보통으로", 3: "크게"}),
+}
 ASK_QUESTIONS = {
     "target": "어느 장치를 말씀하시는지 다시 말해 주세요.",
     "level": "세기를 약, 중, 강 중에서 말해 주세요.",
@@ -47,6 +62,9 @@ def describe(call: dict[str, Any]) -> str | None:
     if action == "TURN_OFF":
         return "모두 껐습니다." if call["target"] == "all" else f"{_obj(device)} 껐습니다."
     if action == "SET_LEVEL":
+        if call["target"] in LEVEL_PHRASES:
+            what, words = LEVEL_PHRASES[call["target"]]
+            return f"{device} {_obj(what)} {words[call['level']]} 바꿨습니다."
         return f"{device} 세기를 {LEVEL_NAMES[call['level']]}으로 바꿨습니다."
     if action == "SET_TIMER":
         when = _duration(call["duration_s"])
@@ -68,7 +86,13 @@ def describe(call: dict[str, Any]) -> str | None:
         return "그건 아직 할 수 없어요."
     if action in ("CHECK_STATUS", "CHECK_RISK"):
         return "상태 확인은 아직 준비 중이에요."  # 장치 상태·위험도를 읽어 주는 건 FUS-08 이후
-    return None
+    if action == "CHECK_AMOUNT":
+        return "금액 확인은 아직 준비 중이에요."  # 가상 결제 단말의 금액을 받아 오는 연결이 생긴 뒤
+    if action == "REQUEST_PAYMENT":
+        return "결제를 요청했습니다."
+    if action == "DENY":
+        return "알겠습니다. 취소했습니다."
+    return None  # CONFIRM: 확인받은 명령의 결과 문장이 따로 나온다
 
 
 def reply_for_decision(payload: dict[str, Any]) -> str | None:
@@ -82,6 +106,8 @@ def reply_for_decision(payload: dict[str, Any]) -> str | None:
         head = f"지금은 {_obj(device)} 제어할 수 없어요." if device else "지금은 할 수 없어요."
         return f"{head} {reason}".strip()
     if decision == "ASK":
+        if call["action"] == "REQUEST_PAYMENT":
+            return "결제할까요?"
         return f"정말 {_obj(device)} 제어할까요?" if device else "정말 할까요?"
     return None
 
