@@ -18,7 +18,8 @@ ENVELOPE_VERSION = 1
 TOPIC_REQUIRED_FIELDS: dict[str, frozenset[str]] = {
     "stt/text": frozenset({"text", "wake", "audio_ms", "stt_ms", "speech_end_mono"}),
     "vision/objects": frozenset({"objects", "frame_id", "pre_ms", "npu_ms", "post_ms"}),
-    "sensor/reading": frozenset({"device_id", "temperature_c", "current_a"}),
+    # current_a는 선택 필드 (가상 주방에 없음)
+    "sensor/reading": frozenset({"device_id", "temperature_c"}),
     "fusion/state": frozenset({"state", "prev_state", "evidence", "risk"}),
     "llm/function_call": frozenset({"call", "raw_text", "valid", "fallback", "gen_ms", "tokens"}),
     "guard/decision": frozenset({"call", "decision", "reason"}),
