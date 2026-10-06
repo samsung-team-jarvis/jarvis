@@ -108,7 +108,7 @@
 - [ ] FUS-04 긴급 빠른 경로: "정지/멈춰/그만" 등은 LLM 없이 즉시 EMERGENCY_STOP | 선행: FUS-03 | 담당: 최지환
 - [x] ~~HW-05 `ble_gw` 서비스~~ — 취소 (2026-10-05 → HW-17)
 - [x] ~~HW-06 ESP32 하트비트 감시~~ — 취소 (2026-10-05 → HW-18)
-- [ ] HW-17 `kitchen_gw` 서비스: `control/command` → `kitchen/cmd`, `kitchen/ack` → `control/result`(재시도·`rtt_ms`), `kitchen/temp` → `sensor/reading`, `kitchen/heartbeat` 발행. Unity 없이 개발할 수 있게 같은 토픽을 쓰는 가짜 가상 주방 포함 | 선행: HW-14, INFRA-03 | 담당: 이현종 (2026-10-05 조정)
+- [x] HW-17 `kitchen_gw` 서비스: `control/command` → `kitchen/cmd`, `kitchen/ack` → `control/result`(재시도·`rtt_ms`), `kitchen/temp` → `sensor/reading`, `kitchen/heartbeat` 발행. Unity 없이 개발할 수 있게 같은 토픽을 쓰는 가짜 가상 주방 포함 | 선행: HW-14, INFRA-03 | 담당: 이현종 (#82, `services/kitchen_gw` — Mac·가짜 가상 주방으로 확인. Unity와의 연결은 HW-16)
 - [ ] HW-18 가상 주방 안전장치 (안전 계층 L0): `kitchen/heartbeat`가 3초 끊기면 가열 장치 OFF, `kitchen/state`의 `safe_stop` 보고 ([interfaces](./architecture/interfaces.md) §4.4) | 선행: HW-16 | 담당: 최석진
 - [x] INFRA-05 `recorder`: 모든 토픽을 세션별 JSONL로 저장 | 선행: INFRA-03 | 담당: 이현종 (#31, `services/recorder`)
 - [x] INFRA-06 지연 분해 스크립트: 발화 끝 → STT → 파서 → Guard → 제어 결과 확인 구간별 ms — METRICS E2E 항목 첫 기록 | 선행: INFRA-05 | 담당: 이현종 (#45, `bench/latency.py` — 첫 기록은 Mac·명령 발행까지, Guard·가상 주방 구간은 해당 서비스가 생기면 같은 명령으로)
