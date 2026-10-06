@@ -4,6 +4,8 @@ start_delay_s: 1.0   # 서비스 사이 대기 (모델 로드·브로커 접속 
 services:
   - name: recorder
     module: services.recorder
+  - name: kitchen_gw          # 가상 주방(또는 services.kitchen_gw.fake_kitchen)이 없어도 뜬다
+    module: services.kitchen_gw
   - name: llm_svc
     module: services.llm_svc
   - name: audio_svc
