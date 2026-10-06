@@ -1,13 +1,13 @@
-"""Seed + Paraphrase → LLM 데이터 v1 (LLM-04, 발표 p.9 ②~④).
+"""Seed + Paraphrase → LLM 데이터 (LLM-04, 발표 p.9 ②~④).
 
-python -m training.llm.build_dataset                          # → data/llm/dataset_v1.jsonl
+python -m training.llm.build_dataset                          # → data/llm/dataset_v2.jsonl
 python -m training.llm.build_dataset --review-csv review.csv  # Paraphrase 검수용 표
 
 ① Seed: plan_sheet.yaml (build_seed) — 모두 넣는다
 ② Paraphrase: paraphrase_sheet.yaml — 부모 템플릿의 정답·슬롯을 물려받은 바꿔 쓴 템플릿
 ③ 검증·중복 제거: 스키마 검증, 띄어쓰기·문장부호만 다른 중복 제거, 같은 문장에 다른 정답이면 실패
 ④ Entity 치환·STT 표기 정규화: 슬롯 채우기 + 서비스와 같은 STT 오인식 사전(normalize) 적용
-   (⑤ Hard Negative는 hard_negative_v1.jsonl로 따로, ⑥ 분할은 LLM-05)
+   (⑤ Hard Negative는 hard_negative_v2.jsonl로 따로, ⑥ 분할은 LLM-05)
 """
 
 from __future__ import annotations
@@ -46,7 +46,10 @@ def find_template(plan: dict, template_id: str) -> tuple[str, dict]:
 
 
 def paraphrase_templates(plan: dict, para: dict) -> dict[str, list[dict]]:
-    """Action → 바꿔 쓴 템플릿 목록. 정답·devices·indirect는 부모 것, 가족(group)은 부모 id."""
+    """Action → 바꿔 쓴 템플릿 목록. 정답·devices·indirect는 부모 것, 가족(group)은 부모 id.
+
+    그 말투가 어울리는 장치가 부모보다 적으면 devices만 줄여 쓸 수 있다 ("음악 돌려"는 어색하다).
+    """
     out: dict[str, list[dict]] = {}
     for parent_id, items in para["paraphrases"].items():
         action, parent = find_template(plan, parent_id)
@@ -54,6 +57,8 @@ def paraphrase_templates(plan: dict, para: dict) -> dict[str, list[dict]]:
             t = copy.deepcopy(parent)
             t.update(id=f"{parent_id}_p{i}", tone=item["tone"], texts=alternatives(item["text"]))
             t["group"] = parent_id
+            if "devices" in item:
+                t["devices"] = item["devices"]
             out.setdefault(action, []).append(t)
     return out
 
@@ -97,30 +102,22 @@ def build_dataset(plan: dict, para: dict, exclude: set[str]) -> tuple[list[dict]
                 for it in expand_paraphrase(t, plan, action)
                 if bs.compact(it[0]) not in exclude and bs.compact(it[0]) not in seen
             ]
-            rng.shuffle(items)
-            pools.append((t, items))
+            pools.append((t, bs.balanced(items, rng)))
         need = target - seed_count[action]
-        picked = 0
-        while picked < need and any(items for _, items in pools):
-            for t, items in pools:
-                if items and picked < need:
-                    sentence, output, _ = items.pop()
-                    if bs.compact(sentence) in seen:
-                        continue
-                    seen.add(bs.compact(sentence))
-                    context = copy.deepcopy(rng.choice(plan["contexts"]["normal"]))
-                    meta = {
-                        "template_id": t["id"],
-                        "group": t["group"],
-                        "tone": t["tone"],
-                        "source": "paraphrase",
-                        "indirect": bool(t.get("indirect")),
-                        "split": None,
-                    }
-                    records.append(bs.record(sentence, output, context, meta))
-                    picked += 1
-        if picked < need:
-            shortfall[action] = need - picked
+        chosen = bs.pick(pools, need, seen)
+        for t, (sentence, output, _) in chosen:
+            context = copy.deepcopy(rng.choice(plan["contexts"]["normal"]))
+            meta = {
+                "template_id": t["id"],
+                "group": t["group"],
+                "tone": t["tone"],
+                "source": "paraphrase",
+                "indirect": bool(t.get("indirect")),
+                "split": None,
+            }
+            records.append(bs.record(sentence, output, context, meta))
+        if len(chosen) < need:
+            shortfall[action] = need - len(chosen)
     records = bs.dedupe([_normalized(r) for r in records])
     return records, shortfall
 
@@ -146,7 +143,7 @@ def main() -> int:
     parser.add_argument("--plan", type=pathlib.Path, default=bs.SHEET)
     parser.add_argument("--para", type=pathlib.Path, default=PARA_SHEET)
     parser.add_argument("--out-dir", type=pathlib.Path, default=bs.OUT_DIR)
-    parser.add_argument("--version", default="v1")
+    parser.add_argument("--version", default=bs.VERSION)
     parser.add_argument("--exclude-script", type=pathlib.Path, default=bs.STT_SCRIPT)
     parser.add_argument(
         "--review-csv", type=pathlib.Path, default=None, help="Paraphrase 검수용 표"
