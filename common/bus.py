@@ -7,6 +7,11 @@
 
 - memory://           같은 프로세스 안에서만 전달 (테스트, 하드웨어 없는 개발)
 - mqtt://host:port    MQTT 브로커(mosquitto) 경유, 프로세스 간 전달
+
+가상 주방과의 연결 토픽(`kitchen/*`, interfaces §4)은 봉투가 아니다. 이 토픽만
+`publish_raw` / `subscribe_raw`로 바이트를 그대로 주고받는다 (kitchen_gw·vision_svc 전용).
+한 프로세스에서 봉투 구독 `#`과 `kitchen/*` 구독을 함께 걸지 않는다 — 구독이 겹치면 브로커가
+같은 메시지를 두 번 전달한다 (mosquitto 2.1.2에서 확인).
 """
 
 from __future__ import annotations
@@ -21,7 +26,9 @@ from typing import Protocol
 from common.messages import Envelope, MessageError
 
 DEFAULT_BUS_URL = "mqtt://localhost:1883"
+RAW_PREFIX = "kitchen/"  # 이 아래 토픽은 봉투가 아니다 (common/kitchen_link.py)
 Handler = Callable[[Envelope], None]
+RawHandler = Callable[[str, bytes], None]
 log = logging.getLogger(__name__)
 
 
@@ -39,7 +46,14 @@ def topic_matches(pattern: str, topic: str) -> bool:
 class Bus(Protocol):
     def publish(self, msg: Envelope) -> None: ...
     def subscribe(self, pattern: str, handler: Handler) -> None: ...
+    def publish_raw(self, topic: str, payload: bytes) -> None: ...
+    def subscribe_raw(self, pattern: str, handler: RawHandler) -> None: ...
     def close(self) -> None: ...
+
+
+def _check_raw(topic: str) -> None:
+    if not topic.startswith(RAW_PREFIX):
+        raise ValueError(f"봉투 없는 메시지는 {RAW_PREFIX}* 토픽에만 씁니다: {topic}")
 
 
 def _dispatch(handler: Handler, msg: Envelope) -> None:
@@ -50,11 +64,19 @@ def _dispatch(handler: Handler, msg: Envelope) -> None:
         log.exception("handler failed for %s", msg.type)
 
 
+def _dispatch_raw(handler: RawHandler, topic: str, payload: bytes) -> None:
+    try:
+        handler(topic, payload)
+    except Exception:
+        log.exception("raw handler failed for %s", topic)
+
+
 class MemoryBus:
     """같은 프로세스 안의 구독자에게 동기적으로 전달한다."""
 
     def __init__(self) -> None:
         self._subs: list[tuple[str, Handler]] = []
+        self._raw_subs: list[tuple[str, RawHandler]] = []
         self._lock = threading.Lock()
 
     def publish(self, msg: Envelope) -> None:
@@ -68,9 +90,22 @@ class MemoryBus:
         with self._lock:
             self._subs.append((pattern, handler))
 
+    def publish_raw(self, topic: str, payload: bytes) -> None:
+        _check_raw(topic)
+        with self._lock:
+            targets = [h for p, h in self._raw_subs if topic_matches(p, topic)]
+        for handler in targets:
+            _dispatch_raw(handler, topic, payload)
+
+    def subscribe_raw(self, pattern: str, handler: RawHandler) -> None:
+        _check_raw(pattern)
+        with self._lock:
+            self._raw_subs.append((pattern, handler))
+
     def close(self) -> None:
         with self._lock:
             self._subs.clear()
+            self._raw_subs.clear()
 
 
 class MqttBus:
@@ -80,6 +115,7 @@ class MqttBus:
         import paho.mqtt.client as mqtt
 
         self._subs: list[tuple[str, Handler]] = []
+        self._raw_subs: list[tuple[str, RawHandler]] = []
         self._lock = threading.Lock()
         self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
         self._client.on_message = self._on_message
@@ -92,11 +128,22 @@ class MqttBus:
         # 재접속 시 구독을 다시 건다
         with self._lock:
             patterns = {p for p, _ in self._subs}
+            raw_patterns = {p for p, _ in self._raw_subs}
         for pattern in patterns:
             client.subscribe(pattern, qos=1)
+        for pattern in raw_patterns:
+            client.subscribe(pattern, qos=0)
 
     def _on_message(self, client, userdata, mqtt_msg) -> None:
         self._network_thread = threading.get_ident()
+        if mqtt_msg.topic.startswith(
+            RAW_PREFIX
+        ):  # 연결 토픽은 봉투가 아니다 ("#" 구독자에게도 안 넘긴다)
+            with self._lock:
+                raw_targets = [h for p, h in self._raw_subs if topic_matches(p, mqtt_msg.topic)]
+            for raw_handler in raw_targets:
+                _dispatch_raw(raw_handler, mqtt_msg.topic, bytes(mqtt_msg.payload))
+            return
         try:
             msg = Envelope.from_json(mqtt_msg.payload)
         except MessageError:
@@ -119,6 +166,16 @@ class MqttBus:
         with self._lock:
             self._subs.append((pattern, handler))
         self._client.subscribe(pattern, qos=1)
+
+    def publish_raw(self, topic: str, payload: bytes) -> None:
+        _check_raw(topic)
+        self._client.publish(topic, payload, qos=0)
+
+    def subscribe_raw(self, pattern: str, handler: RawHandler) -> None:
+        _check_raw(pattern)
+        with self._lock:
+            self._raw_subs.append((pattern, handler))
+        self._client.subscribe(pattern, qos=0)
 
     def close(self) -> None:
         self._client.loop_stop()
