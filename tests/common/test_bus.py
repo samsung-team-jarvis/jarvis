@@ -52,6 +52,23 @@ def test_failing_handler_does_not_block_others() -> None:
     assert len(received) == 1
 
 
+def test_raw_messages_stay_in_the_kitchen_namespace() -> None:
+    bus = MemoryBus()
+    raw, enveloped = [], []
+    bus.subscribe_raw("kitchen/#", lambda topic, data: raw.append((topic, data)))
+    bus.subscribe("#", enveloped.append)
+
+    bus.publish_raw("kitchen/cmd", b'{"seq":1}')
+    bus.publish(heartbeat())
+
+    assert raw == [("kitchen/cmd", b'{"seq":1}')]  # 봉투 메시지는 raw 구독자에게 가지 않는다
+    assert len(enveloped) == 1  # raw 메시지는 "#" 구독자에게도 가지 않는다
+    with pytest.raises(ValueError):
+        bus.publish_raw("stt/text", b"x")
+    with pytest.raises(ValueError):
+        bus.subscribe_raw("#", lambda topic, data: None)
+
+
 def test_connect_parses_urls() -> None:
     assert isinstance(connect("memory://"), MemoryBus)
     with pytest.raises(ValueError):
@@ -110,3 +127,28 @@ def test_mqtt_publish_inside_handler_does_not_block() -> None:
     assert max(took) < 1.0
     relay.close()
     src.close()
+
+
+@pytest.mark.skipif(not os.environ.get("JARVIS_TEST_MQTT"), reason="JARVIS_TEST_MQTT 브로커 없음")
+def test_mqtt_raw_round_trip() -> None:
+    """연결 토픽(kitchen/*)은 바이트 그대로 오가고, "#" 봉투 구독자(녹화기 등)에게는 가지 않는다."""
+    url = os.environ["JARVIS_TEST_MQTT"]
+    sub, pub = connect(url, client_id="test_raw_sub"), connect(url, client_id="test_raw_pub")
+    everything = connect(url, client_id="test_raw_all")
+    got = threading.Event()
+    raw, enveloped = [], []
+
+    def on_raw(topic: str, data: bytes) -> None:
+        raw.append((topic, data))
+        got.set()
+
+    sub.subscribe_raw("kitchen/ack", on_raw)
+    everything.subscribe("#", enveloped.append)
+    time.sleep(0.3)
+    pub.publish_raw("kitchen/ack", b'{"seq":1,"ok":true}')
+    assert got.wait(timeout=5)
+    time.sleep(0.3)
+    assert raw == [("kitchen/ack", b'{"seq":1,"ok":true}')]
+    assert enveloped == []
+    for bus in (sub, pub, everything):
+        bus.close()

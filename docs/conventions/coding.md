@@ -8,7 +8,7 @@
 - 포맷·린트: `ruff format`, `ruff check` (pre-commit과 CI에서 실행)
 - 네이밍: 모듈·함수·변수 `snake_case`, 클래스 `PascalCase`, 상수 `BIG_SNAKE_CASE`
 - 타입 힌트를 공개 함수 시그니처에 붙인다.
-- 서비스 간 메시지는 `common`의 `Envelope.new()`로 만들고 `connect()`로 얻은 버스로만 주고받는다. dict를 직접 조립하거나 MQTT를 직접 쓰지 않는다 ([interfaces](../architecture/interfaces.md)).
+- 서비스 간 메시지는 `common`의 `Envelope.new()`로 만들고 `connect()`로 얻은 버스로만 주고받는다. dict를 직접 조립하거나 MQTT를 직접 쓰지 않는다 ([interfaces](../architecture/interfaces.md)). 가상 주방과의 연결 토픽(`kitchen/*`)만 예외로 `publish_raw`·`subscribe_raw`를 쓴다 (§4).
 - 로그는 `print` 대신 `common`의 로거를 쓴다. 측정에 쓰는 시각은 `time.monotonic()`.
 - 설정값(장치 경로, 임계값, 모델 경로)은 코드에 하드코딩하지 않고 설정 파일·환경변수로 뺀다.
 - 하드웨어가 없어도 실행되도록 입력 소스는 교체 가능하게 만든다 (실제 마이크 / wav 파일 / 가짜 메시지).
