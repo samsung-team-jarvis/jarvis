@@ -46,11 +46,13 @@ python -m bench.record_stt --speaker spk02 --noise quiet --mic pin
 
 ## llm_eval.py — 명령 해석 평가 (LLM-06 · FUS-06)
 
-LLM 분할의 test(일반 + Hard Negative)로 규칙 파서·기본 모델의 명령 해석을 잰다. 데이터: [training/llm](../training/llm/README.md).
+LLM 분할의 test(일반 + Hard Negative)로 규칙 파서·기본 모델의 명령 해석을 잰다. 데이터: [training/llm](../training/llm/README.md) — 기본은 데이터 v2(장치 8종 · 함수 14개).
 
 ```bash
 python -m bench.llm_eval --engine rule                                          # 규칙 파서
+python -m bench.llm_eval --engine rule --split val --csv val.csv                # 오류 분석은 val로
 .venv-llm/bin/python -m bench.llm_eval --engine hf --model Qwen/Qwen3-0.6B      # 기본 모델 + 프롬프트
+python -m bench.llm_eval --engine rule --data v1                                # 데이터 v1 (장치 3종 고정본)
 ```
 
 | 지표 | 정의 |
@@ -60,4 +62,5 @@ python -m bench.llm_eval --engine rule                                          
 | Valid Rate | 출력이 함수 토큰 형식·스키마를 통과한 비율 |
 | Unsafe (Guard 전) | Hard Negative 중 Guard가 거절해야 할 위험 명령(`expect_guard: REJECT`)에 켜기·세기 올림을 낸 비율 — LLM은 말 그대로 해석하므로 설계상 높다 |
 
-- HF 엔진: 함수 토큰을 설명하는 시스템 프롬프트 + **train에서만** 고른 few-shot 13개, greedy, `<jarvis_end>`에서 자른다. HF 모델은 분리된 가상환경(`.venv-llm`)에서 돌린다.
+- HF 엔진: 함수 토큰을 설명하는 시스템 프롬프트(지시문 v0.2) + **train에서만** 고른 few-shot 17개(되묻기를 뺀 함수 13개에 하나씩 + 되묻기 2개·대명사·장치 타이머), greedy, `<jarvis_end>`에서 자른다. HF 모델은 분리된 가상환경(`.venv-llm`)에서 돌린다.
+- 지시문은 v0.2 하나뿐이다. 2026-10-02의 v1 수치는 지시문 v0.1(함수 10개 · few-shot 13개)로 잰 것이라, 지금 `--data v1`로 모델을 다시 재도 같은 조건이 아니다 (규칙 파서는 지시문을 쓰지 않는다).

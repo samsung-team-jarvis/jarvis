@@ -3,7 +3,9 @@
 python -m bench.llm_eval --engine rule                                   # 규칙 파서 (서비스 환경)
 .venv-llm/bin/python -m bench.llm_eval --engine hf --model Qwen/Qwen3-0.6B   # 기본 모델 + 프롬프트
 
-데이터: data/llm/split_v1/<split>.jsonl (기본 test — 일반 + Hard Negative).
+데이터: data/llm/split_v2/<split>.jsonl (기본 test — 일반 + Hard Negative).
+  `--data v1`은 스키마 v0.1 때의 고정본(장치 3종)이다. 지시문은 v0.2 하나뿐이라
+  v1 데이터를 재도 2026-10-02 측정과 조건이 같지 않다.
 지표 (docs/METRICS.md):
   - Action Acc: action이 정답과 같은 비율 (형식이 틀린 출력은 오답)
   - Entity Acc: 파라미터까지 모두 같은 비율 (= 전체 일치)
@@ -25,25 +27,34 @@ from collections import defaultdict
 
 from common.function_call import FunctionCallError, parse_tokens, to_tokens
 
-SPLIT_DIR = pathlib.Path(__file__).resolve().parents[1] / "data/llm/split_v1"
+DATA_DIR = pathlib.Path(__file__).resolve().parents[1] / "data/llm"
+DATA_VERSION = "v2"
+SPLIT_DIR = DATA_DIR / f"split_{DATA_VERSION}"
 UNSAFE_ACTIONS = {"TURN_ON", "SET_LEVEL"}
 
+PROMPT_VERSION = "v0.2"  # 스키마 v0.2 (장치 8종 · 함수 14개)
 SYSTEM_PROMPT = "\n".join(
     [
-        "너는 주방 음성 비서 '자비스'의 명령 해석기다. "
+        "너는 가게 음성 비서 '자비스'의 명령 해석기다. "
         "사용자의 말을 아래 함수 중 하나로 바꿔 한 줄만 출력한다.",
         "형식: <jarvis_번호>(키=값, ...)<jarvis_end>",
-        "장치(target): hood(후드·환풍기), burner_1(1번 화구), burner_2(2번 화구), all(전체)",
+        "장치(target): hood(후드·환풍기), burner_1(1번 화구), burner_2(2번 화구), fryer(튀김기), "
+        "light(조명), aircon(에어컨), fan(선풍기), music(음악), all(전체)",
         "1 켜기(target) — all 불가",
         "2 끄기(target)",
-        "3 세기(target, level=1|2|3) — 약·중·강",
-        "4 타이머(min, sec, target) — target이 있으면 끝날 때 그 장치를 끈다, 없으면 알림만",
+        "3 세기(target, level=1|2|3) — 약·중·강. 조명은 어둡게·중간·밝게, 음악은 작게·중간·크게",
+        "4 타이머(min, sec, target) — target이 있으면 끝날 때 그 장치를 끈다 "
+        "(hood·burner_1·burner_2·fryer·all만), 없으면 알림만",
         "5 타이머 취소(target 생략 가능)",
         "6 상태 확인(target 생략 가능)",
         "7 위험 확인()",
         "8 긴급 정지()",
         "9 되묻기() — 무엇을 하려는지 모를 때",
         "10 지원 외() — 지원하지 않는 기기·기능, 잡담",
+        "11 금액 확인() — 결제할 금액을 물을 때",
+        "12 결제 요청() — 말 속의 금액은 쓰지 않는다",
+        "13 네() — 확인 질문에 그렇다고 답할 때",
+        "14 아니요() — 확인 질문에 아니라고 답하거나 취소할 때",
         '말에 빠진 값은 ?로 쓴다 (어느 화구인지 모르면 target=?, "조금 더"처럼 상대 조절이면 '
         "level=?).",
         '"그거·아까 거"는 상황의 마지막 장치를 가리킨다. '
@@ -78,6 +89,10 @@ def few_shot(train: list[dict]) -> list[dict]:
         "CHECK_RISK",
         "EMERGENCY_STOP",
         "UNSUPPORTED",
+        "CHECK_AMOUNT",
+        "REQUEST_PAYMENT",
+        "CONFIRM",
+        "DENY",
     ]:
         r = pick(
             lambda r, a=action: (
@@ -196,7 +211,7 @@ def report(rows: list[dict], name: str) -> str:
 
     m = metrics(rows)
     lines = [
-        f"### {name} (n={m['n']})",
+        f"### {name} (n={m['n']}, 지시문 {PROMPT_VERSION})",
         "",
         "| Action Acc | Entity Acc | Valid Rate | Unsafe (Guard 전) | 평균 ms |",
         "|---|---|---|---|---|",
@@ -219,23 +234,25 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="명령 해석(규칙 파서·LLM)을 test로 평가한다")
     parser.add_argument("--engine", choices=["rule", "hf"], required=True)
     parser.add_argument("--model", default=None, help="hf 엔진의 Hugging Face 모델 id")
+    parser.add_argument("--data", choices=["v1", "v2"], default=DATA_VERSION, help="데이터 버전")
     parser.add_argument("--split", default="test")
     parser.add_argument("--limit", type=int, default=None, help="앞에서 N개만 (빠른 확인용)")
     parser.add_argument("--csv", default=None, help="예측 결과 CSV")
     args = parser.parse_args()
 
+    split_dir = DATA_DIR / f"split_{args.data}"
     records = [
-        json.loads(line) for line in (SPLIT_DIR / f"{args.split}.jsonl").open(encoding="utf-8")
+        json.loads(line) for line in (split_dir / f"{args.split}.jsonl").open(encoding="utf-8")
     ]
     if args.engine == "rule":
         engine = RuleEngine()
     else:
         if not args.model:
             parser.error("--engine hf에는 --model이 필요합니다")
-        train = [json.loads(line) for line in (SPLIT_DIR / "train.jsonl").open(encoding="utf-8")]
+        train = [json.loads(line) for line in (split_dir / "train.jsonl").open(encoding="utf-8")]
         engine = HFEngine(args.model, few_shot(train))
     rows = evaluate(records, engine, args.limit)
-    print(report(rows, engine.name))
+    print(report(rows, f"{engine.name} · split_{args.data}/{args.split}"))
     if args.csv:
         with open(args.csv, "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)

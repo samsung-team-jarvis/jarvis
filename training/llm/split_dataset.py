@@ -1,12 +1,14 @@
 """LLM 데이터 분할 (LLM-05, 발표 p.9 ⑥): 가족(meta.group) 단위 Train/Val/Test + 캘리브레이션.
 
-python -m training.llm.split_dataset   # → data/llm/split_v1/{train,val,test,calib}.jsonl
+python -m training.llm.split_dataset   # → data/llm/split_v2/{train,val,test,calib}.jsonl
 
 - 같은 가족(부모 템플릿과 그 Paraphrase)은 같은 split에 간다
   → 비슷한 문장이 train·test에 같이 안 들어간다.
 - Action별로 따로 가족을 배정해 각 split의 문장 수가 비율(70/15/15%)에 가깝게 한다
   (큰 가족부터, 목표보다 가장 모자란 split에). Hard Negative는 범주별로 같은 방식.
 - Test는 고정한다: 데이터를 다시 만들어도 같은 가족은 같은 split에 가도록 순서·seed를 고정.
+  데이터 버전을 올릴 때는 앞 버전의 배정(groups.json)을 그대로 두고 새 가족만 배정한다 (--base)
+  → 앞 버전의 train으로 배운 모델을 새 test로 재도, 배운 가족이 test에 섞이지 않는다.
 - 캘리브레이션(양자화용)은 Train에서만, Action 비율대로 뽑는다 (학교 특강 규칙).
 """
 
@@ -22,6 +24,8 @@ from collections import Counter, defaultdict
 
 from training.llm import build_seed as bs
 
+SPLIT_DIR = bs.OUT_DIR / f"split_{bs.VERSION}"
+BASE_GROUPS = bs.OUT_DIR / "split_v1/groups.json"  # 앞 버전의 가족 배정 (그대로 둔다)
 SPLITS = ("train", "val", "test")
 RATIOS = {"train": 0.70, "val": 0.15, "test": 0.15}
 CALIB_SIZE = 500  # 특강 권장 300~1,000
@@ -31,38 +35,59 @@ def load(path: pathlib.Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
 
+def load_groups(path: pathlib.Path) -> dict[str, str]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def group_key(record: dict) -> str:
     m = record["meta"]
     return m.get("group") or m["template_id"]
 
 
 def stratum(record: dict) -> str:
-    """분할 비율을 맞추는 묶음: 일반 데이터는 Action, Hard Negative는 범주 + Guard 기대 판정.
+    """분할 비율을 맞추는 묶음. 묶음마다 train·val·test에 비율대로 들어간다.
 
-    기대 판정까지 나눠야 "Guard가 거절해야 할 위험 명령"이 test에도 들어가 Unsafe를 잴 수 있다.
+    - Hard Negative: 범주 + Guard 기대 판정. 기대 판정까지 나눠야 "Guard가 거절해야 할 위험 명령"이
+      test에도 들어가 Unsafe를 잴 수 있다.
+    - 되묻기: 종류(무엇을 하려다 무엇이 빠졌나)별로. 간접 발화: Action별로 따로.
+      Action으로만 묶었던 v1은 "장치·시간 되묻기"와 간접 발화가 거의 val·test에만 들어가
+      train에서 배울 수 없었다.
     """
-    m = record["meta"]
+    m, output = record["meta"], record["output"]
     if m["source"] == "hard_negative":
         return f"hn:{m['category']}:{m.get('expect_guard') or '-'}"
-    return record["output"]["action"]
+    if output["action"] == "ASK_CLARIFY":
+        return f"ASK_CLARIFY:{output['for_action']}:{'+'.join(output['missing'])}"
+    if m.get("indirect"):
+        return f"{output['action']}:indirect"
+    return output["action"]
 
 
-def assign_groups(records: list[dict], seed: int = 0) -> dict[str, str]:
+def assign_groups(
+    records: list[dict], seed: int = 0, fixed: dict[str, str] | None = None
+) -> dict[str, str]:
     """가족 → split. 묶음(stratum)마다 큰 가족부터 목표 대비 가장 모자란 split에 넣고,
-    이 묶음이 하나도 없는 split이 있으면 가장 남는 split의 가장 작은 가족을 옮긴다."""
+    이 묶음이 하나도 없는 split이 있으면 가장 남는 split의 가장 작은 가족을 옮긴다.
+
+    `fixed`(앞 버전의 배정)에 있는 가족은 그 split에 그대로 두고 옮기지 않는다.
+    """
     sizes: dict[str, Counter] = defaultdict(Counter)
     for r in records:
         sizes[stratum(r)][group_key(r)] += 1
     rng = random.Random(seed)
-    assignment: dict[str, str] = {}
+    present = {g for groups in sizes.values() for g in groups}
+    assignment: dict[str, str] = {g: sp for g, sp in (fixed or {}).items() if g in present}
     for st in sorted(sizes):
         groups = sorted(sizes[st].items(), key=lambda kv: (-kv[1], kv[0]))
         total = sum(n for _, n in groups)
+        # 이미 배정된 가족(앞 버전, 다른 묶음)을 먼저 세고 남은 자리에 새 가족을 넣는다
         filled = Counter()
+        for group, n in groups:
+            if group in assignment:
+                filled[assignment[group]] += n
         mine = []  # 이 묶음에서 새로 배정한 가족
         for group, n in groups:
-            if group in assignment:  # 다른 묶음에서 이미 배정 (같은 가족은 한 곳에)
-                filled[assignment[group]] += n
+            if group in assignment:
                 continue
             deficits = {sp: RATIOS[sp] * total - filled[sp] for sp in SPLITS}
             best = max(deficits.values())
@@ -143,14 +168,21 @@ def summary(splits: dict[str, list[dict]], calib: list[dict]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="LLM 데이터를 가족 단위로 Train/Val/Test로 나눈다")
-    parser.add_argument("--dataset", type=pathlib.Path, default=bs.OUT_DIR / "dataset_v1.jsonl")
-    parser.add_argument("--hard", type=pathlib.Path, default=bs.OUT_DIR / "hard_negative_v1.jsonl")
-    parser.add_argument("--out-dir", type=pathlib.Path, default=bs.OUT_DIR / "split_v1")
+    parser.add_argument(
+        "--dataset", type=pathlib.Path, default=bs.OUT_DIR / f"dataset_{bs.VERSION}.jsonl"
+    )
+    parser.add_argument(
+        "--hard", type=pathlib.Path, default=bs.OUT_DIR / f"hard_negative_{bs.VERSION}.jsonl"
+    )
+    parser.add_argument("--out-dir", type=pathlib.Path, default=SPLIT_DIR)
+    parser.add_argument(
+        "--base", type=pathlib.Path, default=BASE_GROUPS, help="앞 버전의 groups.json (그대로 둠)"
+    )
     parser.add_argument("--calib-size", type=int, default=CALIB_SIZE)
     args = parser.parse_args()
 
     records = load(args.dataset) + load(args.hard)
-    assignment = assign_groups(records)
+    assignment = assign_groups(records, fixed=load_groups(args.base))
     splits = split_records(records, assignment)
     problems = leaks(splits)
     if problems:

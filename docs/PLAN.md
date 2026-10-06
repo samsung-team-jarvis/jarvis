@@ -131,7 +131,7 @@
 - [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함, **간접 발화**·**숫자 표기 변형**("3번"/"삼 번") 포함 — SUDA 방식, [school-materials](./school-materials.md)) | 선행: LLM-01 | 담당: 이현종 (#55 — 기획 시트로 627건 생성, 사람 검수 대기)
 - [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 검수·보강: 위험 상황 판정이 Guard 규칙과 직결) (#55 — 84건 생성, 사람 검수 대기)
 - [ ] LLM-04 Paraphrase 합성 → 형식 검증·중복 제거·사람 검수 파이프라인 (6단계, 발표 p.9). 생성은 SUDA식 **기획 시트**(기능별 키워드 목록 + 어투 3종 + 데이터 비율 + 생성 프롬프트)로 | 선행: LLM-02 | 담당: 이현종 (#63 — 데이터 v1 2,234건, 사람 검수 대기)
-- [ ] LLM-14 LLM 데이터 v2: 기획 시트에 장치 8종과 결제 문장 추가 → 재생성·재분할 → 규칙 파서·기본 모델 기준선 재측정 (v1에서 "지원 외"였던 조명·에어컨·음악 22문장의 정답이 바뀜. 결제·네/아니요 문장과 평가용 지시문(`bench/llm_eval.py`)도 v0.2로) | 선행: LLM-13 | 담당: 이현종
+- [x] LLM-14 LLM 데이터 v2: 기획 시트에 장치 8종과 결제 문장 추가 → 재생성·재분할 → 규칙 파서·기본 모델 기준선 재측정 (v1에서 "지원 외"였던 조명·에어컨·음악 22문장의 정답이 바뀜. 결제·네/아니요 문장과 평가용 지시문(`bench/llm_eval.py`)도 v0.2로) | 선행: LLM-13 | 담당: 이현종 (#86 — 3,015문장 + Hard Negative 165, v1 가족은 같은 split 유지. v2 test: 규칙 파서 82.5% · Qwen3-0.6B 25.7% · Qwen3.5-2B 44.5%(Mac). 사람 검수 대기)
 - [x] LLM-05 템플릿·세션 단위 Train/Val/Test 분할, Test 고정, 캘리브레이션 세트는 Train에서만 | 선행: LLM-04 | 담당: 이현종 (#65, `training/llm/split_dataset.py` — 검수로 데이터가 바뀌면 같은 명령으로 재분할)
 - [ ] FUS-05 온도 시나리오 20~30개 정의 (정상·과열·방치·가열 장치 켜짐 방치) + 기록 — 가상 주방 전에는 [simulator](../services/simulator/README.md) 시나리오 형식으로 먼저 작성 | 선행: HW-19 (simulator로 선진행 가능) | 담당: 최지환
 - [x] ~~HW-07 모형 1차~~ — 취소 (2026-10-05 → HW-15)
@@ -141,8 +141,8 @@
 - [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 최석진 (2026-10-05 조정 — 측정 실행. decision log는 이현종과 함께)
 - [ ] STT-09 마이크 비교 (핀마이크 vs 노트북 내장) CER | 선행: STT-06 | 담당: 최석진 (#71 이관 — 마이크는 부품 담당, [stt_eval](../bench/README.md)로 측정)
 - [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 | 담당: 신지호
-- [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종 (#67 — Mac 정확도: Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1%. 남음: Llama-3.2-1B(HF 승인), 보드 tok/s·RAM)
-- [x] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종 (#67 — Action Acc 79.9%, `bench/llm_eval.py`)
+- [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종 (#67 — Mac 정확도: Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1% (데이터 v1), #86 — 25.7% · 44.5% (데이터 v2). 남음: Llama-3.2-1B(HF 승인), 보드 tok/s·RAM)
+- [x] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종 (#67 — Action Acc 79.9% (데이터 v1), #86 — 82.5% (데이터 v2), `bench/llm_eval.py`)
 - [ ] FUS-07 단일 조건 판단 Baseline (State F1, 위험 미탐율) | 선행: FUS-05 | 담당: 최지환
 - [x] ~~HW-08 BLE 제어 Baseline~~ — 취소 (2026-10-05 → HW-21)
 - [ ] HW-21 가상 주방 제어 Baseline (성공률, 왕복 지연) — 단순 전달 vs 결과 확인·재시도 | 선행: HW-17 | 담당: 최석진

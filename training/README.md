@@ -14,8 +14,8 @@
 | `convert/hf_to_rkllm.py` | HF LLM → RKLLM 변환 스크립트 | Linux x86_64 · Python 3.10~3.12 |
 | `convert/docker_rknn_smoke.sh` | Mac에서 Docker로 RKNN 변환 확인 | Docker (linux/amd64 에뮬레이션) |
 | `llm/plan_sheet.yaml` · `llm/build_seed.py` | LLM 기획 시트 → Seed·Hard Negative 데이터 (`data/llm/`) — [llm](./llm/README.md) | 어디서나 |
-| `llm/paraphrase_sheet.yaml` · `llm/build_dataset.py` | Seed + Paraphrase → 데이터 v1 (`data/llm/dataset_v1.jsonl`) | 어디서나 |
-| `llm/split_dataset.py` | 가족 단위 Train/Val/Test + 캘리브레이션 (`data/llm/split_v1/`) | 어디서나 |
+| `llm/paraphrase_sheet.yaml` · `llm/build_dataset.py` | Seed + Paraphrase → 데이터 v2 (`data/llm/dataset_v2.jsonl`) | 어디서나 |
+| `llm/split_dataset.py` | 가족 단위 Train/Val/Test + 캘리브레이션 (`data/llm/split_v2/`) | 어디서나 |
 
 ## 주의
 
