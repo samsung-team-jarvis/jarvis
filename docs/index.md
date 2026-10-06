@@ -57,6 +57,7 @@
 - [LLM → RKLLM 변환](../recipes/llm-to-rkllm.md)
 - [STT 평가](../recipes/stt-eval.md)
 - [STT 테스트 세트 녹음 (팀원용)](../recipes/stt-recording.md)
+- [가상 주방(Unity) ↔ 보드 연결 (Unity 담당용)](../recipes/unity-kitchen-link.md)
 - [새 서비스 추가](../recipes/add-service.md)
 
 ## Services
