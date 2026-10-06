@@ -156,7 +156,7 @@
 - [ ] VIS-06 YOLOv8n 파인튜닝 v1 (Colab) | 선행: VIS-04, VIS-10 | 담당: 신지호
 - [ ] VIS-07 ONNX → RKNN INT8 변환 (가상 주방 캡처 화면으로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06, BOARD-06 | 담당: 신지호
 - [ ] VIS-08 `vision_svc`: 가상 주방 캡처 화면을 받아 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, HW-20, INFRA-03 | 담당: 이현종
-- [ ] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 이현종
+- [x] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 이현종 (#88 — Qwen3-0.6B LoRA를 Mac에서 학습, 데이터 v2 test 72.6%(Mac fp16 참고값, 규칙 파서 82.5%보다 낮음). 입력 형식 [decision](./decisions/2026-10-06-llm-input-format.md). 더 큰 베이스용 Colab 노트북은 미검증)
 - [ ] LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정 (서버 기본/서버 학습/보드 양자화 3단계 비교) | 선행: LLM-07, BOARD-06 | 담당: 이현종
 - [ ] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-08, FUS-02 | 담당: 이현종
 - [ ] FUS-08 State Machine v1 (온도+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환
