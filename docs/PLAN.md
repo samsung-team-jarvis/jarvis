@@ -56,7 +56,7 @@
 - [x] ~~HW-01 BLE GATT·패킷 규격 v0.1 확정~~ — 취소 (2026-10-05 실물 하드웨어 없음 → HW-14)
 - [x] ~~HW-02 부품 목록(BOM) 확정·주문~~ — 취소 (2026-10-05, 아래 BOM은 보드 주변 장치만 남김)
 - [x] HW-13 메타버스 플랫폼 선정 — 보드와 메시지 주고받기, 인식용 카메라 화면 캡처, 장치 상태를 스크립트로 바꾸기, 비용을 확인해 open-questions Q-11 답 | 선행: - | 담당: 최석진 (#75 — Unity 6.3 LTS, 공식 문서 확인. 실동작은 HW-16·20 ([decision](./decisions/2026-10-05-unity-virtual-kitchen.md)))
-- [ ] HW-14 보드 ↔ 가상 주방 연결 규격 v0.1 (제어 명령·결과 확인·온도·캡처 화면·생존 신호의 전달 방식) — interfaces §4 확정 | 선행: HW-13, FUS-01 | 담당: 이현종 (2026-10-05 조정 — 버스를 만든 쪽이 보드 연결을 맡는다. 플랫폼 전에는 simulator 기준으로 선진행)
+- [x] HW-14 보드 ↔ 가상 주방 연결 규격 v0.1 (제어 명령·결과 확인·온도·캡처 화면·생존 신호의 전달 방식) — interfaces §4 확정 | 선행: HW-13, FUS-01 | 담당: 이현종 (#80 — 연결 토픽 `kitchen/*`, `common/kitchen_link.py`, [Unity 안내](../recipes/unity-kitchen-link.md). Unity와의 실동작은 HW-16)
 - [ ] LLM-13 Function Call 스키마 v0.2 (장치 8종: 튀김기·조명·에어컨·선풍기·음악 target 추가, 결제 요청·금액 확인 Action, 장치별 값의 범위) — interfaces §3·§5 확정, `common/function_call.py`·규칙 파서·응답 문장·테스트 반영 | 선행: LLM-01 | 담당: 이현종
 - [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 신지호
 
@@ -92,7 +92,7 @@
 - [x] ~~HW-03 ESP32 BLE 서버~~ — 취소 (2026-10-05 → HW-16)
 - [x] ~~HW-04 열전대·INA219 값 시리얼 출력~~ — 취소 (2026-10-05 → HW-19)
 - [ ] HW-15 가상 주방 장면 1차 (화구 2개·후드·튀김기, 조리 구역, 인식용 카메라 고정) — 화면을 캡처할 수 있는 상태 | 선행: HW-13 | 담당: 최석진
-- [ ] HW-16 가상 장치 제어 hello: Mac에서 메시지 하나로 가상 주방의 후드를 켜고 끄기 | 선행: HW-14, HW-15 | 담당: 최석진
+- [ ] HW-16 가상 장치 제어 hello: `kitchen/cmd` 메시지 하나로 가상 주방의 후드를 켜고 끄고 `kitchen/ack`로 답하기 ([안내](../recipes/unity-kitchen-link.md)) | 선행: HW-14, HW-15 | 담당: 최석진
 
 ---
 
@@ -108,8 +108,8 @@
 - [ ] FUS-04 긴급 빠른 경로: "정지/멈춰/그만" 등은 LLM 없이 즉시 EMERGENCY_STOP | 선행: FUS-03 | 담당: 최지환
 - [x] ~~HW-05 `ble_gw` 서비스~~ — 취소 (2026-10-05 → HW-17)
 - [x] ~~HW-06 ESP32 하트비트 감시~~ — 취소 (2026-10-05 → HW-18)
-- [ ] HW-17 `kitchen_gw` 서비스: 버스 `control/command` → 가상 주방 장치, 결과 확인(seq) 수신·재시도, `control/result` 발행 | 선행: HW-14, INFRA-03 (가상 주방 전에는 가짜 상대로 선진행) | 담당: 이현종 (2026-10-05 조정)
-- [ ] HW-18 가상 주방 안전장치 (안전 계층 L0): 보드 생존 신호가 N초 끊기면 가열 장치 OFF | 선행: HW-16 | 담당: 최석진
+- [ ] HW-17 `kitchen_gw` 서비스: `control/command` → `kitchen/cmd`, `kitchen/ack` → `control/result`(재시도·`rtt_ms`), `kitchen/temp` → `sensor/reading`, `kitchen/heartbeat` 발행. Unity 없이 개발할 수 있게 같은 토픽을 쓰는 가짜 가상 주방 포함 | 선행: HW-14, INFRA-03 | 담당: 이현종 (2026-10-05 조정)
+- [ ] HW-18 가상 주방 안전장치 (안전 계층 L0): `kitchen/heartbeat`가 3초 끊기면 가열 장치 OFF, `kitchen/state`의 `safe_stop` 보고 ([interfaces](./architecture/interfaces.md) §4.4) | 선행: HW-16 | 담당: 최석진
 - [x] INFRA-05 `recorder`: 모든 토픽을 세션별 JSONL로 저장 | 선행: INFRA-03 | 담당: 이현종 (#31, `services/recorder`)
 - [x] INFRA-06 지연 분해 스크립트: 발화 끝 → STT → 파서 → Guard → 제어 결과 확인 구간별 ms — METRICS E2E 항목 첫 기록 | 선행: INFRA-05 | 담당: 이현종 (#45, `bench/latency.py` — 첫 기록은 Mac·명령 발행까지, Guard·가상 주방 구간은 해당 서비스가 생기면 같은 명령으로)
 - [x] BOARD-07 서비스 일괄 기동/종료 스크립트 (systemd 또는 단일 런처) | 선행: INFRA-03 | 담당: 이현종 (#47, `scripts/launch.py` — Mac 확인, systemd 예시는 보드 미검증)
@@ -163,8 +163,8 @@
 - [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 최지환
 - [x] ~~HW-09 ESP32 자체 하드 리밋~~ — 취소 (2026-10-05 → HW-18·HW-19)
 - [x] ~~HW-10 센서값 BLE notify~~ — 취소 (2026-10-05 → HW-19)
-- [ ] HW-19 가상 온도: 가열 장치(화구·튀김기)의 세기와 시간으로 온도 계산 → `kitchen_gw` → `sensor/reading` (1Hz). 온도 상한을 넘으면 가상 주방이 스스로 가열 장치 OFF | 선행: HW-17 | 담당: 최석진
-- [ ] HW-20 인식용 카메라 캡처 화면을 보드로 전달 (3~5fps) — `vision_svc`가 받을 수 있는 형식 | 선행: HW-15, HW-14 | 담당: 최석진
+- [ ] HW-19 가상 온도: 가열 장치(화구·튀김기)의 온도를 규칙대로 계산해 `kitchen/temp`로 1초에 한 번 전송, 265°C에 닿으면 스스로 OFF ([interfaces](./architecture/interfaces.md) §4.5, 기준 구현 `common.kitchen_link.next_temperature`) | 선행: HW-16 | 담당: 최석진
+- [ ] HW-20 인식용 카메라 화면을 `kitchen/frame`으로 전송 (JPEG 640×360, 1초에 4장) — `vision_svc`가 받을 수 있는지 확인 | 선행: HW-15, HW-14 | 담당: 최석진
 - [ ] BOARD-08 NPU 코어 배치 (YOLO core0 / LLM 나머지) 및 동시 구동 부하 측정 (tok/s 변화, fps, RAM, SoC 온도) | 선행: VIS-08, LLM-09 | 담당: 이현종
 - [ ] BOARD-09 장시간(30분+) 구동 발열·스로틀링 확인 | 선행: BOARD-08 | 담당: 신지호
 
