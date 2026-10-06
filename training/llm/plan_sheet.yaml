@@ -1,4 +1,4 @@
-# LLM 데이터 기획 시트 v1 (LLM-02 Seed · LLM-03 Hard Negative)
+# LLM 데이터 기획 시트 v2 (LLM-02 Seed · LLM-03 Hard Negative · LLM-14 장치 8종·결제)
 #
 # SUDA 방식 (docs/school-materials.md): 기능별 키워드 목록 + 어투 3종(명령·요청·평서) + 데이터 비율.
 # build_seed.py가 이 시트로 데이터를 만든다. 사람이 고치는 곳은 이 파일이다.
@@ -6,7 +6,11 @@
 # - 입력(instruction)은 호출어를 뺀 명령 문장이다 (llm_svc가 split_wake 결과를 넘긴다).
 # - 정답(output)은 interfaces §3 버스 JSON. "{device}" "{level}" "{time}"은 슬롯 값으로 채운다.
 # - 템플릿 id는 학습/평가 분할(LLM-05)의 그룹 단위다. 한번 쓴 id는 뜻을 바꾸지 않는다.
+#   정답이 바뀐 템플릿은 지우고 새 id로 만든다 (v2에서 지운 것: un_02 · un_31 · un_35 ·
+#   hn_nm_01 · hn_nm_03 · hn_nm_05 — 조명·에어컨·음악이 장치가 되면서 "지원 외"가 아니게 됨).
 # - 위험 상황의 위험 명령도 정답은 말 그대로의 명령이다. 막는 것은 Safety Guard (결정 #55).
+# - 스키마에 없는 값·조합을 말했을 때: 되물어서 풀리면 되묻기("후드 5단" → 세기 되묻기),
+#   되물어도 풀리지 않으면 지원 외("10분 뒤에 에어컨 꺼줘" — 에어컨에는 타이머가 없다).
 
 seed: 0
 
@@ -15,7 +19,23 @@ devices:
   hood: [후드, 환풍기, 환기팬, 후드 팬]
   burner_1: [1번 화구, 일번 화구, 첫 번째 화구, 1번 불, 첫 번째 불, 1번 버너]
   burner_2: [2번 화구, 이번 화구, 두 번째 화구, 2번 불, 두 번째 불, 2번 버너]
+  fryer: [튀김기, 튀김 기계, 전기 튀김기]
+  light: [조명, 전등, 매장 조명]
+  aircon: [에어컨, 에어콘, 냉방]
+  fan: [선풍기, 매장 선풍기]
+  music: [음악, 노래, 배경 음악]
   all: [전부, 다, 모두, 전체]
+
+# 템플릿의 devices에 쓰는 장치 묶음 (devices: *each 처럼 가져다 쓴다)
+device_groups:
+  each: &each [hood, burner_1, burner_2, fryer, light, aircon, fan, music]  # 개별 장치 8종
+  heat: &heat [burner_1, burner_2, fryer]                # 가열 장치
+  timer: &timer [hood, burner_1, burner_2, fryer]        # 타이머로 끌 수 있는 개별 장치
+  timer_all: &timer_all [hood, burner_1, burner_2, fryer, all]
+  store: &store [light, aircon, fan, music]              # 매장 장치 (타이머 없음)
+  wind: &wind [hood, aircon, fan]                        # 바람이 나오는 장치 ("돌려")
+  play: &play [hood, aircon, fan, music]                 # "틀어"라고 말하는 장치
+  strength: &strength [hood, burner_1, burner_2, fryer, aircon, fan]  # "세게·약하게"로 말하는 장치
 
 # 세기 (level → 표현)
 levels:
@@ -23,21 +43,46 @@ levels:
   2: [중간으로, 보통으로, 2단으로, 이단으로, 중으로]
   3: [세게, 강하게, 최대로, 3단으로, 제일 세게]
 
+# 세기를 다르게 말하는 장치 (없으면 위의 levels). 조명은 밝기, 음악은 음량 — 값은 똑같이 1~3
+device_levels:
+  light:
+    1: [어둡게, 1단으로, 일단으로, 제일 어둡게]
+    2: [중간으로, 보통으로, 2단으로, 중간 밝기로]
+    3: [밝게, 환하게, 최대로, 3단으로, 제일 밝게]
+  music:
+    1: [작게, 조용하게, 1단으로, 제일 작게]
+    2: [중간으로, 보통으로, 2단으로, 중간 크기로]
+    3: [크게, 최대로, 3단으로, 제일 크게]
+
 # 시간 (초 → 표현). 아라비아 숫자와 한글 수 둘 다
+# v2에서 13종 → 26종으로 늘렸다 (v1으로 시험 학습한 모델이 못 본 시간 값을 틀렸다)
 times:
+  10: [10초, 십 초]
+  20: [20초, 이십 초]
   30: [30초, 삼십 초]
   45: [45초, 사십오 초]
   60: [1분, 일 분]
+  75: [1분 15초, 일 분 십오 초]
   90: [1분 30초, 1분 반, 일 분 삼십 초]
   120: [2분, 이 분]
   150: [2분 30초, 2분 반]
   180: [3분, 삼 분]
+  200: [3분 20초, 삼 분 이십 초]
+  240: [4분, 사 분]
   300: [5분, 오 분]
+  330: [5분 30초, 5분 반]
+  360: [6분, 육 분]
   420: [7분, 칠 분]
+  480: [8분, 팔 분]
   600: [10분, 십 분]
+  720: [12분, 십이 분]
   900: [15분, 십오 분]
   1200: [20분, 이십 분]
+  1500: [25분, 이십오 분]
   1800: [30분, 삼십 분]
+  2400: [40분, 사십 분]
+  3000: [50분, 오십 분]
+  3600: [60분, 1시간, 한 시간]
 
 # 맥락 (context). Seed는 평소 상황에서 고르게 뽑는다
 contexts:
@@ -50,34 +95,45 @@ contexts:
     - {state: DANGER, temperature: 262, detected_objects: [pan, burner_on], last_target: null}
     - {state: UNATTENDED, temperature: 188, detected_objects: [pan, burner_on], last_target: null}
 
-# Action별 목표 수량 (Seed 합계 660). 소수 Action은 LLM-04 Paraphrase에서 더 늘린다
+# Action별 목표 수량 (Seed 합계 880). 소수 Action은 LLM-04 Paraphrase에서 더 늘린다
+# (문장이 고정된 템플릿만 있는 Action은 템플릿 수가 상한이다)
 targets:
-  TURN_ON: 100
-  TURN_OFF: 100
-  SET_LEVEL: 110
-  SET_TIMER: 110
+  TURN_ON: 130
+  TURN_OFF: 130
+  SET_LEVEL: 150
+  SET_TIMER: 120
   CANCEL_TIMER: 40
-  CHECK_STATUS: 50
+  CHECK_STATUS: 70
   CHECK_RISK: 25
   EMERGENCY_STOP: 40
-  ASK_CLARIFY: 50
-  UNSUPPORTED: 35
+  ASK_CLARIFY: 80
+  UNSUPPORTED: 40
+  CHECK_AMOUNT: 12
+  REQUEST_PAYMENT: 12
+  CONFIRM: 12
+  DENY: 12
 
 # 템플릿: id · tone(명령/요청/평서) · text · output · devices(쓸 target, 생략 시 output에 맞게)
 # {device_obj}는 을/를이 붙은 장치 이름 ("전부·다·모두·전체"에는 조사를 붙이지 않는다)
 templates:
   TURN_ON:
-    - {id: on_01, tone: 명령, text: "{device} 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: [hood, burner_1, burner_2]}
-    - {id: on_02, tone: 명령, text: "{device} 켜", output: {action: TURN_ON, target: "{device}"}, devices: [hood, burner_1, burner_2]}
-    - {id: on_03, tone: 요청, text: "{device_obj} 켜 주세요", output: {action: TURN_ON, target: "{device}"}, devices: [hood, burner_1, burner_2]}
-    - {id: on_04, tone: 요청, text: "{device_obj} 좀 켜 줄래", output: {action: TURN_ON, target: "{device}"}, devices: [hood, burner_1, burner_2]}
-    - {id: on_05, tone: 평서, text: "{device_obj} 켜야겠다", output: {action: TURN_ON, target: "{device}"}, devices: [hood, burner_1, burner_2]}
-    - {id: on_06, tone: 명령, text: "{device} 틀어줘", output: {action: TURN_ON, target: "{device}"}, devices: [hood]}
-    - {id: on_07, tone: 요청, text: "{device} 좀 돌려 주세요", output: {action: TURN_ON, target: "{device}"}, devices: [hood]}
+    - {id: on_01, tone: 명령, text: "{device} 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: *each}
+    - {id: on_02, tone: 명령, text: "{device} 켜", output: {action: TURN_ON, target: "{device}"}, devices: *each}
+    - {id: on_03, tone: 요청, text: "{device_obj} 켜 주세요", output: {action: TURN_ON, target: "{device}"}, devices: *each}
+    - {id: on_04, tone: 요청, text: "{device_obj} 좀 켜 줄래", output: {action: TURN_ON, target: "{device}"}, devices: *each}
+    - {id: on_05, tone: 평서, text: "{device_obj} 켜야겠다", output: {action: TURN_ON, target: "{device}"}, devices: *each}
+    - {id: on_06, tone: 명령, text: "{device} 틀어줘", output: {action: TURN_ON, target: "{device}"}, devices: *play}
+    - {id: on_07, tone: 요청, text: "{device} 좀 돌려 주세요", output: {action: TURN_ON, target: "{device}"}, devices: [hood, fan]}
+    - {id: on_08, tone: 요청, text: "{device} 켜 줬으면 좋겠어", output: {action: TURN_ON, target: "{device}"}}
+    - {id: on_09, tone: 명령, text: "{device} 가동해줘", output: {action: TURN_ON, target: "{device}"}, devices: [hood, fryer, aircon, fan]}
     - {id: on_ind_01, tone: 평서, text: "연기가 너무 많이 나", output: {action: TURN_ON, target: hood}, indirect: true}
     - {id: on_ind_02, tone: 평서, text: "냄새가 너무 심해", output: {action: TURN_ON, target: hood}, indirect: true}
     - {id: on_ind_03, tone: 요청, text: "환기 좀 시켜줘", output: {action: TURN_ON, target: hood}, indirect: true}
     - {id: on_ind_04, tone: 평서, text: "물 끓여야 하니까 {device_obj} 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: [burner_1, burner_2], indirect: true}
+    - {id: on_ind_05, tone: 평서, text: "더우니까 {device_obj} 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: [aircon, fan], indirect: true}
+    - {id: on_ind_06, tone: 평서, text: "매장이 너무 어두워", output: {action: TURN_ON, target: light}, indirect: true}
+    - {id: on_ind_07, tone: 평서, text: "튀김 해야 하니까 {device_obj} 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: [fryer], indirect: true}
+    - {id: on_ind_08, tone: 평서, text: "매장이 너무 조용해 {device} 좀 틀어줘", output: {action: TURN_ON, target: "{device}"}, devices: [music], indirect: true}
   TURN_OFF:
     - {id: off_01, tone: 명령, text: "{device} 꺼줘", output: {action: TURN_OFF, target: "{device}"}}
     - {id: off_02, tone: 명령, text: "{device} 꺼", output: {action: TURN_OFF, target: "{device}"}}
@@ -88,14 +144,26 @@ templates:
     - {id: off_ind_01, tone: 평서, text: "이제 환기 그만해도 돼", output: {action: TURN_OFF, target: hood}, indirect: true}
     - {id: off_ind_02, tone: 평서, text: "요리 다 끝났어 불 다 꺼도 돼", output: {action: TURN_OFF, target: all}, indirect: true}
     - {id: off_ind_03, tone: 평서, text: "다 먹었으니까 전부 꺼도 돼", output: {action: TURN_OFF, target: all}, indirect: true}
+    - {id: off_ind_04, tone: 평서, text: "이제 시원해 {device} 꺼도 돼", output: {action: TURN_OFF, target: "{device}"}, devices: [aircon, fan], indirect: true}
+    - {id: off_ind_05, tone: 평서, text: "너무 시끄러워 {device} 꺼줘", output: {action: TURN_OFF, target: "{device}"}, devices: [music], indirect: true}
+    - {id: off_ind_06, tone: 평서, text: "마감이야 전부 꺼줘", output: {action: TURN_OFF, target: all}, indirect: true}
+    - {id: off_ind_07, tone: 평서, text: "튀김 다 했어 {device} 꺼줘", output: {action: TURN_OFF, target: "{device}"}, devices: [fryer], indirect: true}
   SET_LEVEL:
-    - {id: lv_01, tone: 명령, text: "{device} {level} 해줘", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: [hood, burner_1, burner_2]}
-    - {id: lv_02, tone: 명령, text: "{device} {level}", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: [hood, burner_1, burner_2]}
-    - {id: lv_03, tone: 요청, text: "{device_obj} {level} 해 주세요", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: [hood, burner_1, burner_2]}
-    - {id: lv_04, tone: 요청, text: "{device} 좀 {level} 해 줄래", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: [hood, burner_1, burner_2]}
-    - {id: lv_05, tone: 평서, text: "{device} {level} 해야겠다", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: [hood, burner_1, burner_2]}
+    - {id: lv_01, tone: 명령, text: "{device} {level} 해줘", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: *each}
+    - {id: lv_02, tone: 명령, text: "{device} {level}", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: *each}
+    - {id: lv_03, tone: 요청, text: "{device_obj} {level} 해 주세요", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: *each}
+    - {id: lv_04, tone: 요청, text: "{device} 좀 {level} 해 줄래", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: *each}
+    - {id: lv_05, tone: 평서, text: "{device} {level} 해야겠다", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: *each}
     - {id: lv_ind_01, tone: 평서, text: "연기가 계속 나 후드 최대로", output: {action: SET_LEVEL, target: hood, level: 3}, indirect: true}
     - {id: lv_ind_02, tone: 평서, text: "넘칠 것 같아 {device} 약하게", output: {action: SET_LEVEL, target: "{device}", level: 1}, devices: [burner_1, burner_2], indirect: true}
+    - {id: lv_06, tone: 명령, text: "{device} {level} 틀어줘", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: *play}
+    # "볼륨·소리"는 음악의 음량이다 (소리를 내는 장치가 음악뿐)
+    - {id: lv_vol_01, tone: 명령, text: "볼륨 {level} 해줘", output: {action: SET_LEVEL, target: music, level: "{level}"}}
+    - {id: lv_vol_02, tone: 명령, text: "소리 {level} 해줘", output: {action: SET_LEVEL, target: music, level: "{level}"}}
+    - {id: lv_ind_03, tone: 평서, text: "손님이 어둡대 조명 밝게 해줘", output: {action: SET_LEVEL, target: light, level: 3}, indirect: true}
+    - {id: lv_ind_04, tone: 평서, text: "너무 시끄러워 음악 작게 해줘", output: {action: SET_LEVEL, target: music, level: 1}, indirect: true}
+    - {id: lv_ind_05, tone: 평서, text: "너무 추워 에어컨 약하게 해줘", output: {action: SET_LEVEL, target: aircon, level: 1}, indirect: true}
+    - {id: lv_ind_06, tone: 평서, text: "기름 온도 올려야 해 튀김기 세게", output: {action: SET_LEVEL, target: fryer, level: 3}, indirect: true}
   SET_TIMER:
     - {id: tm_01, tone: 명령, text: "타이머 {time}", output: {action: SET_TIMER, duration_s: "{time}"}}
     - {id: tm_02, tone: 명령, text: "타이머 {time} 맞춰줘", output: {action: SET_TIMER, duration_s: "{time}"}}
@@ -105,15 +173,20 @@ templates:
     - {id: tm_06, tone: 명령, text: "{time} 뒤에 {device} 꺼줘", output: {action: SET_TIMER, duration_s: "{time}", target: "{device}"}}
     - {id: tm_07, tone: 요청, text: "{time} 있다가 {device_obj} 꺼 주세요", output: {action: SET_TIMER, duration_s: "{time}", target: "{device}"}}
     - {id: tm_08, tone: 명령, text: "{device} {time} 뒤에 꺼", output: {action: SET_TIMER, duration_s: "{time}", target: "{device}"}}
+    - {id: tm_09, tone: 명령, text: "{time} 타이머", output: {action: SET_TIMER, duration_s: "{time}"}}
+    - {id: tm_10, tone: 요청, text: "{time} 뒤에 {device} 좀 꺼 줄래", output: {action: SET_TIMER, duration_s: "{time}", target: "{device}"}}
     - {id: tm_ind_01, tone: 평서, text: "라면 끓일 거야 3분 재줘", output: {action: SET_TIMER, duration_s: 180}, indirect: true}
     - {id: tm_ind_02, tone: 평서, text: "계란 반숙으로 7분만 알려줘", output: {action: SET_TIMER, duration_s: 420}, indirect: true}
+    - {id: tm_ind_03, tone: 평서, text: "치킨 튀길 거야 {time} 뒤에 {device} 꺼줘", output: {action: SET_TIMER, duration_s: "{time}", target: "{device}"}, devices: [fryer], indirect: true}
+    - {id: tm_ind_04, tone: 평서, text: "계란 삶을 거야 {time} 뒤에 알려줘", output: {action: SET_TIMER, duration_s: "{time}"}, indirect: true}
+    - {id: tm_ind_05, tone: 평서, text: "찌개 올렸어 {time} 뒤에 {device} 꺼줘", output: {action: SET_TIMER, duration_s: "{time}", target: "{device}"}, devices: [burner_1, burner_2], indirect: true}
   CANCEL_TIMER:
     - {id: ct_01, tone: 명령, text: "타이머 취소", output: {action: CANCEL_TIMER}}
     - {id: ct_02, tone: 명령, text: "타이머 꺼줘", output: {action: CANCEL_TIMER}}
     - {id: ct_03, tone: 요청, text: "타이머 취소해 주세요", output: {action: CANCEL_TIMER}}
     - {id: ct_04, tone: 평서, text: "타이머 이제 안 해도 돼", output: {action: CANCEL_TIMER}}
     - {id: ct_05, tone: 명령, text: "알람 그만", output: {action: CANCEL_TIMER}}
-    - {id: ct_06, tone: 명령, text: "{device} 타이머 취소해줘", output: {action: CANCEL_TIMER, target: "{device}"}, devices: [hood, burner_1, burner_2]}
+    - {id: ct_06, tone: 명령, text: "{device} 타이머 취소해줘", output: {action: CANCEL_TIMER, target: "{device}"}, devices: *timer}
     - {id: ct_07, tone: 명령, text: "타이머 멈춰", output: {action: CANCEL_TIMER}}
     - {id: ct_08, tone: 명령, text: "타이머 없애줘", output: {action: CANCEL_TIMER}}
     - {id: ct_09, tone: 명령, text: "타이머 지워줘", output: {action: CANCEL_TIMER}}
@@ -123,12 +196,13 @@ templates:
     - {id: ct_13, tone: 명령, text: "맞춰 둔 타이머 취소해", output: {action: CANCEL_TIMER}}
     - {id: ct_14, tone: 평서, text: "타이머 그만해도 돼", output: {action: CANCEL_TIMER}}
   CHECK_STATUS:
-    - {id: st_01, tone: 명령, text: "{device} 켜져 있어", output: {action: CHECK_STATUS, target: "{device}"}, devices: [hood, burner_1, burner_2]}
-    - {id: st_02, tone: 명령, text: "{device} 꺼졌어", output: {action: CHECK_STATUS, target: "{device}"}, devices: [hood, burner_1, burner_2]}
-    - {id: st_03, tone: 요청, text: "{device} 상태 알려 주세요", output: {action: CHECK_STATUS, target: "{device}"}, devices: [hood, burner_1, burner_2]}
+    - {id: st_01, tone: 명령, text: "{device} 켜져 있어", output: {action: CHECK_STATUS, target: "{device}"}, devices: *each}
+    - {id: st_02, tone: 명령, text: "{device} 꺼졌어", output: {action: CHECK_STATUS, target: "{device}"}, devices: *each}
+    - {id: st_03, tone: 요청, text: "{device} 상태 알려 주세요", output: {action: CHECK_STATUS, target: "{device}"}, devices: *each}
     - {id: st_04, tone: 명령, text: "지금 뭐 켜져 있어", output: {action: CHECK_STATUS}}
     - {id: st_05, tone: 명령, text: "상태 알려줘", output: {action: CHECK_STATUS}}
     - {id: st_06, tone: 요청, text: "다 꺼졌는지 확인해 주세요", output: {action: CHECK_STATUS, target: all}}
+    - {id: st_07, tone: 명령, text: "{device} 몇 단이야", output: {action: CHECK_STATUS, target: "{device}"}, devices: *each}
   CHECK_RISK:
     - {id: rk_01, tone: 명령, text: "지금 위험해", output: {action: CHECK_RISK}}
     - {id: rk_02, tone: 요청, text: "안전한지 봐 주세요", output: {action: CHECK_RISK}}
@@ -188,16 +262,45 @@ templates:
     - {id: ask_03, tone: 요청, text: "불 좀 약하게 해 주세요", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [target]}}
     - {id: ask_04, tone: 명령, text: "세게 해줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [target]}}
     - {id: ask_05, tone: 명령, text: "타이머 맞춰줘", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}}
-    - {id: ask_06, tone: 요청, text: "{device} 타이머 좀 맞춰 주세요", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}, devices: [hood, burner_1, burner_2]}
-    - {id: ask_07, tone: 명령, text: "{device} 조금 더 세게", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [hood, burner_1, burner_2]}
-    - {id: ask_08, tone: 명령, text: "{device} 좀 줄여줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [hood, burner_1, burner_2]}
+    - {id: ask_06, tone: 요청, text: "{device} 타이머 좀 맞춰 주세요", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}, devices: *timer}
+    - {id: ask_07, tone: 명령, text: "{device} 조금 더 세게", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: *strength}
+    - {id: ask_08, tone: 명령, text: "{device} 좀 줄여줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: *each}
     - {id: ask_09, tone: 명령, text: "그거 해줘", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
     - {id: ask_10, tone: 평서, text: "잠깐만", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    # v2: 되묻기 종류마다 가족을 여럿 둔다. v1은 "세기 빠짐"(ask_07·08)만 train에 있고 나머지 종류는
+    # val·test에만 있어서, v1으로 배운 모델이 장치·시간을 되묻는 법을 볼 수 없었다
+    # -- 켜기: 어느 장치인지 없음
+    - {id: ask_18, tone: 명령, text: "켜줘", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
+    - {id: ask_19, tone: 요청, text: "가스불 켜 주세요", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
+    - {id: ask_20, tone: 평서, text: "버너 켜야겠다", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
+    # -- 끄기: 어느 장치인지 없음
+    - {id: ask_21, tone: 요청, text: "가스불 꺼 주세요", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}}
+    - {id: ask_22, tone: 평서, text: "버너 꺼야겠다", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}}
+    - {id: ask_23, tone: 명령, text: "꺼줘", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}}
+    # -- 세기: 어느 장치인지 없음
+    - {id: ask_24, tone: 명령, text: "화구 {level} 해줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [target]}}
+    - {id: ask_25, tone: 명령, text: "불 좀 {level}", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [target]}}
+    - {id: ask_26, tone: 명령, text: "{level} 맞춰 줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [target]}}
+    # -- 타이머: 무엇을 끌지 없음 (몇 번 화구인지)
+    - {id: ask_11, tone: 명령, text: "{time} 뒤에 화구 꺼줘", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [target]}}
+    - {id: ask_27, tone: 명령, text: "불 {time}만 켜 두고 꺼줘", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [target]}}
+    - {id: ask_28, tone: 요청, text: "{time} 있다가 가스불 꺼 주세요", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [target]}}
+    # -- 타이머: 시간이 없음
+    - {id: ask_12, tone: 명령, text: "{device} 이따가 꺼줘", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}, devices: *timer_all}
+    - {id: ask_29, tone: 요청, text: "조금 있다가 알려줘", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}}
+    # -- 세기: 조명 밝기·음악 음량의 상대 조절 ("더")
+    - {id: ask_13, tone: 명령, text: "{device} 좀 더 밝게", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [light]}
+    - {id: ask_14, tone: 명령, text: "{device} 좀 더 크게", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [music]}
+    - {id: ask_15, tone: 명령, text: "볼륨 좀 키워줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}}
+    # -- 무엇을 하려는지 모름
+    - {id: ask_16, tone: 평서, text: "{device}", output: {action: ASK_CLARIFY, for_action: null, missing: []}, devices: *each}
+    - {id: ask_17, tone: 요청, text: "{device} 좀 어떻게 해 줘", output: {action: ASK_CLARIFY, for_action: null, missing: []}, devices: *each}
+    - {id: ask_30, tone: 평서, text: "어 그러니까", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
   UNSUPPORTED:
     # 지원하지 않는 기기·기능, 잡담(SUDA의 General_Conversation). "알람 7시"는 시각 알람이라 타이머가 아님.
     # "가스 밸브"는 실물 가스를 다루지 않으므로 지원 외 (안전 3계층)
+    # v2: 조명·음악·볼륨 문장(un_02 · un_31 · un_35)은 장치 명령이 되어 지웠다. 가게 일(un_36~)을 더했다
     - {id: un_01, tone: 명령, text: "오늘 날씨 어때", output: {action: UNSUPPORTED}}
-    - {id: un_02, tone: 명령, text: "노래 틀어줘", output: {action: UNSUPPORTED}}
     - {id: un_03, tone: 요청, text: "김치찌개 레시피 알려 주세요", output: {action: UNSUPPORTED}}
     - {id: un_04, tone: 명령, text: "냉장고 문 닫아줘", output: {action: UNSUPPORTED}}
     - {id: un_05, tone: 명령, text: "전자레인지 돌려줘", output: {action: UNSUPPORTED}}
@@ -226,23 +329,85 @@ templates:
     - {id: un_28, tone: 명령, text: "현관문 잠가줘", output: {action: UNSUPPORTED}}
     - {id: un_29, tone: 명령, text: "알람 7시에 맞춰줘", output: {action: UNSUPPORTED}}
     - {id: un_30, tone: 요청, text: "가스 밸브 잠가 주세요", output: {action: UNSUPPORTED}}
-    - {id: un_31, tone: 명령, text: "볼륨 좀 키워줘", output: {action: UNSUPPORTED}}
     - {id: un_32, tone: 요청, text: "오늘 일정 알려 주세요", output: {action: UNSUPPORTED}}
     - {id: un_33, tone: 명령, text: "물 좀 따라줘", output: {action: UNSUPPORTED}}
     - {id: un_34, tone: 평서, text: "요리 잘하고 싶다", output: {action: UNSUPPORTED}}
-    - {id: un_35, tone: 명령, text: "조명 좀 어둡게 해줘", output: {action: UNSUPPORTED}}
+    - {id: un_36, tone: 명령, text: "환불해 줘", output: {action: UNSUPPORTED}}
+    - {id: un_37, tone: 명령, text: "영수증 뽑아 줘", output: {action: UNSUPPORTED}}
+    - {id: un_38, tone: 명령, text: "주문 받아 줘", output: {action: UNSUPPORTED}}
+    - {id: un_39, tone: 요청, text: "예약 확인해 주세요", output: {action: UNSUPPORTED}}
+    - {id: un_40, tone: 명령, text: "히터 켜줘", output: {action: UNSUPPORTED}}
+    - {id: un_41, tone: 명령, text: "오늘 매출 알려줘", output: {action: UNSUPPORTED}}
+    - {id: un_42, tone: 요청, text: "포인트 적립해 주세요", output: {action: UNSUPPORTED}}
+    - {id: un_43, tone: 명령, text: "와이파이 비밀번호 알려줘", output: {action: UNSUPPORTED}}
+  CHECK_AMOUNT:
+    # 금액은 가상 결제 단말이 가진 값이다. 말 속의 금액은 쓰지 않는다 (interfaces §3.1)
+    - {id: am_01, tone: 명령, text: "얼마야", output: {action: CHECK_AMOUNT}}
+    - {id: am_02, tone: 명령, text: "얼마 나왔어", output: {action: CHECK_AMOUNT}}
+    - {id: am_03, tone: 요청, text: "금액 확인해 주세요", output: {action: CHECK_AMOUNT}}
+    - {id: am_04, tone: 명령, text: "결제 금액 알려줘", output: {action: CHECK_AMOUNT}}
+    - {id: am_05, tone: 명령, text: "총 얼마야", output: {action: CHECK_AMOUNT}}
+    - {id: am_06, tone: 명령, text: "합계 얼마야", output: {action: CHECK_AMOUNT}}
+    - {id: am_07, tone: 요청, text: "금액 좀 알려 줄래", output: {action: CHECK_AMOUNT}}
+    - {id: am_08, tone: 평서, text: "손님한테 얼마 받아야 하지", output: {action: CHECK_AMOUNT}}
+    - {id: am_09, tone: 명령, text: "계산 얼마 나왔어", output: {action: CHECK_AMOUNT}}
+    - {id: am_10, tone: 명령, text: "지금 금액 얼마야", output: {action: CHECK_AMOUNT}}
+    - {id: am_11, tone: 요청, text: "총액 알려 주세요", output: {action: CHECK_AMOUNT}}
+    - {id: am_12, tone: 평서, text: "얼마 나왔는지 봐야겠다", output: {action: CHECK_AMOUNT}}
+  REQUEST_PAYMENT:
+    # 결제 요청. 실행 전에 Safety Guard가 항상 확인을 받는다
+    - {id: pay_01, tone: 명령, text: "결제해줘", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_02, tone: 명령, text: "결제 요청해줘", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_03, tone: 요청, text: "결제 진행해 주세요", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_04, tone: 명령, text: "카드 결제해줘", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_05, tone: 명령, text: "계산해줘", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_06, tone: 요청, text: "계산 좀 해 주세요", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_07, tone: 요청, text: "결제 좀 부탁해", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_08, tone: 평서, text: "손님 계산하신대", output: {action: REQUEST_PAYMENT}, indirect: true}
+    - {id: pay_09, tone: 명령, text: "결제 받아줘", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_10, tone: 명령, text: "결제 시작해", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_11, tone: 평서, text: "이제 결제해야겠다", output: {action: REQUEST_PAYMENT}}
+    - {id: pay_12, tone: 명령, text: "카드로 계산해줘", output: {action: REQUEST_PAYMENT}}
+  CONFIRM:
+    # "네" — 기다리는 질문이 있는지는 Safety Guard가 본다. LLM은 말 그대로 CONFIRM
+    - {id: yes_01, tone: 평서, text: "네", output: {action: CONFIRM}}
+    - {id: yes_02, tone: 평서, text: "응", output: {action: CONFIRM}}
+    - {id: yes_03, tone: 평서, text: "그래", output: {action: CONFIRM}}
+    - {id: yes_04, tone: 평서, text: "맞아", output: {action: CONFIRM}}
+    - {id: yes_05, tone: 평서, text: "좋아", output: {action: CONFIRM}}
+    - {id: yes_06, tone: 평서, text: "예", output: {action: CONFIRM}}
+    - {id: yes_07, tone: 명령, text: "응 해줘", output: {action: CONFIRM}}
+    - {id: yes_08, tone: 평서, text: "네 맞아요", output: {action: CONFIRM}}
+    - {id: yes_09, tone: 명령, text: "그렇게 해줘", output: {action: CONFIRM}}
+    - {id: yes_10, tone: 평서, text: "오케이", output: {action: CONFIRM}}
+    - {id: yes_11, tone: 요청, text: "네 진행해 주세요", output: {action: CONFIRM}}
+    - {id: yes_12, tone: 평서, text: "어 그래", output: {action: CONFIRM}}
+  DENY:
+    # "아니요". "취소"만 말하면 거절이고, "타이머 취소"는 타이머 취소다
+    - {id: no_01, tone: 평서, text: "아니", output: {action: DENY}}
+    - {id: no_02, tone: 평서, text: "아니요", output: {action: DENY}}
+    - {id: no_03, tone: 평서, text: "아니야", output: {action: DENY}}
+    - {id: no_04, tone: 평서, text: "싫어", output: {action: DENY}}
+    - {id: no_05, tone: 명령, text: "하지 마", output: {action: DENY}}
+    - {id: no_06, tone: 명령, text: "취소", output: {action: DENY}}
+    - {id: no_07, tone: 평서, text: "됐어", output: {action: DENY}}
+    - {id: no_08, tone: 평서, text: "아니 됐어", output: {action: DENY}}
+    - {id: no_09, tone: 평서, text: "안 해", output: {action: DENY}}
+    - {id: no_10, tone: 평서, text: "아니요 괜찮아요", output: {action: DENY}}
+    - {id: no_11, tone: 요청, text: "취소해 주세요", output: {action: DENY}}
+    - {id: no_12, tone: 명령, text: "그러지 마", output: {action: DENY}}
 
 # Hard Negative (LLM-03): 모델이 틀리기 쉬운 경우. 맥락(context)을 직접 지정한다.
 # 범주끼리 수가 너무 벌어지지 않게 템플릿 하나에서 최대 이만큼만 뽑는다
 hard_negative_max_per_template: 8
 # expect_guard: 이 명령이 Guard에 갔을 때 기대 판정 (FUS-03 테스트에도 쓴다)
 hard_negatives:
-  danger_context:   # 위험 상황의 명령 — LLM은 말 그대로 해석, Guard가 막는다
-    - {id: hn_dg_01, text: "{device} 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: [burner_1, burner_2], context: danger, expect_guard: REJECT}
-    - {id: hn_dg_02, text: "{device} 세게 해줘", output: {action: SET_LEVEL, target: "{device}", level: 3}, devices: [burner_1, burner_2], context: danger, expect_guard: REJECT}
-    - {id: hn_dg_03, text: "{device} 최대로", output: {action: SET_LEVEL, target: "{device}", level: 3}, devices: [burner_1, burner_2], context: danger, expect_guard: REJECT}
+  danger_context:   # 위험 상황의 명령 — LLM은 말 그대로 해석, Guard가 막는다 (가열 장치: 화구·튀김기)
+    - {id: hn_dg_01, text: "{device} 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: *heat, context: danger, expect_guard: REJECT}
+    - {id: hn_dg_02, text: "{device} 세게 해줘", output: {action: SET_LEVEL, target: "{device}", level: 3}, devices: *heat, context: danger, expect_guard: REJECT}
+    - {id: hn_dg_03, text: "{device} 최대로", output: {action: SET_LEVEL, target: "{device}", level: 3}, devices: *heat, context: danger, expect_guard: REJECT}
     - {id: hn_dg_04, text: "타이머 30분 맞춰줘", output: {action: SET_TIMER, duration_s: 1800}, context: danger, expect_guard: ALLOW}
-    - {id: hn_dg_05, text: "{device} 꺼줘", output: {action: TURN_OFF, target: "{device}"}, devices: [burner_1, burner_2, all], context: danger, expect_guard: ALLOW}
+    - {id: hn_dg_05, text: "{device} 꺼줘", output: {action: TURN_OFF, target: "{device}"}, devices: [burner_1, burner_2, fryer, all], context: danger, expect_guard: ALLOW}
     - {id: hn_dg_06, text: "후드 최대로", output: {action: SET_LEVEL, target: hood, level: 3}, context: danger, expect_guard: ALLOW}
   ambiguous:        # 장치·값·의도가 빠짐 → 되묻기
     - {id: hn_am_01, text: "아까 그거 켜줘", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
@@ -250,28 +415,50 @@ hard_negatives:
     - {id: hn_am_03, text: "좀 꺼줘", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}}
     - {id: hn_am_04, text: "타이머", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}}
     - {id: hn_am_05, text: "후드 좀", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
-    - {id: hn_am_06, text: "불 켜줘", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}, note: "부엌에서 '불'은 조명일 수도 있지만 우리 장치에는 조명이 없다 → 화구 되묻기"}
+    - {id: hn_am_06, text: "불 켜줘", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}, note: "'불'은 화구 1·2번일 수도, 조명일 수도 있다 → 장치 되묻기"}
+    - {id: hn_am_07, text: "{time} 뒤에 꺼줘", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [target]}, note: "무엇을 끌지 없음 (알림만 원하면 '알려줘')"}
+    - {id: hn_am_08, text: "불 꺼줘", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}, note: "화구인지 조명인지 모름"}
   pronoun:          # 앞에서 말한 장치(last_target)를 가리킴
-    - {id: hn_pr_01, text: "그거 꺼줘", output: {action: TURN_OFF, target: "{device}"}, devices: [hood, burner_1, burner_2], last_target: "{device}"}
-    - {id: hn_pr_02, text: "다시 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: [hood, burner_1, burner_2], last_target: "{device}"}
-    - {id: hn_pr_03, text: "그것도 세게 해줘", output: {action: SET_LEVEL, target: "{device}", level: 3}, devices: [hood, burner_1, burner_2], last_target: "{device}"}
+    - {id: hn_pr_01, text: "그거 꺼줘", output: {action: TURN_OFF, target: "{device}"}, devices: *each, last_target: "{device}"}
+    - {id: hn_pr_02, text: "다시 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: *each, last_target: "{device}"}
+    - {id: hn_pr_03, text: "그것도 세게 해줘", output: {action: SET_LEVEL, target: "{device}", level: 3}, devices: *strength, last_target: "{device}"}
     - {id: hn_pr_04, text: "그거 꺼줘", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}, note: "가리킬 장치가 없음 (last_target 없음)"}
     - {id: hn_pr_05, text: "아까 거 다시 켜줘", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}, note: "last_target 없음"}
-  out_of_range:     # 없는 장치·범위 밖 값 → 되묻기
+  out_of_range:     # 없는 장치·범위 밖 값 → 되묻기 (되물으면 풀린다)
     - {id: hn_or_01, text: "3번 화구 켜줘", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
     - {id: hn_or_02, text: "후드 5단으로", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}}
     - {id: hn_or_03, text: "타이머 2시간", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}, note: "최대 60분"}
     - {id: hn_or_04, text: "타이머 90분 맞춰줘", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}, note: "최대 60분"}
     - {id: hn_or_05, text: "전부 켜줘", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}, note: "모두 켜기는 지원 안 함"}
-  near_miss:        # 장치 명령과 비슷하지만 지원하지 않음
-    - {id: hn_nm_01, text: "조명 켜줘", output: {action: UNSUPPORTED}}
+    - {id: hn_or_06, text: "{device} 4단으로 해줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: *each, note: "세기는 1~3"}
+    - {id: hn_or_07, text: "에어컨 24도로 맞춰줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, note: "온도를 숫자로 받지 않는다 → 세기를 되묻는다"}
+    - {id: hn_or_08, text: "에어컨 18도로 해줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, note: "온도를 숫자로 받지 않는다"}
+    - {id: hn_or_09, text: "볼륨 50으로 해줘", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, note: "음량은 1~3"}
+  near_miss:        # 장치 명령과 비슷하지만 지원하지 않음 (되물어도 풀리지 않는다)
     - {id: hn_nm_02, text: "TV 틀어줘", output: {action: UNSUPPORTED}}
-    - {id: hn_nm_03, text: "에어컨 꺼줘", output: {action: UNSUPPORTED}}
     - {id: hn_nm_04, text: "밥솥 취사 시작해줘", output: {action: UNSUPPORTED}}
-    - {id: hn_nm_05, text: "노래 좀 크게 틀어줘", output: {action: UNSUPPORTED}}
+    - {id: hn_nm_06, text: "{time} 뒤에 {device} 꺼줘", output: {action: UNSUPPORTED}, devices: *store, note: "타이머는 가열 장치·후드·전체에만"}
+    - {id: hn_nm_07, text: "다음 곡 틀어줘", output: {action: UNSUPPORTED}, note: "음악은 켜기·끄기·음량만"}
+    - {id: hn_nm_08, text: "에어컨 제습으로 바꿔줘", output: {action: UNSUPPORTED}}
+    - {id: hn_nm_09, text: "선풍기 회전시켜줘", output: {action: UNSUPPORTED}}
+    - {id: hn_nm_10, text: "조명 색 바꿔줘", output: {action: UNSUPPORTED}}
+    - {id: hn_nm_11, text: "에어프라이어 좀 켜줘", output: {action: UNSUPPORTED}, note: "튀김기와 다른 기기"}
+    - {id: hn_nm_12, text: "오늘 매출 얼마야", output: {action: UNSUPPORTED}, note: "지금 결제할 금액이 아님"}
   negation:         # 하지 말라는 말 → 실행할 명령 없음
-    - {id: hn_ng_01, text: "{device} 끄지 마", output: {action: UNSUPPORTED}, devices: [hood, burner_1, burner_2], note: "실행할 명령 없음"}
-    - {id: hn_ng_02, text: "{device} 켜지 마", output: {action: UNSUPPORTED}, devices: [hood, burner_1, burner_2], note: "실행할 명령 없음"}
+    - {id: hn_ng_01, text: "{device} 끄지 마", output: {action: UNSUPPORTED}, devices: *each, note: "실행할 명령 없음"}
+    - {id: hn_ng_02, text: "{device} 켜지 마", output: {action: UNSUPPORTED}, devices: *each, note: "실행할 명령 없음"}
+  not_urgent:       # 매장 장치를 멈추라는 말은 긴급 정지가 아니라 그 장치 끄기 ("멈춰"만 말하면 긴급 정지)
+    - {id: hn_nu_01, text: "{device} 멈춰", output: {action: TURN_OFF, target: "{device}"}, devices: [aircon, fan, music]}
+    - {id: hn_nu_02, text: "{device} 정지", output: {action: TURN_OFF, target: "{device}"}, devices: [fan, music]}
+    - {id: hn_nu_03, text: "{device} 그만 틀어", output: {action: TURN_OFF, target: "{device}"}, devices: [aircon, fan, music]}
+  payment:          # 결제: 말 속의 금액은 쓰지 않는다. 결제를 하지 말라는 말은 거절
+    - {id: hn_pay_01, text: "만 이천 원 결제해줘", output: {action: REQUEST_PAYMENT}, note: "금액은 결제 단말의 값을 쓰고 Guard가 확인을 받는다"}
+    - {id: hn_pay_02, text: "오천 원 계산해줘", output: {action: REQUEST_PAYMENT}, note: "금액은 말로 받지 않는다"}
+    - {id: hn_pay_03, text: "결제 취소", output: {action: DENY}}
+    - {id: hn_pay_04, text: "결제하지 마", output: {action: DENY}}
+  filler:           # "응·아니"로 시작하지만 뒤에 명령이 있다 → 그 명령
+    - {id: hn_fl_01, text: "응 {device} 꺼줘", output: {action: TURN_OFF, target: "{device}"}, devices: *each}
+    - {id: hn_fl_02, text: "아니 {device} 켜줘", output: {action: TURN_ON, target: "{device}"}, devices: *each}
   stt_error:        # 실제로 관찰된 SenseVoice 오인식 형태 (audio_svc README)
     - {id: hn_se_01, text: "2 화국 꺼줘", output: {action: TURN_OFF, target: burner_2}}
     - {id: hn_se_02, text: "타이머 3분 맞추하 죠", output: {action: SET_TIMER, duration_s: 180}}
