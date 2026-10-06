@@ -177,7 +177,7 @@
 > 절차 (발표 p.14): Baseline 측정 → 오류 로그 수집 → 오류 유형 분류 → 데이터 추가·정제 → 재학습·재포팅 → 동일 Test Set 재평가. **Validation으로 분석, Test는 고정.**
 
 - [x] LLM-10 Validation 오류 유형 분류표 (환각 Action, 잘못된 target, 대명사 실패, 안전 위반 등) | 선행: LLM-08 | 담당: 이현종 (#90 — 보드가 아직이라 Mac fp16 LoRA v1으로 먼저: val 오류 86건, 다른 함수 29 · 지원 외를 실행 19 · 규칙 위반 12, 틀린 실행 42. `bench/llm_errors.py`. 양자화 모델은 LLM-08 뒤에 같은 도구로)
-- [ ] LLM-11 2차 데이터 보강 + LoRA v2 → 재변환 → 재평가 | 선행: LLM-10 | 담당: 이현종
+- [ ] LLM-11 2차 데이터 보강 + LoRA v2 → 재변환 → 재평가 | 선행: LLM-10 | 담당: 이현종 (#92 — Mac fp16까지 완료: val 오류 유형으로 train에만 208문장 보강 → 같은 test 72.6% → 78.5%. 남음: 재변환·보드 재평가 (LLM-08 뒤))
 - [ ] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종
 - [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종 (#61 — spk01 val 기반 첫 사전, `services/llm_svc/stt_fixes.py`)
 - [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종
