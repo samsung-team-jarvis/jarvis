@@ -20,7 +20,7 @@ python -m services.llm_svc parse "3분 뒤에 2번 불 꺼"  # 버스 없이 결
 음성부터 명령까지 한 번에 (브로커 필요 — [local-development](../../docs/workflows/local-development.md)):
 
 ```bash
-python3 scripts/launch.py                                           # recorder → llm_svc → audio_svc(마이크)
+python3 scripts/launch.py                                           # recorder → kitchen_gw → llm_svc → audio_svc(마이크)
 ```
 
 ## 발행 내용 (규칙 파서일 때)

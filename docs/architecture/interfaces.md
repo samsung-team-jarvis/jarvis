@@ -40,7 +40,7 @@
 | `llm/function_call` | llm_svc | `{call: <§3>, raw_text, valid: bool, fallback: bool, gen_ms, tokens}` |
 | `guard/decision` | safety_guard | `{call, decision: ALLOW\|REJECT\|ASK, reason}` |
 | `control/command` | safety_guard | `{seq, cmd, target, value}` |
-| `control/result` | kitchen_gw | `{seq, ok: bool, retries, rtt_ms}` |
+| `control/result` | kitchen_gw | `{seq, ok: bool, retries, rtt_ms, reason?}` |
 | `system/heartbeat` | 각 서비스 | `{alive: true}` |
 
 - `control/command`의 값 (HW-14 확정, 코드: [`common/kitchen_link.py`](../../common/kitchen_link.py) `validate_command`·`command_for`):
@@ -155,7 +155,7 @@
 
 ## 4. 보드 ↔ 가상 주방 (v0.1 확정, HW-14)
 
-가상 주방은 Unity다 ([decision](../decisions/2026-10-05-unity-virtual-kitchen.md)). 보드의 MQTT 브로커에 직접 접속하지만 **버스의 봉투 메시지는 쓰지 않는다.** 봉투 없는 짧은 JSON을 `kitchen/*` 토픽으로 주고받고, 보드의 `kitchen_gw`가 버스 메시지로 옮긴다 ([decision](../decisions/2026-10-06-kitchen-link.md)). 코드: [`common/kitchen_link.py`](../../common/kitchen_link.py) (토픽·상수·검사). Unity 쪽 안내: [recipe](../../recipes/unity-kitchen-link.md).
+가상 주방은 Unity다 ([decision](../decisions/2026-10-05-unity-virtual-kitchen.md)). 보드의 MQTT 브로커에 직접 접속하지만 **버스의 봉투 메시지는 쓰지 않는다.** 봉투 없는 짧은 JSON을 `kitchen/*` 토픽으로 주고받고, 보드의 `kitchen_gw`가 버스 메시지로 옮긴다 ([decision](../decisions/2026-10-06-kitchen-link.md)). 코드: [`common/kitchen_link.py`](../../common/kitchen_link.py) (토픽·상수·검사), [`services/kitchen_gw`](../../services/kitchen_gw/README.md) (서비스와 가짜 가상 주방). Unity 쪽 안내: [recipe](../../recipes/unity-kitchen-link.md).
 
 ### 4.1 구조
 
@@ -194,13 +194,14 @@
 1. `kitchen_gw`가 `kitchen/cmd`를 보내고 0.5초 동안 같은 `seq`의 `kitchen/ack`를 기다린다.
 2. 없으면 **같은 `seq`로 한 번** 다시 보낸다. 그래도 없으면 `control/result`를 `ok: false, retries: 1`로 낸다.
 3. 가상 주방은 이미 처리한 `seq`를 다시 받으면 **장치를 다시 바꾸지 않고** 확인만 다시 보낸다 (최근 `seq`를 기억한다).
-4. `control/result`의 `rtt_ms`는 `kitchen_gw`가 처음 보낸 때부터 확인을 받을 때까지의 시간이다.
+4. `control/result`의 `rtt_ms`는 `kitchen_gw`가 처음 보낸 때부터 확인을 받을 때까지의 시간이다. 실패하면 이유를 `reason`에 넣는다: `no_ack`(확인 없음), `invalid_command`(규격에 안 맞음), 또는 가상 주방이 준 이유.
+5. 알려진 한계: 확인을 못 받아 실패로 끝낸 명령을 가상 주방이 나중에 실행할 수 있다. 실제 상태는 `kitchen/state`가 기준이다.
 
 ### 4.4 가상 주방의 자체 안전장치 (안전 계층 L0)
 
 보드와 무관하게 가상 주방 안에서 동작한다.
 
-- `kitchen/heartbeat`가 **3초** 동안 오지 않으면 모든 가열 장치를 끈다.
+- `kitchen/heartbeat`가 **3초** 동안 오지 않으면 모든 가열 장치를 끈다. 끊긴 동안에는 가열 장치를 켜는 명령(`ON`·`LEVEL`)을 실행하지 않고 `{"ok": false, "reason": "no_heartbeat"}`로 답한다.
 - 가열 장치의 온도가 **265°C**에 닿으면 그 장치를 끈다.
 - 둘 중 하나가 일어나면 `kitchen/state`의 `safe_stop`을 `true`로 보낸다. 생존 신호가 돌아오고 명령을 새로 받으면 `false`로 돌아간다.
 - 시작 직후에는 모든 장치가 꺼져 있다.
@@ -246,3 +247,4 @@
 | 2026-10-02 | v0.1 | §1 `session_id` 이어 쓰기 규칙 명시 (지연 분해 연결 기준) — 필드 변경 없음 (#45) | 이현종 |
 | 2026-10-05 | v0.1 | 시연 환경 변경(가상 주방) 반영: §2 발행 서비스 `ble_gw` → `kitchen_gw`, §2.2 모형 설명, §4 BLE 규격 삭제 → 보드 ↔ 가상 주방, §5 v0.2 예정 변경 추가 — **v0.1 필드·코드 변경 없음** (#73) | 이현종 |
 | 2026-10-06 | v0.1 | §4 보드 ↔ 가상 주방 확정: `kitchen/*` 연결 토픽 6개, 재시도·중복 방지, 자체 안전장치, 가상 온도 규칙. §2 `control/command` 값(`ON`·`OFF`·`LEVEL`) 확정, `sensor/reading`의 `current_a`를 선택 필드로 (#80, HW-14) | 이현종 |
+| 2026-10-06 | v0.1 | §4.3 `control/result`의 `reason`, §4.4 생존 신호가 끊긴 동안 가열 장치 켜기 거절 — `kitchen_gw` 구현하며 명시 (#82, HW-17) | 이현종 |
