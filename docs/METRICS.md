@@ -46,10 +46,10 @@
 |---|---|---|---|---|---|
 | LLM Action Acc (규칙 파서) | **82.5%** (Entity 82.1%) | - | - | | 비교 기준. 데이터 v2 test n=474. 규칙이라 보드에서도 같은 값 (데이터 v1 test n=354에서는 79.9%) |
 | LLM Action Acc (기본 모델+프롬프트) | Qwen3-0.6B 25.7% · Qwen3.5-2B 44.5% (Entity 17.5% · 35.4%) | | | | **Mac fp16 참고값**, 데이터 v2 test · 지시문 v0.2 — 보드(.rkllm) 측정은 BOARD-05 이후. Llama-3.2-1B는 HF 승인 대기. 데이터 v1·지시문 v0.1에서는 32.8% · 66.1% |
-| LLM Action Acc (LoRA, 서버 fp16) | - | Qwen3-0.6B LoRA v1: **72.6%** (Entity 71.1%) | | | **Mac MPS fp16 참고값** (서버 아님), 데이터 v2 test, 학습 모델용 짧은 지시문·예시 없음. val 83.9%. 규칙 파서(82.5%)보다 낮다 |
+| LLM Action Acc (LoRA, 서버 fp16) | - | Qwen3-0.6B LoRA v1: **72.6%** (Entity 71.1%) | LoRA v2 (보강 208문장): **78.5%** (Entity 77.6%) | | **Mac MPS fp16 참고값** (서버 아님), 데이터 v2 test, 학습 모델용 짧은 지시문·예시 없음. 둘 다 규칙 파서(82.5%)보다 낮다. val은 v1 83.9% → v2 94.9%이지만 보강 방향을 val 오류로 정해 v2 val은 낙관적이다 |
 | LLM Action Acc (LoRA, 보드 w8a8) | - | 측정 예정 | | | 양자화 전후 비교 |
-| JSON Valid Rate | Qwen3-0.6B 72.6% · Qwen3.5-2B 75.7% | Qwen3-0.6B LoRA v1 96.0% | | | Mac fp16 참고값, 데이터 v2 test (함수 토큰 형식·스키마 통과율) |
-| Unsafe Action Rate (Guard 전/후) | Guard 전: 규칙 파서 100% · Qwen3-0.6B 37.5% · Qwen3.5-2B 87.5% / Guard 후: 측정 예정 | Guard 전: Qwen3-0.6B LoRA v1 100% (8/8) | | | n=8 (데이터 v2 Hard Negative test의 REJECT 대상). 전은 설계상 높다 — 모델 값이 낮은 건 안전해서가 아니라 명령을 못 알아들어서. Guard 후는 FUS-03 이후 |
+| JSON Valid Rate | Qwen3-0.6B 72.6% · Qwen3.5-2B 75.7% | Qwen3-0.6B LoRA v1 96.0% | LoRA v2 96.6% | | Mac fp16 참고값, 데이터 v2 test (함수 토큰 형식·스키마 통과율) |
+| Unsafe Action Rate (Guard 전/후) | Guard 전: 규칙 파서 100% · Qwen3-0.6B 37.5% · Qwen3.5-2B 87.5% / Guard 후: 측정 예정 | Guard 전: Qwen3-0.6B LoRA v1 100% (8/8) | Guard 전: LoRA v2 100% (8/8) | | n=8 (데이터 v2 Hard Negative test의 REJECT 대상). 전은 설계상 높다 — 모델 값이 낮은 건 안전해서가 아니라 명령을 못 알아들어서. Guard 후는 FUS-03 이후 |
 | STT CER (quiet/hood/frying/mixed) | 측정 예정 | | | | |
 | STT→Action Acc | 측정 예정 | | | | |
 | YOLO mAP50 (fp32 / INT8) | 측정 예정 | | | | |
@@ -69,3 +69,4 @@
 | 2026-10-06 | 기본 모델+프롬프트 Baseline (LLM-06) Qwen3-0.6B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | 25.7% / 17.5% / 72.6% / 37.5% (3/8), 평균 886 ms/건 | M1 Pro Mac MPS fp16 / torch 2.14.1, transformers 5.18.0, 지시문 v0.2(장치 8종·함수 14개) + few-shot 17(train), greedy | LLM split v2 test (n=474) | 318de25 | 이현종 |
 | 2026-10-06 | 기본 모델+프롬프트 Baseline (LLM-06) Qwen3.5-2B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | 44.5% / 35.4% / 75.7% / 87.5% (7/8), 평균 3,661 ms/건 | 위와 같음 | LLM split v2 test (n=474) | 318de25 | 이현종 |
 | 2026-10-06 | LoRA v1 (LLM-07) Qwen3-0.6B — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | test 72.6% / 71.1% / 96.0% / 100% (8/8), 평균 335 ms/건. val 83.9% / 83.1% / 97.6% (n=508) | M1 Pro Mac MPS — 학습 fp32·저장 fp16 / torch 2.14.1, transformers 5.18.0, peft 0.21.2. LoRA r16·α32·dropout 0.05(선형층 7종), lr 2e-4 cosine·warmup 20, 배치 16, 3 epoch(414 step, 31분), seed 0. val loss 0.071 → 0.060 → 0.068. 평가: 학습 모델용 짧은 지시문·예시 없음, greedy | LLM split v2 train 2,198으로 학습, test (n=474) | 1079e3c (학습 시작 때는 미커밋 — MPS 경로 코드 동일) | 이현종 |
+| 2026-10-06 | LoRA v2 (LLM-11) Qwen3-0.6B, 오류 유형 보강 — Action / Entity / Valid / Unsafe(Guard 전) · **Mac 참고값** | test 78.5% / 77.6% / 96.6% / 100% (8/8), 평균 331 ms/건 (v1 72.6% / 71.1% / 96.0%). test 오류 137 → 106건, 틀린 실행 20 → 11건. val 94.9% / 94.3% / 99.4% (보강 방향을 val로 정해 낙관적) | LoRA v1과 같은 설정·환경 (3 epoch 453 step, 34분). val loss 0.038 → 0.024 → 0.021. 바꾼 것은 학습 데이터 하나: train 2,198 + 보강 208 (`augment_v1.jsonl`) | LLM split v2 test (n=474) — v1과 같은 test | 8d926e1 | 이현종 |
