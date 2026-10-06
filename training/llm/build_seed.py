@@ -283,8 +283,8 @@ def dedupe(records: list[dict]) -> list[dict]:
 def write_jsonl(path: pathlib.Path, records: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
-        for r in records:
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        for r in records:  # 공백 없이 쓴다 (파일 하나가 저장소의 1MB 검사를 넘지 않게)
+            f.write(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
 def write_review_csv(path: pathlib.Path, records: list[dict]) -> None:
