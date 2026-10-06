@@ -34,6 +34,7 @@ YYYY-MM-DD-short-decision-title.md
 - [2026-10-05 시연 환경은 가상 주방(메타버스), 장치 8종](./2026-10-05-virtual-kitchen-demo.md)
 - [2026-10-05 가상 주방 플랫폼은 Unity](./2026-10-05-unity-virtual-kitchen.md)
 - [2026-10-06 가상 주방은 연결 토픽으로 붙고, 보드의 kitchen_gw가 버스로 옮긴다](./2026-10-06-kitchen-link.md)
+- [2026-10-06 Function Call 스키마 v0.2 (장치 8종 · 세기 통일 · 결제)](./2026-10-06-function-call-schema-v02.md)
 
 ## Template
 

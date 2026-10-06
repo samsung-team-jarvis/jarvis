@@ -54,9 +54,12 @@ def test_parse_tolerates_spaces() -> None:
     [
         ("후드 켜", "형식"),
         ("<jarvis_1>(target=hood)", "형식"),  # 끝 토큰 없음 (생성이 잘림)
-        ("<jarvis_11>()<jarvis_end>", "함수 번호"),
+        ("<jarvis_15>()<jarvis_end>", "함수 번호"),
         ("<jarvis_1>(target=all)<jarvis_end>", "target"),  # 모두 켜기는 지원 안 함
-        ("<jarvis_1>(target=fryer)<jarvis_end>", "target"),
+        ("<jarvis_1>(target=fridge)<jarvis_end>", "target"),
+        ("<jarvis_4>(target=light, min=10)<jarvis_end>", "target"),  # 조명에는 타이머가 없다
+        ("<jarvis_12>(target=?)<jarvis_end>", "없는 파라미터"),  # 결제는 인자가 없다
+        ("<jarvis_11>(min=3)<jarvis_end>", "없는 파라미터"),
         ("<jarvis_1>()<jarvis_end>", "필수"),
         ("<jarvis_3>(target=hood, level=5)<jarvis_end>", "level"),
         ("<jarvis_3>(target=hood, level=high)<jarvis_end>", "숫자"),

@@ -32,7 +32,7 @@ s30,ask,자비스 타이머 맞춰줘,<jarvis_4>(min=?)<jarvis_end>
 s31,ask,자비스,<jarvis_9>()<jarvis_end>
 s32,ask,자비스야,<jarvis_9>()<jarvis_end>
 s33,unsupported,자비스 오늘 날씨 어때,<jarvis_10>()<jarvis_end>
-s34,unsupported,자비스 노래 틀어줘,<jarvis_10>()<jarvis_end>
+s34,turn_on,자비스 노래 틀어줘,<jarvis_1>(target=music)<jarvis_end>
 s35,no_wake,후드 켜줘,
 s36,no_wake,저기 자비스 후드 켜줘,
 s37,no_wake,오늘 저녁 뭐 먹지,

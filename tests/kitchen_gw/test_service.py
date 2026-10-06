@@ -153,7 +153,7 @@ def test_kitchen_refuses_unknown_target() -> None:
     acks: list[dict] = []
     rig.bus.subscribe_raw(link.TOPIC_ACK, lambda _t, d: acks.append(json.loads(d)))
 
-    rig.bus.publish_raw(link.TOPIC_CMD, b'{"seq":6,"cmd":"ON","target":"fryer","value":1}')
+    rig.bus.publish_raw(link.TOPIC_CMD, b'{"seq":6,"cmd":"ON","target":"fridge","value":1}')
     rig.bus.publish_raw(link.TOPIC_CMD, b"not json")
 
     assert acks == [{"seq": 6, "ok": False, "reason": "invalid_command"}]
@@ -224,6 +224,21 @@ def test_heater_turns_itself_off_at_the_hard_limit() -> None:
 
     rig.run(120)
     assert rig.kitchen.temps["burner_1"] < 40  # 꺼진 뒤에는 식는다
+
+
+def test_fryer_is_a_heater_and_other_devices_are_not() -> None:
+    rig = Rig()
+    rig.command(1, "LEVEL", "fryer", 3)
+    rig.command(2, "ON", "light", 1)
+    rig.command(3, "LEVEL", "music", 2)
+    rig.run(5)
+    fryer = [r.payload["temperature_c"] for r in rig.readings if r.payload["device_id"] == "fryer"]
+    assert len(fryer) == 5 and fryer[-1] > 25.0
+    assert {r.payload["device_id"] for r in rig.readings} == set(link.HEATERS)
+
+    rig.run(3, heartbeat=False)  # 생존 신호가 끊기면 가열 장치만 꺼진다
+    assert rig.kitchen.devices["fryer"] == {"on": False, "level": 0}
+    assert rig.kitchen.devices["light"]["on"] and rig.kitchen.devices["music"]["level"] == 2
 
 
 def test_heartbeat_goes_to_kitchen_and_bus_once_a_second() -> None:

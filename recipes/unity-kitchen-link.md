@@ -33,11 +33,13 @@ kitchen/state      {"devices": {"hood": {"on": true, "level": 1}, "burner_1": {"
 
 | `cmd` | `target` | `value` | 가상 주방에서 |
 |---|---|---|---|
-| `ON` | `hood` · `burner_1` · `burner_2` | `1` | 켠다 (세기 1) |
-| `OFF` | 위 셋 또는 `all` | `0` | 끈다. `all`이면 전부 |
-| `LEVEL` | `hood` · `burner_1` · `burner_2` | `1` · `2` · `3` | 세기를 바꾼다 (꺼져 있으면 켜면서) |
+| `ON` | 개별 장치 8종 | `1` | 켠다 (세기 1) |
+| `OFF` | 개별 장치 또는 `all` | `0` | 끈다. `all`이면 전부 |
+| `LEVEL` | 개별 장치 8종 | `1` · `2` · `3` | 세기를 바꾼다 (꺼져 있으면 켜면서) |
 
-- 지금 장치는 3종이다. 튀김기·조명·에어컨·선풍기·음악·결제는 스키마 v0.2(LLM-13)에서 `target`이 추가된다. **모르는 `target`이 오면 무시하지 말고 `{"seq": …, "ok": false, "reason": "unknown_target"}`으로 답한다.**
+- 장치(`target`)는 8종이다: `hood`(후드) · `burner_1` · `burner_2`(화구) · `fryer`(튀김기) · `light`(조명) · `aircon`(에어컨) · `fan`(선풍기) · `music`(음악) ([interfaces](../docs/architecture/interfaces.md) §2.2). 세기는 모두 1~3이고, 조명은 밝기, 음악은 음량이다.
+- 처음에는 후드와 화구만 만들어도 된다. **아직 만들지 않은 `target`이 오면 무시하지 말고 `{"seq": …, "ok": false, "reason": "unknown_target"}`으로 답한다.**
+- 결제는 아직 연결 메시지가 없다 (HW-23에서 정한다).
 - 타이머는 보드가 센다. 가상 주방은 끝났을 때 오는 `OFF`만 받는다.
 
 ## 2. 지켜야 할 동작
@@ -45,7 +47,7 @@ kitchen/state      {"devices": {"hood": {"on": true, "level": 1}, "burner_1": {"
 1. **같은 `seq`를 두 번 실행하지 않는다.** 보드는 0.5초 안에 확인을 못 받으면 같은 `seq`로 한 번 다시 보낸다. 이미 처리한 `seq`가 다시 오면 장치는 그대로 두고 `kitchen/ack`만 다시 보낸다 (최근 `seq` 몇 개를 기억해 둔다).
 2. **장치를 바꾼 뒤에 `kitchen/ack`를 보낸다.** 보드는 이 확인을 받은 뒤에 "후드를 켰습니다"라고 말한다.
 3. **시작하면 모든 장치가 꺼져 있다.**
-4. **`kitchen/heartbeat`가 3초 동안 안 오면 가열 장치(`burner_1`, `burner_2`)를 끈다.** 후드는 끄지 않는다. 이때 `kitchen/state`의 `safe_stop`을 `true`로 보낸다. 끊긴 동안 가열 장치를 켜는 명령이 오면 실행하지 않고 `{"seq": …, "ok": false, "reason": "no_heartbeat"}`로 답한다.
+4. **`kitchen/heartbeat`가 3초 동안 안 오면 가열 장치(`burner_1`, `burner_2`, `fryer`)를 끈다.** 후드와 매장 장치는 끄지 않는다. 이때 `kitchen/state`의 `safe_stop`을 `true`로 보낸다. 끊긴 동안 가열 장치를 켜는 명령이 오면 실행하지 않고 `{"seq": …, "ok": false, "reason": "no_heartbeat"}`로 답한다.
 5. **온도가 265°C에 닿은 가열 장치는 스스로 끈다** (`safe_stop: true`).
 6. `kitchen/state`는 상태가 바뀔 때마다, 그리고 5초에 한 번 보낸다.
 7. MQTT 메시지는 Unity의 메인 스레드가 아닌 곳에서 도착한다. 장치를 바꾸는 코드는 메인 스레드에서 실행되게 넘긴다 ([Unity 결정](../docs/decisions/2026-10-05-unity-virtual-kitchen.md)).

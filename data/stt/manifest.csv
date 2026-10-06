@@ -32,7 +32,7 @@ spk01_quiet_macbook_s30,spk01,quiet,macbook,stt/spk01/quiet_macbook/s30.wav,자�
 spk01_quiet_macbook_s31,spk01,quiet,macbook,stt/spk01/quiet_macbook/s31.wav,자비스,<jarvis_9>()<jarvis_end>,val
 spk01_quiet_macbook_s32,spk01,quiet,macbook,stt/spk01/quiet_macbook/s32.wav,자비스야,<jarvis_9>()<jarvis_end>,val
 spk01_quiet_macbook_s33,spk01,quiet,macbook,stt/spk01/quiet_macbook/s33.wav,자비스 오늘 날씨 어때,<jarvis_10>()<jarvis_end>,val
-spk01_quiet_macbook_s34,spk01,quiet,macbook,stt/spk01/quiet_macbook/s34.wav,자비스 노래 틀어줘,<jarvis_10>()<jarvis_end>,val
+spk01_quiet_macbook_s34,spk01,quiet,macbook,stt/spk01/quiet_macbook/s34.wav,자비스 노래 틀어줘,<jarvis_1>(target=music)<jarvis_end>,val
 spk01_quiet_macbook_s35,spk01,quiet,macbook,stt/spk01/quiet_macbook/s35.wav,후드 켜줘,,val
 spk01_quiet_macbook_s36,spk01,quiet,macbook,stt/spk01/quiet_macbook/s36.wav,저기 자비스 후드 켜줘,,val
 spk01_quiet_macbook_s37,spk01,quiet,macbook,stt/spk01/quiet_macbook/s37.wav,오늘 저녁 뭐 먹지,,val

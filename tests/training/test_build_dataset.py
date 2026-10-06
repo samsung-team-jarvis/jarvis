@@ -4,7 +4,7 @@ import pathlib
 import pytest
 import yaml
 
-from common.function_call import PARAMS, parse_tokens, to_tokens
+from common.function_call import V01_ACTIONS, parse_tokens, to_tokens
 from training.llm import build_dataset as bd
 from training.llm import build_seed as bs
 
@@ -34,7 +34,7 @@ def test_alternatives() -> None:
 def test_dataset_shape() -> None:
     rows = load(DATASET)
     assert 2000 <= len(rows) <= 3000
-    assert {r["output"]["action"] for r in rows} == set(PARAMS)
+    assert {r["output"]["action"] for r in rows} == set(V01_ACTIONS)  # 데이터 v1은 스키마 v0.1 범위
     for r in rows:
         assert parse_tokens(to_tokens(r["output"])) == r["output"]
         assert r["meta"]["split"] is None and r["meta"]["group"]

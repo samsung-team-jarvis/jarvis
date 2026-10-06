@@ -4,7 +4,7 @@ import pathlib
 import pytest
 import yaml
 
-from common.function_call import parse_tokens, to_tokens, validate
+from common.function_call import V01_ACTIONS, parse_tokens, to_tokens, validate
 from training.llm import build_seed as bs
 
 DATA = bs.OUT_DIR
@@ -28,7 +28,7 @@ def test_every_output_is_valid_and_round_trips(path: pathlib.Path) -> None:
 def test_seed_covers_every_action_and_tone() -> None:
     rows = load(SEED)
     assert 500 <= len(rows) <= 800
-    assert {r["output"]["action"] for r in rows} == set(bs.PARAMS)
+    assert {r["output"]["action"] for r in rows} == set(V01_ACTIONS)  # 데이터 v1은 스키마 v0.1 범위
     assert {r["meta"]["tone"] for r in rows} == {"명령", "요청", "평서"}
     assert any(r["meta"]["indirect"] for r in rows)
     assert any("삼 분" in r["instruction"] or "일번" in r["instruction"] for r in rows)  # 한글 수
