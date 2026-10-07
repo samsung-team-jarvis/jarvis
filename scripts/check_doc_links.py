@@ -9,7 +9,8 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SKIP_DIRS = {".git", ".venv", "venv", "node_modules", ".agents"}
+# Library: Unity가 kitchen/Library/에 받아 두는 패키지 문서 (git 제외, UTF-8이 아닌 파일 포함)
+SKIP_DIRS = {".git", ".venv", "venv", "node_modules", ".agents", "Library"}
 LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
 CODE_RE = re.compile(r"```.*?```|`[^`\n]*`", re.DOTALL)
 
