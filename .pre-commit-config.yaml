@@ -13,9 +13,12 @@ repos:
       - id: check-merge-conflict
       - id: check-yaml
       - id: detect-private-key
+      # Unity가 저장하는 에셋(장면·.meta 등)은 줄 끝 공백을 남긴다. 고쳐도 Unity가 다시 넣으므로 검사하지 않는다.
       - id: end-of-file-fixer
+        exclude: '^kitchen/.*\.(unity|prefab|asset|meta|mat|anim|controller|overrideController|inputactions|physicMaterial|lighting|mask|playable|signal|preset|spriteatlas|shadergraph|shadersubgraph|vfx|terrainlayer)$'
       - id: trailing-whitespace
         args: ['--markdown-linebreak-ext=md']
+        exclude: '^kitchen/.*\.(unity|prefab|asset|meta|mat|anim|controller|overrideController|inputactions|physicMaterial|lighting|mask|playable|signal|preset|spriteatlas|shadergraph|shadersubgraph|vfx|terrainlayer)$'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.10  # requirements-dev.txt의 ruff 버전과 맞춘다
