@@ -67,6 +67,10 @@
 - [audio_svc (마이크·wav → VAD → STT → `stt/text`, 모델 받기)](../services/audio_svc/README.md)
 - [llm_svc (`stt/text` → 규칙 파서 → `llm/function_call`)](../services/llm_svc/README.md)
 
+## Virtual Kitchen
+
+- [kitchen (가상 주방 Unity 프로젝트: 현재 상태·작업 순서·장면 만드는 법)](../kitchen/README.md)
+
 ## Bench
 
 - [bench (지연 분해 등 측정 스크립트)](../bench/README.md)
