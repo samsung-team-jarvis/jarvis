@@ -33,7 +33,7 @@
 | `services/llm_svc` | 받아쓴 문장 → 명령 (규칙 파서, LLM 연결 예정) | 이현종 ② | [README](services/llm_svc/README.md) |
 | `services/safety_guard` · `fusion_svc` | 상황 인식(State Machine), 위험 판단·차단 | 최지환 ③ | (예정) |
 | `services/kitchen_gw` | 보드 ↔ 가상 주방 연결(제어·결과 확인·온도·생존 신호), 가짜 가상 주방 | 이현종 ② | [README](services/kitchen_gw/README.md) |
-| 가상 주방 (Unity) | 장면·장치·가상 온도·캡처 화면 | 최석진 ④ | (예정 — [결정](docs/decisions/2026-10-05-unity-virtual-kitchen.md), [연결 안내](recipes/unity-kitchen-link.md)) |
+| `kitchen` (Unity) | 가상 주방: 장면·장치·가상 온도·캡처 화면 | 최석진 ④ | [README](kitchen/README.md) · [연결 안내](recipes/unity-kitchen-link.md) |
 | `services/vision_svc` · `training/yolo` | YOLOv8 RKNN 객체 인식, 데이터·학습 | 신지호 ① · 이현종 | [training](training/README.md) |
 | `services/recorder` · `simulator` | 모든 메시지 녹화 / 가상 주방 없이 가짜 메시지 재생 | 이현종 ② | [recorder](services/recorder/README.md) · [simulator](services/simulator/README.md) |
 | `training/llm` | LLM 데이터(기획 시트 → Seed·Paraphrase·분할) | 이현종 ② | [README](training/llm/README.md) |
@@ -66,6 +66,7 @@ python -m services.llm_svc parse "3분 뒤에 2번 불 꺼"         # 문장 하
 ```text
 common/      메시지 봉투·MQTT 버스·명령 스키마 (모든 서비스 공용)
 services/    서비스 (프로세스 하나 = 폴더 하나)
+kitchen/     가상 주방 Unity 프로젝트 (Assets·Packages·ProjectSettings만 커밋)
 bench/       측정 스크립트 (지연·STT·LLM 평가, 녹음 도구)
 training/    학습·변환 (YOLO·LLM 데이터, RKNN/RKLLM 변환, Colab 노트북)
 data/        매니페스트·대본·LLM 텍스트 데이터 (녹음·사진·모델 파일은 git 제외)

@@ -36,6 +36,7 @@ YYYY-MM-DD-short-decision-title.md
 - [2026-10-06 가상 주방은 연결 토픽으로 붙고, 보드의 kitchen_gw가 버스로 옮긴다](./2026-10-06-kitchen-link.md)
 - [2026-10-06 Function Call 스키마 v0.2 (장치 8종 · 세기 통일 · 결제)](./2026-10-06-function-call-schema-v02.md)
 - [2026-10-06 학습한 LLM의 입력 형식 (짧은 지시문 · chat template · 끝 토큰)](./2026-10-06-llm-input-format.md)
+- [2026-10-08 Unity 프로젝트는 같은 저장소의 kitchen/에](./2026-10-08-unity-project-in-repo.md)
 
 ## Template
 

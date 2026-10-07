@@ -17,7 +17,7 @@
 | ultralytics (학습) | **8.4.171** | 8.4.171 | RKNN export는 x86 Linux 전용이라 쓰지 않음 (포크 사용) | 2026-10-02 (Mac에서 학습·평가 확인, #19) |
 | airockchip/ultralytics_yolov8 (export) | **4674fe6** + torch 2.4.1 · numpy<2 · onnx 1.16.1 ([export-requirements](../../training/yolo/export-requirements.txt)) | (포크, 커밋으로 고정) | 학습 환경과 별도 가상환경 | 2026-10-02 (Mac에서 export 성공, 출력 9개, #19) |
 | Python (보드 / Colab) | | — | 위 제약의 교집합: **3.10~3.12** | |
-| Unity (가상 주방) | | 6.3 LTS (2026-10-05 확인, 2027-12까지 지원) | Unity Personal(무료). 패치 버전은 설치 후 HW-15에서 고정 ([decision](../decisions/2026-10-05-unity-virtual-kitchen.md)) | |
+| Unity (가상 주방) | **6000.3.25f1** (6.3 LTS) | 6.3 LTS (2026-10-05 확인, 2027-12까지 지원) | Unity Personal(무료). 다른 버전으로 열면 `kitchen/ProjectSettings/ProjectVersion.txt`가 바뀐다 ([decision](../decisions/2026-10-05-unity-virtual-kitchen.md)) | 2026-10-08 (Windows에서 URP 프로젝트 생성, #95) |
 | MQTTnet (Unity 안 MQTT 클라이언트) | | 4.3.7 (2026-10-05 확인) | 5.x는 .NET 8 이상 전용이라 Unity(.NET Standard 2.1)에서 못 쓴다. HW-16에서 동작 확인 후 고정 | |
 
 개발 도구(pre-commit · ruff · pytest)는 [`requirements-dev.txt`](../../requirements-dev.txt)가 source of truth다.
