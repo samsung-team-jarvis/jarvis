@@ -18,6 +18,12 @@ class ScenarioError(ValueError):
     pass
 
 
+# interfaces §2.3 State — `expect`(정답 State)에 쓴다
+STATES = ("IDLE", "PREHEAT", "COOKING", "UNATTENDED", "DANGER", "SAFE_STOP")
+# 온도 시나리오의 분류 (FUS-05) — 위험 미탐율을 분류별로 센다
+CATEGORIES = ("normal", "overheat", "unattended", "left_on")
+
+
 Points = list[tuple[float, float]]
 
 
@@ -74,6 +80,16 @@ class Scenario:
     sensor: SensorStream | None
     vision: VisionStream | None
     stt: list[tuple[float, str]]
+    category: str | None = None
+    expect: list[tuple[float, str]] = dataclasses.field(default_factory=list)  # (시각, 정답 State)
+
+    def state_at(self, t: float) -> str | None:
+        """그 시각의 정답 State. `expect`가 없으면 None."""
+        current = None
+        for start, state in self.expect:
+            if start <= t:
+                current = state
+        return current
 
 
 def _positive(value: Any, field: str) -> float:
@@ -90,6 +106,7 @@ def parse(raw: dict[str, Any]) -> Scenario:
     if not isinstance(raw, dict):
         raise ScenarioError("시나리오 최상위는 key: value 형식이어야 합니다")
     known = {"name", "description", "duration_s", "heartbeat_hz", "sensor", "vision", "stt"}
+    known |= {"category", "expect"}
     unknown = set(raw) - known
     if unknown:
         raise ScenarioError(f"알 수 없는 키: {sorted(unknown)} (사용 가능: {sorted(known)})")
@@ -125,6 +142,21 @@ def parse(raw: dict[str, Any]) -> Scenario:
             raise ScenarioError(f'stt 항목은 [시각, "발화"] 이어야 합니다: {entry!r}')
         stt.append((float(entry[0]), str(entry[1])))
 
+    category = raw.get("category")
+    if category is not None and category not in CATEGORIES:
+        raise ScenarioError(f"category는 {CATEGORIES} 중 하나: {category!r}")
+
+    expect = []
+    for entry in raw.get("expect") or []:
+        if not (isinstance(entry, list) and len(entry) == 2 and entry[1] in STATES):
+            raise ScenarioError(
+                f"expect 항목은 [시각, State] 이어야 합니다 (State: {STATES}): {entry!r}"
+            )
+        expect.append((float(entry[0]), str(entry[1])))
+    times = [t for t, _ in expect]
+    if expect and (times != sorted(times) or times[0] != 0):
+        raise ScenarioError("expect는 0초부터 시각 순이어야 합니다")
+
     return Scenario(
         name=str(raw["name"]),
         description=str(raw.get("description", "")),
@@ -133,6 +165,8 @@ def parse(raw: dict[str, Any]) -> Scenario:
         sensor=sensor,
         vision=vision,
         stt=sorted(stt),
+        category=category,
+        expect=expect,
     )
 
 

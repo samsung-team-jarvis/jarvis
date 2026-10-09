@@ -79,7 +79,21 @@
 - 켤 때(`TURN_ON`) 세기는 1. 결제시스템은 장치(target)가 아니라 Action으로 다룬다 (§3.1).
 
 ### 2.3 State (FUS-01 확정)
-`IDLE, PREHEAT, COOKING, UNATTENDED, DANGER, SAFE_STOP` — 전이 조건은 상황 인식(FUS-05)에서 정한다.
+`IDLE, PREHEAT, COOKING, UNATTENDED, DANGER, SAFE_STOP`
+
+정답 기준 (FUS-05 확정, [decision](../decisions/2026-10-09-state-criteria.md)) — 위가 먼저다. 시연용 설계값이고 가상 주방에서 써 보고 조정한다.
+
+| State | 기준 |
+|---|---|
+| `SAFE_STOP` | 긴급 정지 또는 가상 주방 안전장치(§4.4)로 꺼진 뒤, 가열 장치를 다시 켜기 전까지 |
+| `DANGER` | 가열 장치가 켜져 있고 온도 ≥ 240°C |
+| `UNATTENDED` | 가열 장치가 켜져 있고 사람이 30초 이상 안 보임, 또는 화구 위에 조리 도구가 60초 이상 없음 (튀김기 제외) |
+| `PREHEAT` | 가열 장치가 켜져 있고 온도 < 100°C |
+| `COOKING` | 가열 장치가 켜져 있고 온도 ≥ 100°C |
+| `IDLE` | 가열 장치가 꺼져 있음 |
+
+- `fusion/state`의 `risk`: 온도 ≥ 200°C면 `warn`(State는 그대로), `DANGER`면 `danger`, 그 밖에는 `none`.
+- 이 기준으로 정답을 붙인 온도 시나리오 25개: [simulator](../../services/simulator/README.md)의 `scenarios/temp/`.
 
 ## 3. Function Call 스키마 (LLM 출력)
 
@@ -237,7 +251,7 @@
 - 가열 장치마다 온도를 하나 둔다. 1초마다 목표 온도와의 차이의 5%씩 다가간다: `T ← T + (목표 − T) × 0.05`
 - 목표 온도: 꺼짐 25°C · 세기 1 → 120°C · 세기 2 → 180°C · 세기 3 → 270°C
 - 기준 구현: `common.kitchen_link.next_temperature` (Unity 코드도 같은 식을 쓴다)
-- 주의·위험 구간(200°C·240°C)과 방치 판단은 가상 주방이 아니라 보드(`fusion_svc`·`safety_guard`)가 한다 — 값은 FUS-05에서 확정.
+- 주의·위험 구간(200°C·240°C)과 방치 판단은 가상 주방이 아니라 보드(`fusion_svc`·`safety_guard`)가 한다 — 값은 §2.3 (FUS-05).
 
 ### 4.6 접속
 
@@ -270,3 +284,4 @@
 | 2026-10-06 | v0.1 | §4.3 `control/result`의 `reason`, §4.4 생존 신호가 끊긴 동안 가열 장치 켜기 거절 — `kitchen_gw` 구현하며 명시 (#82, HW-17) | 이현종 |
 | 2026-10-06 | **v0.2** | §2.2 target에 `fryer`·`light`·`aircon`·`fan`·`music` 추가(세기 1~3 통일, 타이머는 가열 장치·후드·전체), §3.1 Action 11~14(`CHECK_AMOUNT`·`REQUEST_PAYMENT`·`CONFIRM`·`DENY`) 추가, §3.3 예시, §5를 남은 변경으로 정리. 기존 이름·번호는 그대로 (#84, LLM-13) | 이현종 |
 | 2026-10-06 | v0.2 | §3.2 함수 토큰은 특수 토큰으로 넣지 않고, 학습한 모델은 `<jarvis_end>` 뒤에 모델의 대화 끝 토큰을 낸다 — **필드·문법 변경 없음** (#88, LLM-07) | 이현종 |
+| 2026-10-09 | v0.2 | §2.3 State 정답 기준 확정(240°C 위험, 200°C 주의, 30초 자리 비움·60초 빈 화구 방치, 100°C 예열 경계), §4.5 값 연결 — **필드 변경 없음** (#97, FUS-05) | 최지환 |

@@ -1,0 +1,52 @@
+# 생성 파일 — 고치려면 services/simulator/temp_scenarios.py를 고치고 다시 생성한다.
+# 값은 가상 주방 온도 규칙으로 계산한 설계값이다 (실측 아님). 정답 기준: FUS-05 decision.
+name: t20_unattended_off_then_leave
+category: unattended
+description: 불을 끄고 자리를 떠남 (방치 아님)
+duration_s: 120
+heartbeat_hz: 1
+
+sensor:
+  device_id: burner_1
+  hz: 1
+  temperature_c:
+    - [0, 25.0]
+    - [5, 60.1]
+    - [10, 87.2]
+    - [15, 108.2]
+    - [20, 124.4]
+    - [25, 137.0]
+    - [30, 146.7]
+    - [35, 154.3]
+    - [40, 160.1]
+    - [45, 164.6]
+    - [50, 168.1]
+    - [55, 170.8]
+    - [60, 172.9]
+    - [65, 139.4]
+    - [70, 113.5]
+    - [75, 93.5]
+    - [80, 78.0]
+    - [85, 66.0]
+    - [90, 56.7]
+    - [95, 49.6]
+    - [100, 44.0]
+    - [105, 39.7]
+    - [110, 36.4]
+    - [115, 33.8]
+    - [120, 31.8]
+
+vision:
+  fps: 2
+  objects:
+    - [0, [pan, burner_on, person]]
+    - [60, [pan, burner_off, person]]
+    - [65, [pan, burner_off]]
+
+stt:
+  - [60, "자비스 1번 화구 꺼 줘"]
+
+expect:                       # 정답 State: [시각, State] — 그 시각부터 다음 항목 전까지
+  - [0, PREHEAT]
+  - [13, COOKING]
+  - [60, IDLE]
