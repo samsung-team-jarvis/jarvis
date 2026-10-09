@@ -1,4 +1,4 @@
-"""safety_guard 실행 (v0: 규칙 판정 + 긴급 빠른 경로).
+"""safety_guard 실행 (v0: 규칙 판정 + 결제 확인 + 긴급 빠른 경로).
 
 python -m services.safety_guard                         # 버스는 JARVIS_BUS (기본 MQTT)
 python -m services.safety_guard --assume-state COOKING  # 상황 인식 없이 개발할 때 (가정 상태)
@@ -67,7 +67,8 @@ def main() -> int:
     bus.close()
     c = guard.counts
     print(
-        f"OK: 허용 {c['ALLOW']} · 거부 {c['REJECT']} · 긴급 빠른 경로 {c['fast_path']}"
+        f"OK: 허용 {c['ALLOW']} · 거부 {c['REJECT']} · 확인 질문 {c['ASK']}"
+        f" · 긴급 빠른 경로 {c['fast_path']}"
         f" · 중복 긴급 정지 무시 {c['duplicate']}"
     )
     return 0
