@@ -7,7 +7,7 @@ from services.simulator.runner import build_events, play
 from services.simulator.scenario import ScenarioError, interpolate, load, parse
 
 SCENARIO_DIR = pathlib.Path(__file__).parents[2] / "services/simulator/scenarios"
-SCENARIOS = sorted(SCENARIO_DIR.glob("*.yaml"))
+SCENARIOS = sorted(SCENARIO_DIR.rglob("*.yaml"))  # temp/ 하위 폴더(FUS-05) 포함
 
 
 def minimal(**extra) -> dict:
@@ -74,8 +74,22 @@ def test_play_waits_according_to_speed() -> None:
         (minimal(sensor={"temperature_c": "hot"}), "sensor.temperature_c"),
         (minimal(vision={"objects": [[0, "pan"]]}), "vision.objects"),
         (minimal(stt=[["자비스"]]), "stt 항목"),
+        (minimal(category="fire"), "category"),
+        (minimal(expect=[[0, "BURNING"]]), "expect 항목"),
+        (minimal(expect=[[5, "IDLE"]]), "0초부터"),
+        (minimal(expect=[[0, "IDLE"], [9, "COOKING"], [3, "IDLE"]]), "시각 순"),
     ],
 )
 def test_invalid_scenarios_explain_the_problem(raw: dict, message: str) -> None:
     with pytest.raises(ScenarioError, match=message):
         parse(raw)
+
+
+def test_expect_gives_state_at_time() -> None:
+    sc = parse(
+        minimal(category="overheat", expect=[[0, "PREHEAT"], [8, "COOKING"], [41, "DANGER"]])
+    )
+    assert [sc.state_at(t) for t in (0, 7.9, 8, 40, 41, 99)] == [
+        "PREHEAT", "PREHEAT", "COOKING", "COOKING", "DANGER", "DANGER",
+    ]  # fmt: skip
+    assert parse(minimal()).state_at(3) is None
