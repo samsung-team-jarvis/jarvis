@@ -1,0 +1,166 @@
+﻿instruction,정답(함수 토큰),template_id,tone/category,state,last_target,expect_guard,검수(OK/수정),메모,규칙 파서(참고)
+두 번째 불 켜줘,<jarvis_1>(target=burner_2)<jarvis_end>,hn_dg_01,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+전기 튀김기 켜줘,<jarvis_1>(target=fryer)<jarvis_end>,hn_dg_01,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+일번 화구 켜줘,<jarvis_1>(target=burner_1)<jarvis_end>,hn_dg_01,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+2번 화구 켜줘,<jarvis_1>(target=burner_2)<jarvis_end>,hn_dg_01,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+튀김 기계 켜줘,<jarvis_1>(target=fryer)<jarvis_end>,hn_dg_01,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+첫 번째 불 켜줘,<jarvis_1>(target=burner_1)<jarvis_end>,hn_dg_01,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+이번 화구 켜줘,<jarvis_1>(target=burner_2)<jarvis_end>,hn_dg_01,danger_context,UNATTENDED,,REJECT,OK(1차)·제안,제안 P3: '이번 화구'는 '이번(this) 화구'로도 들림 — 슬롯 표현 재검토 / Guard 규칙과 판정 일치,
+튀김기 켜줘,<jarvis_1>(target=fryer)<jarvis_end>,hn_dg_01,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+첫 번째 불 세게 해줘,"<jarvis_3>(target=burner_1, level=3)<jarvis_end>",hn_dg_02,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+이번 화구 세게 해줘,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",hn_dg_02,danger_context,UNATTENDED,,REJECT,OK(1차)·제안,제안 P3: '이번 화구'는 '이번(this) 화구'로도 들림 — 슬롯 표현 재검토 / Guard 규칙과 판정 일치,
+튀김 기계 세게 해줘,"<jarvis_3>(target=fryer, level=3)<jarvis_end>",hn_dg_02,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+첫 번째 화구 세게 해줘,"<jarvis_3>(target=burner_1, level=3)<jarvis_end>",hn_dg_02,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+2번 화구 세게 해줘,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",hn_dg_02,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+튀김기 세게 해줘,"<jarvis_3>(target=fryer, level=3)<jarvis_end>",hn_dg_02,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+1번 불 세게 해줘,"<jarvis_3>(target=burner_1, level=3)<jarvis_end>",hn_dg_02,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+두 번째 화구 세게 해줘,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",hn_dg_02,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+2번 불 최대로,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",hn_dg_03,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+튀김기 최대로,"<jarvis_3>(target=fryer, level=3)<jarvis_end>",hn_dg_03,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+1번 불 최대로,"<jarvis_3>(target=burner_1, level=3)<jarvis_end>",hn_dg_03,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+이번 화구 최대로,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",hn_dg_03,danger_context,UNATTENDED,,REJECT,OK(1차)·제안,제안 P3: '이번 화구'는 '이번(this) 화구'로도 들림 — 슬롯 표현 재검토 / Guard 규칙과 판정 일치,
+튀김 기계 최대로,"<jarvis_3>(target=fryer, level=3)<jarvis_end>",hn_dg_03,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+1번 버너 최대로,"<jarvis_3>(target=burner_1, level=3)<jarvis_end>",hn_dg_03,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+2번 버너 최대로,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",hn_dg_03,danger_context,DANGER,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+전기 튀김기 최대로,"<jarvis_3>(target=fryer, level=3)<jarvis_end>",hn_dg_03,danger_context,UNATTENDED,,REJECT,OK(1차),Guard 규칙과 판정 일치,
+타이머 30분 맞춰줘,<jarvis_4>(min=30)<jarvis_end>,hn_dg_04,danger_context,UNATTENDED,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+1번 화구 꺼줘,<jarvis_2>(target=burner_1)<jarvis_end>,hn_dg_05,danger_context,DANGER,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+전부 꺼줘,<jarvis_2>(target=all)<jarvis_end>,hn_dg_05,danger_context,UNATTENDED,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+두 번째 화구 꺼줘,<jarvis_2>(target=burner_2)<jarvis_end>,hn_dg_05,danger_context,DANGER,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+튀김기 꺼줘,<jarvis_2>(target=fryer)<jarvis_end>,hn_dg_05,danger_context,UNATTENDED,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+첫 번째 화구 꺼줘,<jarvis_2>(target=burner_1)<jarvis_end>,hn_dg_05,danger_context,UNATTENDED,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+다 꺼줘,<jarvis_2>(target=all)<jarvis_end>,hn_dg_05,danger_context,DANGER,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+2번 버너 꺼줘,<jarvis_2>(target=burner_2)<jarvis_end>,hn_dg_05,danger_context,DANGER,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+전기 튀김기 꺼줘,<jarvis_2>(target=fryer)<jarvis_end>,hn_dg_05,danger_context,DANGER,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+후드 최대로,"<jarvis_3>(target=hood, level=3)<jarvis_end>",hn_dg_06,danger_context,DANGER,,ALLOW,OK(1차),Guard 규칙과 판정 일치,
+아까 그거 켜줘,<jarvis_1>(target=?)<jarvis_end>,hn_am_01,ambiguous,PREHEAT,,,OK(1차),,
+불 좀,<jarvis_9>()<jarvis_end>,hn_am_02,ambiguous,PREHEAT,,,OK(1차),,
+좀 꺼줘,<jarvis_2>(target=?)<jarvis_end>,hn_am_03,ambiguous,COOKING,,,OK(1차),,
+타이머,<jarvis_4>(min=?)<jarvis_end>,hn_am_04,ambiguous,COOKING,,,OK(1차),,
+후드 좀,<jarvis_9>()<jarvis_end>,hn_am_05,ambiguous,COOKING,,,OK(1차),,
+20초 뒤에 꺼줘,<jarvis_4>(target=?)<jarvis_end>,hn_am_07,ambiguous,COOKING,,,OK(1차),,<jarvis_4>(sec=20)<jarvis_end>
+3분 20초 뒤에 꺼줘,<jarvis_4>(target=?)<jarvis_end>,hn_am_07,ambiguous,IDLE,,,OK(1차),,"<jarvis_4>(min=3, sec=20)<jarvis_end>"
+사십 분 뒤에 꺼줘,<jarvis_4>(target=?)<jarvis_end>,hn_am_07,ambiguous,PREHEAT,,,OK(1차),,<jarvis_4>(min=40)<jarvis_end>
+2분 뒤에 꺼줘,<jarvis_4>(target=?)<jarvis_end>,hn_am_07,ambiguous,COOKING,,,OK(1차),,<jarvis_4>(min=2)<jarvis_end>
+15분 뒤에 꺼줘,<jarvis_4>(target=?)<jarvis_end>,hn_am_07,ambiguous,COOKING,,,OK(1차),,<jarvis_4>(min=15)<jarvis_end>
+일 분 뒤에 꺼줘,<jarvis_4>(target=?)<jarvis_end>,hn_am_07,ambiguous,IDLE,,,OK(1차),,<jarvis_4>(min=1)<jarvis_end>
+45초 뒤에 꺼줘,<jarvis_4>(target=?)<jarvis_end>,hn_am_07,ambiguous,PREHEAT,,,OK(1차),,<jarvis_4>(sec=45)<jarvis_end>
+삼 분 뒤에 꺼줘,<jarvis_4>(target=?)<jarvis_end>,hn_am_07,ambiguous,PREHEAT,,,OK(1차),,<jarvis_4>(min=3)<jarvis_end>
+불 꺼줘,<jarvis_2>(target=?)<jarvis_end>,hn_am_08,ambiguous,COOKING,,,OK(1차),,
+그거 꺼줘,<jarvis_2>(target=hood)<jarvis_end>,hn_pr_01,pronoun,PREHEAT,hood,,OK(1차),,<jarvis_2>(target=?)<jarvis_end>
+그거 꺼줘,<jarvis_2>(target=aircon)<jarvis_end>,hn_pr_01,pronoun,IDLE,aircon,,OK(1차),,<jarvis_2>(target=?)<jarvis_end>
+그거 꺼줘,<jarvis_2>(target=burner_2)<jarvis_end>,hn_pr_01,pronoun,PREHEAT,burner_2,,OK(1차),,<jarvis_2>(target=?)<jarvis_end>
+그거 꺼줘,<jarvis_2>(target=music)<jarvis_end>,hn_pr_01,pronoun,COOKING,music,,OK(1차),,<jarvis_2>(target=?)<jarvis_end>
+그거 꺼줘,<jarvis_2>(target=fryer)<jarvis_end>,hn_pr_01,pronoun,COOKING,fryer,,OK(1차),,<jarvis_2>(target=?)<jarvis_end>
+그거 꺼줘,<jarvis_2>(target=burner_1)<jarvis_end>,hn_pr_01,pronoun,PREHEAT,burner_1,,OK(1차),,<jarvis_2>(target=?)<jarvis_end>
+그거 꺼줘,<jarvis_2>(target=fan)<jarvis_end>,hn_pr_01,pronoun,COOKING,fan,,OK(1차),,<jarvis_2>(target=?)<jarvis_end>
+그거 꺼줘,<jarvis_2>(target=light)<jarvis_end>,hn_pr_01,pronoun,PREHEAT,light,,OK(1차),,<jarvis_2>(target=?)<jarvis_end>
+다시 켜줘,<jarvis_1>(target=burner_1)<jarvis_end>,hn_pr_02,pronoun,COOKING,burner_1,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+다시 켜줘,<jarvis_1>(target=hood)<jarvis_end>,hn_pr_02,pronoun,PREHEAT,hood,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+다시 켜줘,<jarvis_1>(target=aircon)<jarvis_end>,hn_pr_02,pronoun,IDLE,aircon,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+다시 켜줘,<jarvis_1>(target=music)<jarvis_end>,hn_pr_02,pronoun,COOKING,music,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+다시 켜줘,<jarvis_1>(target=fan)<jarvis_end>,hn_pr_02,pronoun,PREHEAT,fan,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+다시 켜줘,<jarvis_1>(target=burner_2)<jarvis_end>,hn_pr_02,pronoun,COOKING,burner_2,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+다시 켜줘,<jarvis_1>(target=fryer)<jarvis_end>,hn_pr_02,pronoun,IDLE,fryer,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+다시 켜줘,<jarvis_1>(target=light)<jarvis_end>,hn_pr_02,pronoun,PREHEAT,light,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+그것도 세게 해줘,"<jarvis_3>(target=fan, level=3)<jarvis_end>",hn_pr_03,pronoun,PREHEAT,fan,,OK(1차),,<jarvis_3>(target=?)<jarvis_end>
+그것도 세게 해줘,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",hn_pr_03,pronoun,COOKING,burner_2,,OK(1차),,<jarvis_3>(target=?)<jarvis_end>
+그것도 세게 해줘,"<jarvis_3>(target=fryer, level=3)<jarvis_end>",hn_pr_03,pronoun,IDLE,fryer,,OK(1차),,<jarvis_3>(target=?)<jarvis_end>
+그것도 세게 해줘,"<jarvis_3>(target=hood, level=3)<jarvis_end>",hn_pr_03,pronoun,COOKING,hood,,OK(1차),,<jarvis_3>(target=?)<jarvis_end>
+그것도 세게 해줘,"<jarvis_3>(target=burner_1, level=3)<jarvis_end>",hn_pr_03,pronoun,COOKING,burner_1,,OK(1차),,<jarvis_3>(target=?)<jarvis_end>
+그것도 세게 해줘,"<jarvis_3>(target=aircon, level=3)<jarvis_end>",hn_pr_03,pronoun,COOKING,aircon,,OK(1차),,<jarvis_3>(target=?)<jarvis_end>
+그것도 세게 해줘,"<jarvis_3>(target=burner_2, level=3)<jarvis_end>",hn_pr_03,pronoun,IDLE,burner_2,,OK(1차),,<jarvis_3>(target=?)<jarvis_end>
+그거 꺼줘,<jarvis_2>(target=?)<jarvis_end>,hn_pr_04,pronoun,IDLE,,,OK(1차),,
+아까 거 다시 켜줘,<jarvis_1>(target=?)<jarvis_end>,hn_pr_05,pronoun,IDLE,,,OK(1차),,
+3번 화구 켜줘,<jarvis_1>(target=?)<jarvis_end>,hn_or_01,out_of_range,PREHEAT,,,OK(1차),,
+후드 5단으로,<jarvis_3>(level=?)<jarvis_end>,hn_or_02,out_of_range,PREHEAT,,,OK(1차),,<jarvis_9>()<jarvis_end>
+타이머 2시간,<jarvis_4>(min=?)<jarvis_end>,hn_or_03,out_of_range,PREHEAT,,,OK(1차),,
+타이머 90분 맞춰줘,<jarvis_4>(min=?)<jarvis_end>,hn_or_04,out_of_range,PREHEAT,,,OK(1차),,
+전부 켜줘,<jarvis_1>(target=?)<jarvis_end>,hn_or_05,out_of_range,COOKING,,,OK(1차),,
+음악 4단으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_06,out_of_range,IDLE,,,OK(1차),,<jarvis_9>()<jarvis_end>
+선풍기 4단으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_06,out_of_range,COOKING,,,OK(1차),,<jarvis_9>()<jarvis_end>
+전등 4단으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_06,out_of_range,COOKING,,,OK(1차),,<jarvis_9>()<jarvis_end>
+두 번째 불 4단으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_06,out_of_range,COOKING,,,OK(1차),,<jarvis_9>()<jarvis_end>
+튀김 기계 4단으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_06,out_of_range,IDLE,,,OK(1차),,<jarvis_9>()<jarvis_end>
+일번 화구 4단으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_06,out_of_range,COOKING,,,OK(1차),,<jarvis_9>()<jarvis_end>
+환기팬 4단으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_06,out_of_range,COOKING,,,OK(1차),,<jarvis_9>()<jarvis_end>
+에어컨 4단으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_06,out_of_range,IDLE,,,OK(1차),,<jarvis_9>()<jarvis_end>
+에어컨 24도로 맞춰줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_07,out_of_range,IDLE,,,OK(1차),,<jarvis_9>()<jarvis_end>
+에어컨 18도로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_08,out_of_range,COOKING,,,OK(1차),,<jarvis_9>()<jarvis_end>
+볼륨 50으로 해줘,<jarvis_3>(level=?)<jarvis_end>,hn_or_09,out_of_range,IDLE,,,OK(1차),,<jarvis_9>()<jarvis_end>
+TV 틀어줘,<jarvis_10>()<jarvis_end>,hn_nm_02,near_miss,IDLE,,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+밥솥 취사 시작해줘,<jarvis_10>()<jarvis_end>,hn_nm_04,near_miss,IDLE,,,OK(1차),,
+2분 뒤에 에어컨 꺼줘,<jarvis_10>()<jarvis_end>,hn_nm_06,near_miss,IDLE,,,OK(1차),,
+45초 뒤에 노래 꺼줘,<jarvis_10>()<jarvis_end>,hn_nm_06,near_miss,PREHEAT,,,OK(1차),,
+1분 반 뒤에 매장 조명 꺼줘,<jarvis_10>()<jarvis_end>,hn_nm_06,near_miss,IDLE,,,OK(1차),,
+한 시간 뒤에 선풍기 꺼줘,<jarvis_10>()<jarvis_end>,hn_nm_06,near_miss,COOKING,,,OK(1차),,<jarvis_2>(target=fan)<jarvis_end>
+2분 반 뒤에 에어컨 꺼줘,<jarvis_10>()<jarvis_end>,hn_nm_06,near_miss,PREHEAT,,,OK(1차),,
+1분 15초 뒤에 음악 꺼줘,<jarvis_10>()<jarvis_end>,hn_nm_06,near_miss,COOKING,,,OK(1차),,
+15분 뒤에 매장 조명 꺼줘,<jarvis_10>()<jarvis_end>,hn_nm_06,near_miss,PREHEAT,,,OK(1차),,
+이십 초 뒤에 매장 선풍기 꺼줘,<jarvis_10>()<jarvis_end>,hn_nm_06,near_miss,COOKING,,,OK(1차),,
+다음 곡 틀어줘,<jarvis_10>()<jarvis_end>,hn_nm_07,near_miss,COOKING,,,OK(1차),,<jarvis_1>(target=?)<jarvis_end>
+에어컨 제습으로 바꿔줘,<jarvis_10>()<jarvis_end>,hn_nm_08,near_miss,COOKING,,,OK(1차),,<jarvis_9>()<jarvis_end>
+선풍기 회전시켜줘,<jarvis_10>()<jarvis_end>,hn_nm_09,near_miss,COOKING,,,OK(1차),,<jarvis_1>(target=fan)<jarvis_end>
+조명 색 바꿔줘,<jarvis_10>()<jarvis_end>,hn_nm_10,near_miss,COOKING,,,OK(1차),,<jarvis_9>()<jarvis_end>
+에어프라이어 좀 켜줘,<jarvis_10>()<jarvis_end>,hn_nm_11,near_miss,PREHEAT,,,OK(1차),,<jarvis_1>(target=fryer)<jarvis_end>
+오늘 매출 얼마야,<jarvis_10>()<jarvis_end>,hn_nm_12,near_miss,PREHEAT,,,OK(1차),,<jarvis_11>()<jarvis_end>
+환기팬 끄지 마,<jarvis_10>()<jarvis_end>,hn_ng_01,negation,IDLE,,,OK(1차),,<jarvis_2>(target=hood)<jarvis_end>
+1번 불 끄지 마,<jarvis_10>()<jarvis_end>,hn_ng_01,negation,IDLE,,,OK(1차),,<jarvis_2>(target=burner_1)<jarvis_end>
+음악 끄지 마,<jarvis_10>()<jarvis_end>,hn_ng_01,negation,IDLE,,,OK(1차),,<jarvis_2>(target=music)<jarvis_end>
+두 번째 화구 끄지 마,<jarvis_10>()<jarvis_end>,hn_ng_01,negation,COOKING,,,OK(1차),,<jarvis_2>(target=burner_2)<jarvis_end>
+에어컨 끄지 마,<jarvis_10>()<jarvis_end>,hn_ng_01,negation,COOKING,,,OK(1차),,<jarvis_2>(target=aircon)<jarvis_end>
+매장 선풍기 끄지 마,<jarvis_10>()<jarvis_end>,hn_ng_01,negation,IDLE,,,OK(1차),,<jarvis_2>(target=fan)<jarvis_end>
+매장 조명 끄지 마,<jarvis_10>()<jarvis_end>,hn_ng_01,negation,COOKING,,,OK(1차),,<jarvis_2>(target=light)<jarvis_end>
+튀김기 끄지 마,<jarvis_10>()<jarvis_end>,hn_ng_01,negation,IDLE,,,OK(1차),,<jarvis_2>(target=fryer)<jarvis_end>
+조명 켜지 마,<jarvis_10>()<jarvis_end>,hn_ng_02,negation,PREHEAT,,,OK(1차),,<jarvis_1>(target=light)<jarvis_end>
+선풍기 켜지 마,<jarvis_10>()<jarvis_end>,hn_ng_02,negation,PREHEAT,,,OK(1차),,<jarvis_1>(target=fan)<jarvis_end>
+1번 버너 켜지 마,<jarvis_10>()<jarvis_end>,hn_ng_02,negation,COOKING,,,OK(1차),,<jarvis_1>(target=burner_1)<jarvis_end>
+이번 화구 켜지 마,<jarvis_10>()<jarvis_end>,hn_ng_02,negation,COOKING,,,OK(1차)·제안,제안 P3: '이번 화구'는 '이번(this) 화구'로도 들림 — 슬롯 표현 재검토,<jarvis_1>(target=burner_2)<jarvis_end>
+후드 팬 켜지 마,<jarvis_10>()<jarvis_end>,hn_ng_02,negation,COOKING,,,OK(1차),,<jarvis_1>(target=hood)<jarvis_end>
+노래 켜지 마,<jarvis_10>()<jarvis_end>,hn_ng_02,negation,COOKING,,,OK(1차),,<jarvis_1>(target=music)<jarvis_end>
+에어콘 켜지 마,<jarvis_10>()<jarvis_end>,hn_ng_02,negation,IDLE,,,OK(1차),,<jarvis_1>(target=aircon)<jarvis_end>
+전기 튀김기 켜지 마,<jarvis_10>()<jarvis_end>,hn_ng_02,negation,PREHEAT,,,OK(1차),,<jarvis_1>(target=fryer)<jarvis_end>
+냉방 멈춰,<jarvis_2>(target=aircon)<jarvis_end>,hn_nu_01,not_urgent,PREHEAT,,,OK(1차),,
+선풍기 멈춰,<jarvis_2>(target=fan)<jarvis_end>,hn_nu_01,not_urgent,COOKING,,,OK(1차),,
+음악 멈춰,<jarvis_2>(target=music)<jarvis_end>,hn_nu_01,not_urgent,COOKING,,,OK(1차),,
+에어콘 멈춰,<jarvis_2>(target=aircon)<jarvis_end>,hn_nu_01,not_urgent,COOKING,,,OK(1차),,
+매장 선풍기 멈춰,<jarvis_2>(target=fan)<jarvis_end>,hn_nu_01,not_urgent,IDLE,,,OK(1차),,
+노래 멈춰,<jarvis_2>(target=music)<jarvis_end>,hn_nu_01,not_urgent,COOKING,,,OK(1차),,
+에어컨 멈춰,<jarvis_2>(target=aircon)<jarvis_end>,hn_nu_01,not_urgent,COOKING,,,OK(1차),,
+배경 음악 멈춰,<jarvis_2>(target=music)<jarvis_end>,hn_nu_01,not_urgent,PREHEAT,,,OK(1차),,
+음악 정지,<jarvis_2>(target=music)<jarvis_end>,hn_nu_02,not_urgent,COOKING,,,OK(1차),,
+매장 선풍기 정지,<jarvis_2>(target=fan)<jarvis_end>,hn_nu_02,not_urgent,COOKING,,,OK(1차),,
+노래 정지,<jarvis_2>(target=music)<jarvis_end>,hn_nu_02,not_urgent,COOKING,,,OK(1차),,
+선풍기 정지,<jarvis_2>(target=fan)<jarvis_end>,hn_nu_02,not_urgent,COOKING,,,OK(1차),,
+배경 음악 정지,<jarvis_2>(target=music)<jarvis_end>,hn_nu_02,not_urgent,COOKING,,,OK(1차),,
+에어콘 그만 틀어,<jarvis_2>(target=aircon)<jarvis_end>,hn_nu_03,not_urgent,PREHEAT,,,OK(1차),,
+선풍기 그만 틀어,<jarvis_2>(target=fan)<jarvis_end>,hn_nu_03,not_urgent,COOKING,,,OK(1차),,
+노래 그만 틀어,<jarvis_2>(target=music)<jarvis_end>,hn_nu_03,not_urgent,COOKING,,,OK(1차),,
+에어컨 그만 틀어,<jarvis_2>(target=aircon)<jarvis_end>,hn_nu_03,not_urgent,COOKING,,,OK(1차),,
+매장 선풍기 그만 틀어,<jarvis_2>(target=fan)<jarvis_end>,hn_nu_03,not_urgent,IDLE,,,OK(1차),,
+배경 음악 그만 틀어,<jarvis_2>(target=music)<jarvis_end>,hn_nu_03,not_urgent,COOKING,,,OK(1차),,
+냉방 그만 틀어,<jarvis_2>(target=aircon)<jarvis_end>,hn_nu_03,not_urgent,COOKING,,,OK(1차),,
+음악 그만 틀어,<jarvis_2>(target=music)<jarvis_end>,hn_nu_03,not_urgent,COOKING,,,OK(1차),,
+만 이천 원 결제해줘,<jarvis_12>()<jarvis_end>,hn_pay_01,payment,COOKING,,,OK(1차)·제안,제안 P1: expect_guard=ASK (Guard는 결제 요청을 항상 확인 — #96),
+오천 원 계산해줘,<jarvis_12>()<jarvis_end>,hn_pay_02,payment,COOKING,,,OK(1차)·제안,제안 P1: expect_guard=ASK (Guard는 결제 요청을 항상 확인 — #96),<jarvis_10>()<jarvis_end>
+결제 취소,<jarvis_14>()<jarvis_end>,hn_pay_03,payment,COOKING,,,OK(1차),,
+결제하지 마,<jarvis_14>()<jarvis_end>,hn_pay_04,payment,IDLE,,,OK(1차),,
+응 후드 팬 꺼줘,<jarvis_2>(target=hood)<jarvis_end>,hn_fl_01,filler,IDLE,,,OK(1차),,
+응 두 번째 불 꺼줘,<jarvis_2>(target=burner_2)<jarvis_end>,hn_fl_01,filler,PREHEAT,,,OK(1차),,
+응 튀김 기계 꺼줘,<jarvis_2>(target=fryer)<jarvis_end>,hn_fl_01,filler,COOKING,,,OK(1차),,
+응 냉방 꺼줘,<jarvis_2>(target=aircon)<jarvis_end>,hn_fl_01,filler,IDLE,,,OK(1차),,
+응 전등 꺼줘,<jarvis_2>(target=light)<jarvis_end>,hn_fl_01,filler,IDLE,,,OK(1차),,
+응 일번 화구 꺼줘,<jarvis_2>(target=burner_1)<jarvis_end>,hn_fl_01,filler,COOKING,,,OK(1차),,
+응 음악 꺼줘,<jarvis_2>(target=music)<jarvis_end>,hn_fl_01,filler,IDLE,,,OK(1차),,
+응 매장 선풍기 꺼줘,<jarvis_2>(target=fan)<jarvis_end>,hn_fl_01,filler,PREHEAT,,,OK(1차),,
+아니 매장 선풍기 켜줘,<jarvis_1>(target=fan)<jarvis_end>,hn_fl_02,filler,PREHEAT,,,OK(1차),,
+아니 조명 켜줘,<jarvis_1>(target=light)<jarvis_end>,hn_fl_02,filler,COOKING,,,OK(1차),,
+아니 에어컨 켜줘,<jarvis_1>(target=aircon)<jarvis_end>,hn_fl_02,filler,IDLE,,,OK(1차),,
+아니 2번 화구 켜줘,<jarvis_1>(target=burner_2)<jarvis_end>,hn_fl_02,filler,COOKING,,,OK(1차),,
+아니 배경 음악 켜줘,<jarvis_1>(target=music)<jarvis_end>,hn_fl_02,filler,COOKING,,,OK(1차),,
+아니 환풍기 켜줘,<jarvis_1>(target=hood)<jarvis_end>,hn_fl_02,filler,PREHEAT,,,OK(1차),,
+아니 1번 버너 켜줘,<jarvis_1>(target=burner_1)<jarvis_end>,hn_fl_02,filler,IDLE,,,OK(1차),,
+아니 튀김 기계 켜줘,<jarvis_1>(target=fryer)<jarvis_end>,hn_fl_02,filler,COOKING,,,OK(1차),,
+2 화국 꺼줘,<jarvis_2>(target=burner_2)<jarvis_end>,hn_se_01,stt_error,COOKING,,,OK(1차),,
+타이머 3분 맞추하 죠,<jarvis_4>(min=3)<jarvis_end>,hn_se_02,stt_error,IDLE,,,OK(1차),,
+불꺼 죠,<jarvis_2>(target=?)<jarvis_end>,hn_se_03,stt_error,COOKING,,,OK(1차),,
