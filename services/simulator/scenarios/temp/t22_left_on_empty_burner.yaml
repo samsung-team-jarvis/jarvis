@@ -1,0 +1,46 @@
+# 생성 파일 — 고치려면 services/simulator/temp_scenarios.py를 고치고 다시 생성한다.
+# 값은 가상 주방 온도 규칙으로 계산한 설계값이다 (실측 아님). 정답 기준: FUS-05 decision.
+name: t22_left_on_empty_burner
+category: left_on
+description: 팬 없이 화구를 켜 놓음
+duration_s: 100
+heartbeat_hz: 1
+
+sensor:
+  device_id: burner_1
+  hz: 1
+  temperature_c:
+    - [0, 25.0]
+    - [5, 46.5]
+    - [10, 63.1]
+    - [15, 76.0]
+    - [20, 85.9]
+    - [25, 93.6]
+    - [30, 99.6]
+    - [35, 104.2]
+    - [40, 107.8]
+    - [45, 110.6]
+    - [50, 112.7]
+    - [55, 114.3]
+    - [60, 115.6]
+    - [65, 116.6]
+    - [70, 117.4]
+    - [75, 118.0]
+    - [80, 118.4]
+    - [85, 118.8]
+    - [90, 119.1]
+    - [95, 119.3]
+    - [100, 119.4]
+
+vision:
+  fps: 2
+  objects:
+    - [0, [burner_on, person]]
+
+stt:
+  - [0, "자비스 1번 화구 켜 줘"]
+
+expect:                       # 정답 State: [시각, State] — 그 시각부터 다음 항목 전까지
+  - [0, PREHEAT]
+  - [31, COOKING]
+  - [60, UNATTENDED]

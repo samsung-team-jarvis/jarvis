@@ -1,0 +1,52 @@
+# 생성 파일 — 고치려면 services/simulator/temp_scenarios.py를 고치고 다시 생성한다.
+# 값은 가상 주방 온도 규칙으로 계산한 설계값이다 (실측 아님). 정답 기준: FUS-05 decision.
+name: t13_overheat_turned_off
+category: overheat
+description: 과열 중 사람이 직접 끔
+duration_s: 120
+heartbeat_hz: 1
+
+sensor:
+  device_id: burner_1
+  hz: 1
+  temperature_c:
+    - [0, 25.0]
+    - [5, 80.4]
+    - [10, 123.3]
+    - [15, 156.5]
+    - [20, 182.2]
+    - [25, 202.0]
+    - [30, 217.4]
+    - [35, 229.3]
+    - [40, 238.5]
+    - [45, 245.6]
+    - [50, 251.1]
+    - [55, 200.0]
+    - [60, 160.4]
+    - [65, 129.8]
+    - [70, 106.1]
+    - [75, 87.7]
+    - [80, 73.5]
+    - [85, 62.6]
+    - [90, 54.1]
+    - [95, 47.5]
+    - [100, 42.4]
+    - [105, 38.5]
+    - [110, 35.4]
+    - [115, 33.1]
+    - [120, 31.2]
+
+vision:
+  fps: 2
+  objects:
+    - [0, [pan, burner_on, person]]
+    - [50, [pan, burner_off, person]]
+
+stt:
+  - [50, "자비스 1번 화구 꺼 줘"]
+
+expect:                       # 정답 State: [시각, State] — 그 시각부터 다음 항목 전까지
+  - [0, PREHEAT]
+  - [8, COOKING]
+  - [41, DANGER]
+  - [50, IDLE]
