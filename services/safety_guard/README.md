@@ -4,9 +4,10 @@
 
 ```text
 fusion/state ───────────────▶ 지금 상태 (마지막 값)
-llm/function_call ─▶ 판정 ─▶ guard/decision (ALLOW | REJECT + 이유) ─▶ 음성 응답(audio_svc)
+llm/function_call ─▶ 판정 ─▶ guard/decision (ALLOW | REJECT | ASK + 이유) ─▶ 음성 응답(audio_svc)
                              └─ ALLOW이고 장치를 움직이는 명령 ─▶ control/command ─▶ kitchen_gw
 stt/text ─▶ 긴급어? ─▶ 바로 EMERGENCY_STOP (명령 해석을 기다리지 않음)
+         └─ 결제 확인을 기다리는 중이면 호출어 없는 "네"·"아니요"도 대답으로 받음
 ```
 
 ## 실행
@@ -24,14 +25,30 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 | 명령 | 평소 (IDLE·PREHEAT·COOKING) | 위험 (UNATTENDED·DANGER·SAFE_STOP) · 상태 모름 |
 |---|---|---|
 | 형식이 틀린 명령 (`common.function_call.validate` 실패) | REJECT | REJECT |
-| 화구 켜기·세기 바꾸기 (`TURN_ON`·`SET_LEVEL` + `burner_1`·`burner_2`) | ALLOW | **REJECT** |
-| 그 밖의 모든 명령 (끄기·긴급 정지·후드·타이머·상태/위험 확인·되묻기·지원 외) | ALLOW | ALLOW |
+| 가열 장치 켜기·세기 바꾸기 (`TURN_ON`·`SET_LEVEL` + `burner_1`·`burner_2`·`fryer`) | ALLOW | **REJECT** |
+| 결제 요청 (`REQUEST_PAYMENT`) | **ASK** | **ASK** |
+| "네"·"아니요" (`CONFIRM`·`DENY`) — 기다리는 질문이 없을 때 | REJECT | REJECT |
+| 그 밖의 모든 명령 (끄기·긴급 정지·후드·조명·에어컨·선풍기·음악·타이머·상태/위험/금액 확인·되묻기·지원 외) | ALLOW | ALLOW |
 
 - **끄는 쪽은 어떤 상태에서도 막지 않는다.** 막으면 더 위험해진다.
 - 위험 상태에서는 세기를 **낮추는** 명령도 막는다. Guard는 지금 세기를 모르므로 "낮춤"과 "꺼진 화구를 켜기"를 구분할 수 없다. 대신 REJECT 이유로 "끄려면 꺼 달라고 말해 주세요"를 안내한다.
 - `fusion/state`를 한 번도 받지 못했으면 **상태 모름 = 위험 상태처럼** 판정한다. 그래서 상황 인식이 없을 때도 후드는 켜지지만(Gate 2) 화구는 켜지지 않는다. 개발할 때는 `--assume-state`로 가정 상태를 준다.
 - REJECT 이유는 음성 응답이 "지금은 ○○을 제어할 수 없어요." 뒤에 붙여 읽는다 ([responses](../audio_svc/responses.py)).
-- 위험 상황 Hard Negative 34건(`data/llm/hard_negative_v1.jsonl`의 `expect_guard`)과 이 규칙의 판정이 같은지 테스트로 검사한다. 규칙을 바꾸면 데이터의 `expect_guard`도 같이 바꾼다.
+- 위험 상황 Hard Negative 34건(`data/llm/hard_negative_v1.jsonl`·`hard_negative_v2.jsonl`의 `expect_guard`)과 이 규칙의 판정이 같은지 테스트로 검사한다. 규칙을 바꾸면 데이터의 `expect_guard`도 같이 바꾼다.
+
+## 결제 확인 흐름 (`service.py`)
+
+결정: [Safety Guard의 확인 흐름](../../docs/decisions/2026-10-09-guard-confirm-flow.md)
+
+```text
+"자비스 결제해 줘" → REQUEST_PAYMENT → ASK ("결제할까요?")
+   10초 안에  "네" / "자비스 네"       → REQUEST_PAYMENT를 ALLOW ("결제를 요청했습니다.")
+              "아니요" / "결제 취소"   → DENY를 ALLOW ("알겠습니다. 취소했습니다.")
+   다른 명령 · 긴급 정지 · 10초 지남 → 질문을 버림. 그 뒤의 "네"·"아니요"는 REJECT
+```
+
+- 기다리는 동안에만 호출어 없는 문장(`stt/text`, `wake=false`)을 규칙 파서로 읽어 `CONFIRM`·`DENY`일 때 대답으로 받는다. 그 밖의 말은 무시하고 계속 기다린다.
+- 결제를 실제로 실행하는 연결(가상 결제 단말)은 아직 없다 (HW-23). 지금은 판정까지만 한다.
 
 ## 긴급 빠른 경로 (`emergency.py`, FUS-04)
 
@@ -48,13 +65,15 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 
 | 허용된 명령 | `cmd` | `target` | `value` |
 |---|---|---|---|
-| `TURN_ON` | `TURN_ON` | 장치 | 1 (켤 때 세기 1, interfaces §2.2) |
-| `SET_LEVEL` | `SET_LEVEL` | 장치 | 1~3 |
-| `TURN_OFF` | `TURN_OFF` | 장치 또는 `all` | 0 |
-| `EMERGENCY_STOP` | `EMERGENCY_STOP` | `all` | 0 |
+| `TURN_ON` | `ON` | 장치 | 1 (켤 때 세기 1, interfaces §2.2) |
+| `SET_LEVEL` | `LEVEL` | 장치 | 1~3 |
+| `TURN_OFF` | `OFF` | 장치 또는 `all` | 0 |
+| `EMERGENCY_STOP` | `OFF` | `all` | 0 |
+
+제어 명령은 `common.kitchen_link.command_for`로 만든다 (`kitchen_gw`가 받는 규격, interfaces §2).
 
 - `seq`는 1부터 하나씩 늘어난다 (서비스를 다시 띄우면 1부터). `session_id`는 받은 명령의 것을 이어 쓴다 (지연 분해, `bench/latency.py`).
-- 타이머·상태 확인·되묻기·지원 외는 판정만 하고 장치로 보내지 않는다. **타이머 실행(끝나면 장치 끄기)은 v0에 없다.**
+- 타이머·상태/금액 확인·결제·되묻기·지원 외는 판정만 하고 장치로 보내지 않는다. **타이머 실행(끝나면 장치 끄기)과 결제 실행은 v0에 없다.**
 
 ## Spec
 
@@ -65,10 +84,11 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 | 설정 | `--bus`, `--session`, `--assume-state`(개발용), `--quiet` |
 | 자원 | CPU 무시할 수준 (규칙 판정 1건 1ms 미만) |
 | 실패 시 | 상태 입력이 없으면 화구 켜기·세기 거부. 형식이 틀린 명령은 거부. 이 서비스가 죽으면 제어 명령이 나가지 않는다 (장치는 그대로) — 가열 장치의 최종 안전은 가상 주방 쪽 안전장치(L0, HW-18)가 맡는다 |
-| 하지 않는 일 | 과열·방치 자동 차단(FUS-09), 결제 확인(`ASK`, 스키마 v0.2), 타이머 실행 |
+| 하지 않는 일 | 과열·방치 자동 차단(FUS-09), 결제 실행(HW-23), 타이머 실행 |
 
 ## 확인 기록
 
 | 날짜 | 장소 | 확인한 것 |
 |---|---|---|
 | 2026-10-05 | Windows PC, `memory://` | 단위 테스트: 판정 규칙, 긴급어, 서비스 발행·중복 정지 무시, llm_svc와 이은 "후드 켜 줘" → `control/command`. MQTT·보드는 미검증 (이 PC에 브로커 없음) |
+| 2026-10-09 | Windows PC, `memory://` | 스키마 v0.2: 튀김기 판정, 결제 확인 흐름, `control/command`가 `kitchen_link.validate_command`를 통과, Hard Negative v2 `expect_guard` 34건 일치. MQTT·보드·가상 주방은 미검증 |
