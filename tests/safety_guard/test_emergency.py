@@ -34,3 +34,17 @@ def test_emergency(text: str, wake: bool) -> None:
 )
 def test_not_emergency(text: str, wake: bool) -> None:
     assert not is_emergency(text, wake)
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["자비스 음악 멈춰", "자비스 선풍기 정지", "자비스 노래 그만 틀어", "자비스 에어컨 멈춰 줘"],
+)
+def test_store_device_stop_is_not_emergency(text: str) -> None:
+    """매장 장치를 멈추라는 말은 그 장치 끄기다 (스키마 v0.2). 화구까지 끄는 긴급 정지가 아니다."""
+    assert not is_emergency(text, wake=True)
+
+
+def test_heater_or_plain_stop_is_still_emergency() -> None:
+    assert is_emergency("자비스 1번 화구 멈춰", wake=True)
+    assert is_emergency("자비스 다 멈춰", wake=True)
