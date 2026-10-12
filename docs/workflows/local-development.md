@@ -75,7 +75,7 @@ python -m services.audio_svc --input data/stt/cmds.wav --realtime   # 마이크 
 서비스마다 터미널을 여는 대신 런처로 한 번에 띄우고 Ctrl+C 한 번으로 모두 정리한다. 목록·순서는 [`scripts/launch.yaml`](../../scripts/launch.yaml).
 
 ```bash
-python3 scripts/launch.py                                        # recorder → kitchen_gw → llm_svc → audio_svc(마이크)
+python3 scripts/launch.py                                        # recorder → kitchen_gw → safety_guard → llm_svc → audio_svc(마이크)
 python3 scripts/launch.py --arg audio_svc="--input data/stt/cmds.wav --realtime --session demo" --until audio_svc
 python -m bench.latency data/sessions/demo.jsonl                 # 방금 녹화로 구간별 지연
 ```
