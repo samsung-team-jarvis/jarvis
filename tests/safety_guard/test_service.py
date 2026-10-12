@@ -17,7 +17,7 @@ def setup(assume_state: str | None = None):
     got: dict[str, list[Envelope]] = {"guard/decision": [], "control/command": []}
     for topic, msgs in got.items():
         bus.subscribe(topic, msgs.append)
-    guard = SafetyGuard(bus, "s_guard", assume_state=assume_state, clock=clock)
+    guard = SafetyGuard(bus, "s_guard", assume_state=assume_state, clock=clock, seq_start=0)
     guard.start()
     return bus, guard, got, clock
 
@@ -244,3 +244,37 @@ def test_payment_voice_flow_with_llm_svc() -> None:
     bus.publish(stt_msg("자비스 네", wake=True))
     decided = [(m.payload["call"]["action"], m.payload["decision"]) for m in got["guard/decision"]]
     assert decided == [("REQUEST_PAYMENT", "ASK"), ("REQUEST_PAYMENT", "ALLOW")]
+
+
+def test_store_device_stop_turns_off_only_that_device() -> None:
+    """ "자비스 음악 멈춰": 빠른 경로는 가만히 있고, 명령 해석의 음악 끄기만 실행된다."""
+    bus, _, got, _ = setup()
+    bus.publish(stt_msg("자비스 음악 멈춰", wake=True))
+    bus.publish(call_msg({"action": "TURN_OFF", "target": "music"}))
+    assert [m.payload["target"] for m in got["control/command"]] == ["music"]
+
+
+def test_restarted_guard_commands_are_executed_by_the_kitchen() -> None:
+    """Guard만 다시 시작해도 seq가 앞 번호와 겹치지 않아 가상 주방이 실제로 실행한다."""
+    from common.kitchen_link import first_seq
+    from services.kitchen_gw.fake_kitchen import FakeKitchen
+    from services.kitchen_gw.service import KitchenGateway
+
+    bus, clock = MemoryBus(), FakeClock()
+    KitchenGateway(bus, "s_gw", clock=clock).start()
+    kitchen = FakeKitchen(bus, clock=clock)
+    kitchen.start()
+    bus.publish_raw("kitchen/heartbeat", b'{"alive":true}')
+    first = SafetyGuard(bus, "s_guard", assume_state="COOKING", clock=clock,
+                        seq_start=first_seq(1_000.0))  # fmt: skip
+    first.on_call(call_msg({"action": "TURN_ON", "target": "hood"}))
+    first.on_call(call_msg({"action": "TURN_OFF", "target": "hood"}))
+    again = SafetyGuard(bus, "s_guard", assume_state="COOKING", clock=clock,
+                        seq_start=first_seq(1_005.0))  # 5초 뒤 다시 시작  # fmt: skip
+    again.on_call(call_msg({"action": "TURN_ON", "target": "hood"}))
+    assert kitchen.applied == 3
+
+
+def test_default_seq_start_comes_from_wall_clock() -> None:
+    bus = MemoryBus()
+    assert SafetyGuard(bus, "s").seq > 0

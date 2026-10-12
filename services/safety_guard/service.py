@@ -19,7 +19,7 @@ from collections.abc import Callable
 from typing import Any
 
 from common.bus import Bus
-from common.kitchen_link import command_for
+from common.kitchen_link import command_for, first_seq
 from common.messages import Envelope
 from services.llm_svc.rule_parser import parse
 from services.safety_guard.emergency import is_emergency
@@ -53,6 +53,7 @@ class SafetyGuard:
         assume_state: str | None = None,
         on_decision: Callable[[Envelope], None] | None = None,
         clock: Callable[[], float] = time.monotonic,
+        seq_start: int | None = None,
     ) -> None:
         self.bus = bus
         # heartbeat용. 판정·제어는 받은 메시지의 session_id를 이어 쓴다
@@ -60,7 +61,8 @@ class SafetyGuard:
         self.state: str | None = assume_state  # 개발용 가정 상태 (상황 인식 전). 운영에서는 None
         self.on_decision = on_decision
         self.clock = clock
-        self.seq = 0
+        # 첫 control/command의 seq는 seq_start + 1. 기본은 시각에서 정한다 (재시작해도 안 겹치게)
+        self.seq = first_seq(time.time()) if seq_start is None else seq_start
         self.counts = {"ALLOW": 0, "REJECT": 0, "ASK": 0, "fast_path": 0, "duplicate": 0}
         self.pending: Pending | None = None
         self._last_emergency: float | None = None
