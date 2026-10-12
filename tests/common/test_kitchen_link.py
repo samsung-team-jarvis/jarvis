@@ -165,3 +165,11 @@ def test_only_the_highest_level_reaches_the_hard_limit() -> None:
 def test_unknown_level_is_rejected() -> None:
     with pytest.raises(LinkError):
         link.next_temperature(25.0, 4)
+
+
+def test_first_seq_grows_with_time_and_fits_csharp_int() -> None:
+    assert link.first_seq(1_000.0) == 1_000_000
+    assert link.first_seq(1_001.9) == link.first_seq(1_000.0) + 1_000  # 1초에 번호 1,000개
+    assert link.first_seq(1_760_000_000.0) + 999 <= link.MAX_SEQ  # 지금 시각에서도 C# int 안
+    with pytest.raises(LinkError, match="seq"):
+        link.validate_command({"seq": link.MAX_SEQ + 1, "cmd": "ON", "target": "hood", "value": 1})
