@@ -246,7 +246,7 @@ python -m training.llm.build_augment --sheet training/llm/variety_sheet_v2.yaml 
     --extra data/llm/variety_v2.jsonl --name llm_qwen3-0.6b_jarvis_v4
 ```
 
-- 긴급 빠른 경로(`services/safety_guard/emergency.py`)가 긴급 정지로 처리하는 말은 정답도 긴급 정지인지 테스트로 확인한다 (`tests/training/test_variety_v2.py`).
+- 긴급 빠른 경로(`services/safety_guard/emergency.py`)가 긴급 정지로 처리하는 말은 정답도 긴급 정지인지 테스트로 확인한다 (`tests/training/test_variety_sheets.py`).
 
 ### 결과 (2026-10-13, Mac 참고값)
 
