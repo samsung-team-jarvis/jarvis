@@ -54,3 +54,5 @@ scp vision_kitchen_v1_i8.rknn jarvis-board:~/models/
 |---|---|---|---|---|---|
 | `llm_qwen3-0.6b_jarvis_v1/model.safetensors` (폴더째: 토크나이저·`train_log.json` 포함) | 1.2 GB | `865bea892252` | 1079e3c · `python -m training.llm.train_lora` (Mac MPS, 데이터 v2) | 이현종 | 2026-10-06 |
 | `llm_qwen3-0.6b_jarvis_v2/model.safetensors` (폴더째) | 1.2 GB | `ca82bf78bc66` | 8d926e1 · `python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --name llm_qwen3-0.6b_jarvis_v2` (Mac MPS) | 이현종 | 2026-10-06 |
+| `llm_qwen3-0.6b_jarvis_v3a/model.safetensors` (폴더째) | 1.2 GB | `497cbd4374d4` | f5eace7 · `python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/more_v1.jsonl --name llm_qwen3-0.6b_jarvis_v3a` (Mac MPS, LLM-15 실험 A) | 이현종 | 2026-10-13 |
+| `llm_qwen3-0.6b_jarvis_v3b/model.safetensors` (폴더째) | 1.2 GB | `01bec0ce7b0c` | f5eace7 · `python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/variety_v1.jsonl --name llm_qwen3-0.6b_jarvis_v3b` (Mac MPS, LLM-15 실험 B) | 이현종 | 2026-10-13 |
