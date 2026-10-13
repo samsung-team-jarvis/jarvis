@@ -1,0 +1,104 @@
+# LLM 말투 다양성 시트 v2 (LLM-16) — 새 말투 템플릿으로 train에만 더하는 문장
+#
+# - v1(variety_sheet.yaml, LLM-15 실험 B)을 더한 LoRA v3b가 가장 좋았다. v1은 그대로 두고 이 시트를 더한다.
+# - 방향: v3b의 **val 오류**(training/llm/README.md "v3b의 val 오류")와 페르소나(1인 분식집 사장)의
+#   말버릇 — 짧은 반말 명령, "일번 불", 돌려 말하기, 띄어쓰기 없는 받아쓰기. test 문장은 보지 않았다.
+#   보강 방향을 val로 정했으므로 v4의 val 수치는 낙관적이다. 비교는 test로 한다.
+# - 정답 규칙은 plan_sheet 머리말과 hard_negatives를 따른다:
+#   · 급한 말(빨리·당장·지금·얼른·사고·불났어)이 붙은 "다 꺼"·"멈춰"·"스톱"은 긴급 정지, 그냥 "다 꺼"는 TURN_OFF all
+#   · "멈춰·정지·그만·스톱"이 들어간 말은 매장 장치(조명·에어컨·선풍기·음악)가 아니면 긴급 정지
+#     (긴급 빠른 경로 services/safety_guard/emergency.py와 같게 — 테스트가 확인한다)
+#   · "불"만 말하면 화구인지 조명인지 모른다 → 장치 되묻기. "전부 켜"는 지원하지 않는다 → 장치 되묻기
+#   · 범위 밖 값(4단·18도·볼륨 50·타이머 90분)과 값 없는 상대 조절("더 작게")은 값 되묻기
+#   · 가게 일(주문·매출·발주)은 지원 외
+#
+# 생성: Claude (Claude Code, claude-opus-5-5), 2026-10-13, 사람 검수 전.
+
+seed: 0
+source: variety
+max_per_template: 10
+
+templates:
+  EMERGENCY_STOP:
+    - {id: var2_em_01, tone: 명령, text: "(빨리|당장|얼른|어서) (스톱|스탑|정지|멈춰)", output: {action: EMERGENCY_STOP, target: all}}
+    - {id: var2_em_02, tone: 명령, text: "(스톱|스탑|멈춰|정지) (스톱|스탑|멈춰|정지) (스톱|스탑|멈춰|정지)", output: {action: EMERGENCY_STOP, target: all}}
+    - {id: var2_em_03, tone: 명령, text: "(그만|그만해|그만 멈춰) (빨리|당장|지금|얼른)", output: {action: EMERGENCY_STOP, target: all}}
+    - {id: var2_em_04, tone: 평서, text: "(사고 났다|난리 났어|큰일이다|비상 상황이야) (빨리|당장|얼른) (전부|다|모두) 꺼", output: {action: EMERGENCY_STOP, target: all}}
+    - {id: var2_em_05, tone: 요청, text: "(지금|당장|어서) (전부|다|모두) (꺼 줘|꺼 줄래|꺼 주라)", output: {action: EMERGENCY_STOP, target: all}}
+    - {id: var2_em_06, tone: 평서, text: "(불길이 올라온다|기름에서 불 나|냄비에 불붙었어|팬이 타고 있어|불꽃이 튄다)", output: {action: EMERGENCY_STOP, target: all}}
+    - {id: var2_em_07, tone: 명령, text: "(전부|다|모두|전체) (스톱|멈춰|정지) (빨리|당장|얼른)", output: {action: EMERGENCY_STOP, target: all}}
+    - {id: var2_em_08, tone: 요청, text: "(위험해요|큰일 났어요|도와줘요|사고예요) (멈춰 주세요|다 꺼 주세요|정지해 주세요)", output: {action: EMERGENCY_STOP, target: all}}
+    - {id: var2_em_09, tone: 명령, text: "(화구|튀김기|가스불|불) (전부|다|모두) (당장|빨리|얼른) 꺼", output: {action: EMERGENCY_STOP, target: all}}
+  CONFIRM:
+    # 긴급 정지·아니요와 헷갈리지 않게 짧은 대답을 넓힌다 ("멈춰·그만·스톱"은 쓰지 않는다)
+    - {id: var2_yes_01, tone: 평서, text: "(네 그렇게요|예 맞아요|응 그거 맞아|그래 그렇게)", output: {action: CONFIRM}}
+    - {id: var2_yes_02, tone: 명령, text: "(어|응|그래|네) (해|해 줘|진행해|그대로)", output: {action: CONFIRM}}
+    - {id: var2_yes_03, tone: 평서, text: "(네네네|응 됐어 해|좋아 진행|넵 해 주세요)", output: {action: CONFIRM}}
+  DENY:
+    - {id: var2_no_01, tone: 평서, text: "(아니 됐어요|아냐 하지 마|아니 안 할래|노 괜찮아)", output: {action: DENY}}
+    - {id: var2_no_02, tone: 평서, text: "(안 해도 돼요|하지 마요|취소요|안 할게)", output: {action: DENY}}
+    - {id: var2_no_03, tone: 평서, text: "(아니 아니|아니야 됐어|안 돼 하지 마|싫어 안 해)", output: {action: DENY}}
+  ASK_CLARIFY:
+    # -- 머뭇거림·말이 끊김 → 무엇을 하려는지 모름
+    - {id: var2_ask_01, tone: 평서, text: "(음|어|아|저기) (그게|뭐더라|그러니까 그게|있잖아 그거)", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    - {id: var2_ask_02, tone: 평서, text: "(잠깐|잠깐만|잠시만) (기다려 봐|있어 봐|생각 좀 하고)", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    - {id: var2_ask_03, tone: 평서, text: "(그거 있잖아|그 뭐냐|뭐였더라 그거|그 머시기)", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    - {id: var2_ask_04, tone: 평서, text: "{device} (그거|그 뭐냐|있잖아)", output: {action: ASK_CLARIFY, for_action: null, missing: []}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+    # -- 범위 밖 값 → 값 되묻기
+    - {id: var2_or_01, tone: 명령, text: "{device} (4단으로|5단으로|6단으로|10단으로) (해 줘|맞춰 줘|올려 줘)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+    - {id: var2_or_02, tone: 명령, text: "에어컨 (20도|22도|25도|26도|17도)(로|에) (맞춰 줘|해 줘|설정해)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}}
+    - {id: var2_or_03, tone: 명령, text: "(음량|소리) (30|70|80|100)(으로|에) (해 줘|맞춰 줘)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}}
+    - {id: var2_or_04, tone: 명령, text: "타이머 (70분|80분|두 시간|세 시간|100분)(으로|) (맞춰 줘|해 줘|걸어 줘)", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}}
+    - {id: var2_or_05, tone: 명령, text: "(3번|4번|세 번째|삼번|사번) (화구|불|버너) (켜 줘|켜)", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
+    - {id: var2_or_06, tone: 명령, text: "(3번|4번|세 번째|삼번|사번) (화구|불|버너) (꺼 줘|꺼)", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}}
+    - {id: var2_or_07, tone: 명령, text: "(전부|모두|다) (켜 놔|켜 줘요|켜 줄래|켜 버려)", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
+    # -- 값 없는 상대 조절 → 세기 되묻기
+    - {id: var2_ask_05, tone: 명령, text: "{device} (조금 더 작게|조금만 줄여|살짝 낮춰|더 크게|좀 더 키워)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [music]}
+    - {id: var2_ask_06, tone: 명령, text: "{device} (조금 더 어둡게|살짝 밝게|더 환하게|좀 더 어둡게)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [light]}
+    - {id: var2_ask_07, tone: 명령, text: "{device} (한 단계 올려|한 단계 내려|조금 약하게|조금 세게)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [hood, burner_1, burner_2, fryer, aircon, fan]}
+    - {id: var2_ask_08, tone: 명령, text: "{device} (줄여|낮춰|키워|올려)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [level]}, devices: [burner_1, burner_2, fryer]}
+    # -- 장치가 없음 ("불"·"화구"만) → 장치 되묻기
+    - {id: var2_ask_09, tone: 명령, text: "{time} (뒤에|있다가|지나면) (불|화구|버너|가스불) (꺼 줘|꺼|좀 꺼 줄래)", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [target]}}
+    - {id: var2_ask_10, tone: 명령, text: "(불|가스불|버너|화구) (좀 줄여 줘|좀 키워 줘|약하게 해 줘|세게 해 줘)", output: {action: ASK_CLARIFY, for_action: SET_LEVEL, missing: [target]}}
+    - {id: var2_ask_11, tone: 명령, text: "(불|가스불|버너|화구) (켜 놔|켜 둬|켜 줄래|좀 켜)", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
+    - {id: var2_ask_12, tone: 명령, text: "(불|가스불|버너|화구) (꺼 놔|꺼 둬|꺼 줄래|좀 꺼)", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}}
+    - {id: var2_ask_13, tone: 명령, text: "(불꺼|불꺼줘|불꺼봐|불좀꺼)", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}}
+    - {id: var2_ask_14, tone: 명령, text: "(불켜|불켜줘|불좀켜|불켜봐)", output: {action: ASK_CLARIFY, for_action: TURN_ON, missing: [target]}}
+    # -- 시간이 없음
+    - {id: var2_ask_15, tone: 요청, text: "(타이머|알람) (하나만 걸어 줄래|좀 부탁할게|하나 설정해 줄래)", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}}
+    - {id: var2_ask_16, tone: 명령, text: "{device} (타이머|알람) (걸어 줘|맞춰 놔|설정해 줘)", output: {action: ASK_CLARIFY, for_action: SET_TIMER, missing: [duration]}, devices: [hood, burner_1, burner_2, fryer]}
+  TURN_OFF:
+    # 급하지 않은 "다 꺼" (급한 말이 없다)
+    - {id: var2_off_01, tone: 평서, text: "(요리 끝났어|장사 다 했어|오늘 마감이야|손님 다 갔어) (불|장치|전기) (다|전부|모두) 꺼도 돼", output: {action: TURN_OFF, target: all}, indirect: true}
+    - {id: var2_off_02, tone: 명령, text: "(이제|마감이니까|문 닫을 거니까) (다|전부|모두) (꺼 줘|꺼 놔|꺼 주세요)", output: {action: TURN_OFF, target: all}}
+    # 페르소나 말버릇: 짧은 반말, 띄어쓰기 없는 받아쓰기
+    - {id: var2_off_03, tone: 명령, text: "{device} (꺼라|꺼 봐|꺼 버려|좀 꺼)", output: {action: TURN_OFF, target: "{device}"}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+    - {id: var2_off_04, tone: 명령, text: "{device}꺼줘", output: {action: TURN_OFF, target: "{device}"}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+    - {id: var2_off_05, tone: 평서, text: "(다 익었다|다 됐다|이제 됐어) {device} (꺼|끄자|꺼 줘)", output: {action: TURN_OFF, target: "{device}"}, devices: [burner_1, burner_2, fryer], indirect: true}
+  TURN_ON:
+    - {id: var2_on_01, tone: 명령, text: "{device} (켜라|켜 봐|켜 놔 줘|좀 켜)", output: {action: TURN_ON, target: "{device}"}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+    - {id: var2_on_02, tone: 명령, text: "{device}켜줘", output: {action: TURN_ON, target: "{device}"}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+    - {id: var2_on_03, tone: 평서, text: "(연기 많이 나네|냄새 올라온다|매캐하네) {device} (켜|켜자|좀 켜)", output: {action: TURN_ON, target: "{device}"}, devices: [hood], indirect: true}
+    - {id: var2_on_04, tone: 평서, text: "(튀김 넣을게|튀김 시작하자|돈가스 튀길 거야) {device} (켜|켜 줘|켜 놔)", output: {action: TURN_ON, target: "{device}"}, devices: [fryer], indirect: true}
+  SET_LEVEL:
+    - {id: var2_lv_01, tone: 명령, text: "{device} {level} (가자|놔|돌려)", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}, devices: [hood, burner_1, burner_2, fryer, aircon, fan]}
+    - {id: var2_lv_02, tone: 평서, text: "(졸아붙겠다|끓어 넘친다|타기 직전이야) {device} 약하게", output: {action: SET_LEVEL, target: "{device}", level: 1}, devices: [burner_1, burner_2], indirect: true}
+    - {id: var2_lv_03, tone: 명령, text: "{device} {level} (해라|해 봐|해 놔)", output: {action: SET_LEVEL, target: "{device}", level: "{level}"}}
+  SET_TIMER:
+    - {id: var2_tm_01, tone: 명령, text: "{time}(만|짜리) (재|재 봐|맞춰 봐)", output: {action: SET_TIMER, duration_s: "{time}"}}
+    - {id: var2_tm_02, tone: 평서, text: "(떡볶이 올렸어|어묵 넣었어|라볶이 끓인다) {time} 뒤에 {device} 꺼", output: {action: SET_TIMER, duration_s: "{time}", target: "{device}"}, devices: [burner_1, burner_2], indirect: true}
+  CHECK_STATUS:
+    - {id: var2_st_01, tone: 명령, text: "{device} (켰나|켜졌나 봐 줘|아직 돌아가나)", output: {action: CHECK_STATUS, target: "{device}"}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+    - {id: var2_st_02, tone: 요청, text: "{device} (지금 어떻게 돼 있어요|상태가 어때요|켜져 있는 거 맞아요)", output: {action: CHECK_STATUS, target: "{device}"}, devices: [hood, burner_1, burner_2, fryer, light, aircon, fan, music]}
+  CHECK_AMOUNT:
+    - {id: var2_am_01, tone: 명령, text: "(이 손님|이 테이블|지금 손님|포장 손님) (얼마|얼마 나왔어|계산 얼마야)", output: {action: CHECK_AMOUNT}}
+  REQUEST_PAYMENT:
+    - {id: var2_pay_01, tone: 평서, text: "(카드 받았어|카드 꽂았어|손님이 카드 내셨어) (결제|계산) (해 줘|진행해)", output: {action: REQUEST_PAYMENT}, indirect: true}
+  UNSUPPORTED:
+    - {id: var2_un_01, tone: 명령, text: "(주문|배달 주문|포장 주문) (받아 줘|확인해 줘|넣어 줘|접수해 줘)", output: {action: UNSUPPORTED}}
+    - {id: var2_un_02, tone: 명령, text: "(오늘|이번 주|어제) (매출|판매량|손님 수) (얼마야|알려 줘|어때)", output: {action: UNSUPPORTED}}
+    - {id: var2_un_03, tone: 평서, text: "(힘들어 죽겠다|지친다 오늘|졸려 죽겠네|아이고 허리야|오늘 장사 안 되네)", output: {action: UNSUPPORTED}}
+    - {id: var2_un_04, tone: 명령, text: "(떡|어묵|양파|튀김가루) (주문해 줘|얼마 남았어|발주 넣어 줘)", output: {action: UNSUPPORTED}}
+    - {id: var2_un_05, tone: 명령, text: "{device} (색깔 바꿔 줘|모드 바꿔 줘|예약해 줘)", output: {action: UNSUPPORTED}, devices: [light, aircon, fan]}
+    - {id: var2_un_06, tone: 명령, text: "(다음 노래로|이전 곡으로|다른 노래로) (넘겨 줘|바꿔 줘)", output: {action: UNSUPPORTED}}
+    - {id: var2_un_07, tone: 명령, text: "(배달 기사|손님|단골) (불러 줘|연락해 줘|기다리라고 해 줘)", output: {action: UNSUPPORTED}}

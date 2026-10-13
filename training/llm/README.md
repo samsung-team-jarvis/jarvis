@@ -234,3 +234,44 @@ python -m training.llm.build_more                                           # A:
 | 되물어야 하는데 실행·거절 | 7 | "타이머 90분" → 90분(범위 밖), "에어컨 18도로" → 지원 외, "음악 더 작게" → 세기 1 |
 | 가게 일을 결제 함수로 | 4 | "주문 받아 줘" → 네, "오늘 매출 얼마야" → 금액 확인 |
 | 그 밖 | 3 | "요리 다 끝났어 불 다 꺼도 돼" → 장치 되묻기 |
+
+## 새 말투 v2와 LoRA v4 (LLM-16)
+
+v3b의 val 오류(위 표)와 페르소나 말버릇으로 새 템플릿 63개를 [`variety_sheet_v2.yaml`](./variety_sheet_v2.yaml)에 쓰고 train에만 526문장을 더했다 (비슷해서 뺀 문장 608개). val·test는 그대로다.
+
+```bash
+python -m training.llm.build_augment --sheet training/llm/variety_sheet_v2.yaml --out data/llm/variety_v2.jsonl \
+    --exclude data/llm/augment_v1.jsonl --exclude data/llm/variety_v1.jsonl
+.venv-llm/bin/python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/variety_v1.jsonl \
+    --extra data/llm/variety_v2.jsonl --name llm_qwen3-0.6b_jarvis_v4
+```
+
+- 긴급 빠른 경로(`services/safety_guard/emergency.py`)가 긴급 정지로 처리하는 말은 정답도 긴급 정지인지 테스트로 확인한다 (`tests/training/test_variety_v2.py`).
+
+### 결과 (2026-10-13, Mac 참고값)
+
+바꾼 것은 더한 문장 묶음 하나다 (v3b 학습 데이터 + `variety_v2.jsonl`, 3,807문장. 갱신 횟수 618 → 714, 49분).
+
+| 데이터 v2 test (n=474) | Action Acc | Entity Acc | Valid Rate | 틀린 수 | 틀린 실행 |
+|---|---|---|---|---|---|
+| 규칙 파서 | 82.5% | 82.1% | 100% | 85 | 13 |
+| v3b (새 말투 v1) | 83.5% | 80.6% | 99.8% | 92 | 12 |
+| **v4 (+ 새 말투 v2)** | **86.9%** | **86.5%** | 97.5% | **64** | **11** |
+
+- **Entity도 처음으로 규칙 파서를 넘었다** (82.1% → 86.5%). 틀린 실행은 늘지 않았다 (12 → 11).
+- 줄어든 것: 불필요한 되묻기 37 → 20, 다른 함수 14 → 6, 값 틀림 12 → 2, 지원 외로 거절 24 → 20. 되묻기(ASK_CLARIFY) Entity 50.0% → 88.6%.
+- 늘어난 것: **규칙 위반 1 → 12** (모양은 맞는데 없는 이름·인자 — Guard가 막지만 Valid가 99.8% → 97.5%로 내려갔다).
+- 그대로인 것: 긴급 정지 오판 7 → 7 (EMERGENCY_STOP Action 71.4%), SET_LEVEL 66.0%. 실제 흐름에서는 긴급 단어를 빠른 경로가 LLM보다 먼저 처리한다.
+- val은 98.8% / 98.8% / 100% (v3b 95.9%)이지만 **v2 시트를 v3b val 오류로 만들었으니 낙관적이다.** 비교는 test로 한다.
+- test는 v2부터 다섯 번 비교에 썼다. 비교에만 쓰고 보강 방향은 정하지 않았지만, 같은 test로 고르기를 거듭할수록 test도 조금씩 낙관적이 된다.
+- 기록: 이 실험의 오류 집계 중 `bench/llm_errors.py`가 test 오답 예시 문장 16개를 한 번 출력했다. 그 문장은 보강에 쓰지 않는다. 그 뒤로 test는 `--counts-only`(건수 표만)로 센다.
+
+### v4의 val 오류 (6건)
+
+| 묶음 | 건수 | 예 |
+|---|---|---|
+| 머뭇거림을 네·아니요로 | 3 | "어/음/아 그러니까" → 네·아니요 (되물어야 함) |
+| 결제 요청으로 실행 | 2 | "주문 확인해 줘"(지원 외), "결제하지 마"(아니요) → 결제 요청 — "결제할까요?" 확인 단계가 막는다 |
+| 끄기를 되물음 | 1 | "요리 다 끝났어 불 다 꺼도 돼" → 장치 되묻기 (v3b부터 그대로) |
+
+- 틀린 실행은 val에서 12 → 4건이다. 남은 넷 중 둘이 결제 요청이라 다음 보강은 "결제하지 마"류 부정과 주문·매출 같은 가게 일이다.

@@ -2,6 +2,7 @@
 
 python -m bench.llm_eval --engine rule --split val --csv rule_val.csv
 python -m bench.llm_errors rule_val.csv lora_val.csv          # 여러 개를 나란히
+python -m bench.llm_errors --counts-only rule_test.csv lora_test.csv  # test는 건수만
 
 **val로만 분석한다** (test는 비교할 때만 — docs/workflows/experiment.md).
 
@@ -139,7 +140,7 @@ def analyze(rows: list[dict]) -> dict:
             "families": families, "examples": examples}  # fmt: skip
 
 
-def report(results: dict[str, dict], top: int = 10) -> str:
+def report(results: dict[str, dict], top: int = 10, counts_only: bool = False) -> str:
     names = list(results)
     lines = ["| 유형 | " + " | ".join(names) + " |", "|---|" + "---|" * len(names)]
     lines.append(
@@ -157,6 +158,8 @@ def report(results: dict[str, dict], top: int = 10) -> str:
             + " | ".join(str(r["flags"][key]) for r in results.values())
             + " |"
         )
+    if counts_only:  # test 문장을 보지 않기 위해 표만
+        return "\n".join(lines)
     for name, r in results.items():
         lines += ["", f"### {name}", "", "많이 틀린 가족: "
                   + ", ".join(f"`{g}` {n}" for g, n in r["families"].most_common(top))]  # fmt: skip
@@ -170,9 +173,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="명령 해석 예측 CSV의 오류를 유형별로 센다")
     parser.add_argument("csv", nargs="+", type=pathlib.Path, help="bench/llm_eval.py --csv 결과")
     parser.add_argument("--top", type=int, default=10, help="많이 틀린 가족을 몇 개 보일지")
+    parser.add_argument("--counts-only", action="store_true", help="표만 (예시·가족 없이, test용)")
     args = parser.parse_args()
     results = {path.stem: analyze(load(path)) for path in args.csv}
-    print(report(results, args.top))
+    print(report(results, args.top, args.counts_only))
     return 0
 
 

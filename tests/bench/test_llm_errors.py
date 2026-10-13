@@ -69,3 +69,5 @@ def test_every_error_has_exactly_one_type(tmp_path: pathlib.Path) -> None:
     assert result["families"]["g"] == 3
     text = le.report({"pred": result})
     assert "**3 / 4**" in text and "지원 외로 거절 | 1" in text
+    counts = le.report({"pred": result}, counts_only=True)
+    assert "**3 / 4**" in counts and "후드 켜줘" not in counts and "`g`" not in counts
