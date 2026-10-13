@@ -179,6 +179,7 @@
 - [x] LLM-10 Validation 오류 유형 분류표 (환각 Action, 잘못된 target, 대명사 실패, 안전 위반 등) | 선행: LLM-08 | 담당: 이현종 (#90 — 보드가 아직이라 Mac fp16 LoRA v1으로 먼저: val 오류 86건, 다른 함수 29 · 지원 외를 실행 19 · 규칙 위반 12, 틀린 실행 42. `bench/llm_errors.py`. 양자화 모델은 LLM-08 뒤에 같은 도구로)
 - [ ] LLM-11 2차 데이터 보강 + LoRA v2 → 재변환 → 재평가 | 선행: LLM-10 | 담당: 이현종 (#92 — Mac fp16까지 완료: val 오류 유형으로 train에만 208문장 보강 → 같은 test 72.6% → 78.5%. 남음: 재변환·보드 재평가 (LLM-08 뒤))
 - [x] LLM-15 학습 데이터 양·다양성 확장 실험 (train에만 같은 수 875문장, 같은 test): A 기존 train 템플릿의 장치·값 조합 더 / B 새 말투 템플릿 — 어느 쪽이 test를 올리는지 | 선행: LLM-11 | 담당: 이현종 (#105 — Mac fp16 test: 기준 78.5% → A 79.3%(틀린 실행 11 → 33) · **B 83.5%**(Action은 규칙 파서 82.5%를 처음 넘음, Entity 80.6%는 아직 낮음). 양보다 말투 다양성)
+- [x] LLM-16 새 말투 보강 v2 (v3b val 오류·페르소나 말버릇, train에만 526문장) + LoRA v4, 같은 test로 재평가 | 선행: LLM-15 | 담당: 이현종 (#107 — Mac fp16 test: v3b 83.5% / 80.6% → **v4 86.9% / 86.5%**, Action·Entity 모두 규칙 파서를 넘음. 틀린 실행 12 → 11, 규칙 위반 1 → 12)
 - [ ] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종
 - [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종 (#61 — spk01 val 기반 첫 사전, `services/llm_svc/stt_fixes.py`)
 - [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종
