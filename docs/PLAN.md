@@ -160,7 +160,7 @@
 - [ ] VIS-08 `vision_svc`: 가상 주방 캡처 화면을 받아 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, HW-20, INFRA-03 | 담당: 이현종
 - [x] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 이현종 (#88 — Qwen3-0.6B LoRA를 Mac에서 학습, 데이터 v2 test 72.6%(Mac fp16 참고값, 규칙 파서 82.5%보다 낮음). 입력 형식 [decision](./decisions/2026-10-06-llm-input-format.md). 더 큰 베이스용 Colab 노트북은 미검증)
 - [x] ~~LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정~~ — 취소 (2026-10-29 → LLM-18). Mac Docker 변환 시도는 4시간 넘게 첫 층에서 멈춤(#113)
-- [ ] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-18, FUS-02 | 담당: 이현종 (#111 — Mac까지: `llm_svc --model`(HF)로 LLM 연결, 검증 실패 시 규칙 파서 대체, context는 `fusion/state`. v4 + 대체 test 89.2% / 88.8% (Mac 참고값). 남음: llama.cpp 생성기 (LLM-18))
+- [x] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-18, FUS-02 | 담당: 이현종 (#111 — Mac까지: `llm_svc --model`(HF)로 LLM 연결, 검증 실패 시 규칙 파서 대체, context는 `fusion/state`. v4 + 대체 test 89.2% / 88.8% (Mac 참고값). #118 — llama.cpp(GGUF) 생성기 `llm_svc --model *.gguf`. 보드 확인은 BOARD-08)
 - [ ] FUS-08 State Machine v1 (온도+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환
 - [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 최지환
 - [x] ~~HW-09 ESP32 자체 하드 리밋~~ — 취소 (2026-10-05 → HW-18·HW-19)
@@ -183,7 +183,7 @@
 - [x] LLM-15 학습 데이터 양·다양성 확장 실험 (train에만 같은 수 875문장, 같은 test): A 기존 train 템플릿의 장치·값 조합 더 / B 새 말투 템플릿 — 어느 쪽이 test를 올리는지 | 선행: LLM-11 | 담당: 이현종 (#105 — Mac fp16 test: 기준 78.5% → A 79.3%(틀린 실행 11 → 33) · **B 83.5%**(Action은 규칙 파서 82.5%를 처음 넘음, Entity 80.6%는 아직 낮음). 양보다 말투 다양성)
 - [x] LLM-16 새 말투 보강 v2 (v3b val 오류·페르소나 말버릇, train에만 526문장) + LoRA v4, 같은 test로 재평가 | 선행: LLM-15 | 담당: 이현종 (#107 — Mac fp16 test: v3b 83.5% / 80.6% → **v4 86.9% / 86.5%**, Action·Entity 모두 규칙 파서를 넘음. 틀린 실행 12 → 11, 규칙 위반 1 → 12)
 - [x] LLM-17 새 말투 보강 v3 (v4 val 오류, train에만 162문장) + LoRA v5, 같은 test로 마지막 재평가 | 선행: LLM-16 | 담당: 이현종 (#109 — Mac fp16 test: v5 87.3% / 86.3%로 v4(86.9% / 86.5%)와 차이 없음. val 오류도 6 → 6 (고친 곳 옆이 다시 틀림) → val 오류로 문장을 더하는 방법은 한계. 대표 모델은 v4)
-- [ ] LLM-18 LoRA v4 병합 모델 → GGUF 8비트(llama.cpp) 변환 → 같은 test로 fp16 대비 정확도·속도(Mac), `llm_svc`에 llama.cpp 생성기. 보드가 오면 같은 파일로 보드 CPU tok/s·RAM | 선행: LLM-16 | 담당: 이현종 (2026-10-29, LLM-08 대체)
+- [x] LLM-18 LoRA v4 병합 모델 → GGUF 8비트(llama.cpp) 변환 → 같은 test로 fp16 대비 정확도·속도(Mac), `llm_svc`에 llama.cpp 생성기. 보드가 오면 같은 파일로 보드 CPU tok/s·RAM | 선행: LLM-16 | 담당: 이현종 (2026-10-29, LLM-08 대체. #118 — Mac CPU 4스레드: q8_0 test 87.1% / 86.7% (HF fp16 86.9% / 86.5%, 손실 없음), + 대체 89.7% / 89.2%, 287 ms/건, 639 MB. 보드 CPU 측정은 BOARD-08)
 - [ ] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종
 - [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종 (#61 — spk01 val 기반 첫 사전, `services/llm_svc/stt_fixes.py`)
 - [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종

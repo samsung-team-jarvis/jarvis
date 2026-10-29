@@ -13,6 +13,7 @@
 | rknn-toolkit-lite2 / librknnrt (보드) | | 2.3.2 | aarch64, Python 3.7~3.12. 변환 툴과 같은 버전 | |
 | rkllm-toolkit (변환) — 2026-10-29부터 쓰지 않음 ([decision](../decisions/2026-10-29-llamacpp-and-rebalance.md)) | **1.3.0 (학교 제공 도커)** | 1.3.1 (GitHub 최신) | Linux x86_64 전용, Python 3.10~3.12. 보드 런타임과 맞추기 위해 학교 도커 버전을 따른다 | 2026-10-02 (학교 특강2 p.4, 27) |
 | librkllmrt (보드) — 2026-10-29부터 쓰지 않음 | **1.3.0** | 1.3.1 | `run.sh build-demo` 산출물의 `lib/librkllmrt.so`를 쓴다 | 2026-10-02 (학교 특강2 p.27) |
+| llama.cpp (LLM 실행, CPU) | **llama-cpp-python 0.3.36** (안의 llama.cpp `0c1e570`) + 같은 커밋의 변환 스크립트·gguf-py ([requirements-eval](../../training/llm/requirements-eval.txt), [hf_to_gguf.sh](../../training/convert/hf_to_gguf.sh)) | 0.3.36 | Mac·Linux(x86_64·aarch64) 모두 소스 빌드 가능. 변환 스크립트와 런타임의 llama.cpp 커밋을 맞춘다 ([decision](../decisions/2026-10-29-llamacpp-and-rebalance.md)) | 2026-10-29 (Mac, v4 GGUF f16·q8_0 변환·실행, #118) |
 | sherpa-onnx | **1.13.8** ([requirements](../../requirements.txt)) | 1.13.8 | NPU 실행은 별도 RKNN 빌드. 보드 배포 이미지에 든 버전은 보드 수령 후 확인 (확인 필요) | 2026-10-02 (Mac, SenseVoice int8 받아쓰기, #33) |
 | ultralytics (학습) | **8.4.171** | 8.4.171 | RKNN export는 x86 Linux 전용이라 쓰지 않음 (포크 사용) | 2026-10-02 (Mac에서 학습·평가 확인, #19) |
 | airockchip/ultralytics_yolov8 (export) | **4674fe6** + torch 2.4.1 · numpy<2 · onnx 1.16.1 ([export-requirements](../../training/yolo/export-requirements.txt)) | (포크, 커밋으로 고정) | 학습 환경과 별도 가상환경 | 2026-10-02 (Mac에서 export 성공, 출력 9개, #19) |

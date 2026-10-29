@@ -17,14 +17,15 @@ stt/text (wake=false) ─▶ 무시 (개수만 셈)
 ```bash
 python -m services.llm_svc                          # 규칙 파서만. 버스는 JARVIS_BUS (기본 MQTT)
 python -m services.llm_svc parse "3분 뒤에 2번 불 꺼"  # 버스 없이 결과만 (JSON + 함수 토큰)
-# Mac에서 학습한 LLM + 검증 실패 시 규칙 파서 (torch가 있는 .venv-llm)
+# 학습한 LLM + 검증 실패 시 규칙 파서 (.venv-llm). 실행용은 GGUF(llama.cpp CPU, LLM-18), HF 폴더는 Mac 비교용
+.venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf
 .venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4
 .venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4 parse "일번 화구 약하게"
 ```
 
 MQTT 확인 (Mac, 2026-10-16, #114): 브로커(`eclipse-mosquitto:2`) 위에서 `--model runs/llm/llm_qwen3-0.6b_jarvis_v4`로 띄우고 `fusion/state`(COOKING) 뒤 `stt/text` 5건을 보냈다. 일번 화구 켜기·후드 세게·타이머 3분은 LLM 출력이 그대로 통과해 맞게 발행됐고(`gen_ms` 첫 문장 872 ms, 그 뒤 407·335 ms), "자비스."만 말한 경우는 LLM 없이 되묻기, 호출어 없는 발화는 무시됐다. SIGTERM으로 3초 안에 종료.
 
-보드(RKLLM) 생성기는 LLM-08 뒤에 같은 자리(`interpret.Generate`: 명령 문장·context → LLM 출력·토큰 수)에 붙인다.
+생성기는 `interpret.Generate`(명령 문장·context → LLM 출력·토큰 수) 자리에 바꿔 끼운다: `gguf_engine.GGUFGenerator`(llama.cpp CPU, 실행용 — RKLLM 대신, [decision](../../docs/decisions/2026-10-29-llamacpp-and-rebalance.md)), `hf_engine.HFGenerator`(Mac 비교용). GGUF 생성기는 tokenizer 없이 학습과 같은 입력 문자열(`prompt.chat_prompt`)을 만든다. GGUF 만들기: `bash training/convert/hf_to_gguf.sh <모델 폴더> q8_0`. Mac CPU 4스레드에서 v4 q8_0 test 87.1% / 86.7%(HF fp16과 같은 수준), 287 ms/건 ([METRICS](../../docs/METRICS.md)).
 
 음성부터 명령까지 한 번에 (브로커 필요 — [local-development](../../docs/workflows/local-development.md)):
 
