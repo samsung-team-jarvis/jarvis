@@ -185,7 +185,7 @@
 - [x] LLM-16 새 말투 보강 v2 (v3b val 오류·페르소나 말버릇, train에만 526문장) + LoRA v4, 같은 test로 재평가 | 선행: LLM-15 | 담당: 이현종 (#107 — Mac fp16 test: v3b 83.5% / 80.6% → **v4 86.9% / 86.5%**, Action·Entity 모두 규칙 파서를 넘음. 틀린 실행 12 → 11, 규칙 위반 1 → 12)
 - [x] LLM-17 새 말투 보강 v3 (v4 val 오류, train에만 162문장) + LoRA v5, 같은 test로 마지막 재평가 | 선행: LLM-16 | 담당: 이현종 (#109 — Mac fp16 test: v5 87.3% / 86.3%로 v4(86.9% / 86.5%)와 차이 없음. val 오류도 6 → 6 (고친 곳 옆이 다시 틀림) → val 오류로 문장을 더하는 방법은 한계. 대표 모델은 v4)
 - [x] LLM-18 LoRA v4 병합 모델 → GGUF 8비트(llama.cpp) 변환 → 같은 test로 fp16 대비 정확도·속도(Mac), `llm_svc`에 llama.cpp 생성기. 보드가 오면 같은 파일로 보드 CPU tok/s·RAM | 선행: LLM-16 | 담당: 이현종 (2026-10-29, LLM-08 대체. #118 — Mac CPU 4스레드: q8_0 test 87.1% / 86.7% (HF fp16 86.9% / 86.5%, 손실 없음), + 대체 89.7% / 89.2%, 287 ms/건, 639 MB. 보드 CPU 측정은 BOARD-08)
-- [ ] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종
+- [x] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종 (#124 — `last_target` = 마지막 명령의 장치, 60초. 재학습 없이 v4가 사용: test의 `last_target` 문장 7/7 전체 일치(GGUF q8_0), 노트북 시연 "후드 켜 줘" → "그거 세게 해 줘" → 후드 세기 3. State는 FUS-08 뒤 같은 자리)
 - [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종 (#61 — spk01 val 기반 첫 사전, `services/llm_svc/stt_fixes.py`)
 - [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종
 - [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 최석진(촬영) · 이현종(학습·변환) (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))

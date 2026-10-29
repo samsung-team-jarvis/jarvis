@@ -95,6 +95,7 @@ python3 scripts/launch.py --config scripts/launch_demo.yaml --arg audio_svc="--i
 ```
 
 - 준비: `.venv`(requirements.txt), `.venv-llm`(training/llm/requirements-eval.txt), GGUF 모델(`bash training/convert/hf_to_gguf.sh runs/llm/llm_qwen3-0.6b_jarvis_v4 q8_0`), 브로커.
+- 음성 응답이 나오는 동안(과 끝난 뒤 잠깐)은 에코를 막으려고 입력을 무시한다. 말할 때도, wav를 만들 때도 문장 사이를 응답보다 길게(6초 이상) 둔다.
 - wav로 할 때는 마지막 응답이 나온 뒤 Ctrl+C. `--until audio_svc`는 wav가 끝나는 즉시 모두 정리해서 아직 해석 중인 마지막 명령이 잘린다.
 - 확인 기록 (M1 Pro Mac, 2026-10-29, #120): 합성 음성 wav로 발화 끝 → 가상 주방 확인까지 1.2~2.5초 (LLM 구간 0.55~1.8초 — 첫 문장이 가장 느림), 명령 3건 모두 실행 확인, 음성 응답까지. 자세한 값은 [METRICS](../METRICS.md) 측정 로그.
 

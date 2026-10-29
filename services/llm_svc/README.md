@@ -45,7 +45,7 @@ python3 scripts/launch.py                                           # recorder �
 | `tokens` | `0` | LLM 생성 토큰 수 | LLM 생성 토큰 수 (버려도 쓴 만큼) |
 
 - `call`은 어느 경우든 `common.function_call.validate`를 통과한다. 검증은 형식·함수 번호·장치 이름·꼭 필요한 인자·값 범위(세기 1~3, 타이머 1~3600초)를 본다. 검증은 통과했지만 뜻이 틀린 명령은 그대로 나간다 — 안전은 Safety Guard가 맡는다.
-- LLM 입력은 학습과 같게 만든다: 문장부호를 빼고(학습 문장에 없다), 상황은 `fusion/state`의 마지막 상태(받은 적이 없으면 `IDLE`), `last_target`은 아직 없음(LLM-12). 호출어만 말한 경우는 LLM에 넣지 않는다.
+- LLM 입력은 학습과 같게 만든다: 문장부호를 빼고(학습 문장에 없다), 상황은 `fusion/state`의 마지막 상태(받은 적이 없으면 `IDLE`), `last_target`은 이 서비스가 마지막으로 발행한 명령의 장치(`all` 제외, 60초 지나면 없음 — "그거 꺼 줘", LLM-12). 호출어만 말한 경우는 LLM에 넣지 않는다.
 
 `session_id`는 받은 `stt/text`의 것을 그대로 쓴다 (발화 → 명령 지연을 같은 세션에서 추적). `system/heartbeat`는 1초마다 자기 세션(`--session`)으로 발행한다.
 

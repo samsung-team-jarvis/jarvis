@@ -25,6 +25,9 @@ class GGUFGenerator:
             model_path=model_path,
             n_ctx=N_CTX,
             n_threads=n_threads,
+            # 입력 처리 스레드 기본값은 코어 전부(저전력 코어 포함)라 오히려 느리고 들쭉날쭉하다
+            # (Mac 10코어: 평균 691 → 225 ms, 최대 2,485 → 296 ms, #124)
+            n_threads_batch=n_threads,
             n_gpu_layers=-1 if gpu else 0,
             verbose=False,
         )
