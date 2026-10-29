@@ -7,3 +7,4 @@ accelerate==1.15.0
 pyyaml==6.0.3
 numpy==2.4.6
 peft==0.21.2  # LoRA 학습 (2026-10-06 Mac 확인, #88)
+paho-mqtt==2.1.0  # llm_svc --model을 MQTT로 띄울 때 (requirements.txt와 같은 버전, 2026-10-16 Mac 확인, #114)

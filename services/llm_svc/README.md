@@ -22,6 +22,8 @@ python -m services.llm_svc parse "3분 뒤에 2번 불 꺼"  # 버스 없이 결
 .venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4 parse "일번 화구 약하게"
 ```
 
+MQTT 확인 (Mac, 2026-10-16, #114): 브로커(`eclipse-mosquitto:2`) 위에서 `--model runs/llm/llm_qwen3-0.6b_jarvis_v4`로 띄우고 `fusion/state`(COOKING) 뒤 `stt/text` 5건을 보냈다. 일번 화구 켜기·후드 세게·타이머 3분은 LLM 출력이 그대로 통과해 맞게 발행됐고(`gen_ms` 첫 문장 872 ms, 그 뒤 407·335 ms), "자비스."만 말한 경우는 LLM 없이 되묻기, 호출어 없는 발화는 무시됐다. SIGTERM으로 3초 안에 종료.
+
 보드(RKLLM) 생성기는 LLM-08 뒤에 같은 자리(`interpret.Generate`: 명령 문장·context → LLM 출력·토큰 수)에 붙인다.
 
 음성부터 명령까지 한 번에 (브로커 필요 — [local-development](../../docs/workflows/local-development.md)):
