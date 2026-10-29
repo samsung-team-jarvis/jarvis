@@ -183,6 +183,8 @@
  "meta": {"template_id": "t_017", "source": "seed|paraphrase|real", "split": "train"}}
 ```
 
+서비스에서 `context`는 `llm_svc`가 채운다: `state`는 `fusion/state`의 마지막 값(받은 적이 없으면 `IDLE`), `last_target`은 `llm_svc`가 마지막으로 발행한 명령의 장치(`all` 제외, 60초가 지나면 `null`). 나머지 필드는 학습 데이터에만 있다.
+
 학습용 정답 문자열은 `to_tokens(output)`으로 만든다 → `<jarvis_3>(target=hood, level=3)<jarvis_end>`.
 
 ## 4. 보드 ↔ 가상 주방 (v0.1 확정, HW-14)
@@ -281,3 +283,4 @@
 | 2026-10-12 | v0.2 | §2 `seq` 범위(2³¹−1 이하)와 시작 번호 규칙(시각에서 정함 — 재시작 후 중복으로 무시되던 문제) (#103) | 이현종 |
 | 2026-10-13 | v0.2 | §2 `llm/function_call`에 LLM 출력이 쓰일 때와 검증 실패로 규칙 파서가 대체할 때의 필드 의미 명시 (대체 시 `gen_ms`·`tokens`에 LLM 몫 포함) — 필드 변경 없음 (#111, LLM-09) | 이현종 |
 | 2026-10-29 | v0.2 | §2.1 비전 클래스는 COCO 사전학습 이름을 쓰고 기본 발행은 `person` (`vision/objects` 필드 변경 없음), §5 캡처 화면·클래스 항목 갱신 (#122, VIS-08) | 이현종 |
+| 2026-10-29 | v0.2 | §3.4 서비스에서 `context`를 채우는 출처 명시 (`state` ← `fusion/state`, `last_target` ← `llm_svc`의 마지막 명령 장치, 60초) — 필드 변경 없음 (#124, LLM-12) | 이현종 |
