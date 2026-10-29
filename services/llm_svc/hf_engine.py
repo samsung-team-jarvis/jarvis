@@ -1,4 +1,4 @@
-"""Mac(HF transformers)에서 학습한 LoRA 모델로 함수 토큰을 만든다 — 보드(RKLLM) 생성기는 LLM-08 뒤.
+"""Mac(HF transformers)에서 학습한 LoRA 모델로 함수 토큰을 만든다 — 실행용은 GGUF(gguf_engine.py).
 
 torch·transformers가 있는 환경(.venv-llm)에서만 쓴다. 입력은 학습·평가와 같다 (prompt.py,
 bench/llm_eval.py `--finetuned`): 짧은 지시문 + 사용자 메시지, greedy, 최대 48토큰.
