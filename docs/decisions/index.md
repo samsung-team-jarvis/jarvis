@@ -37,6 +37,7 @@ YYYY-MM-DD-short-decision-title.md
 - [2026-10-06 Function Call 스키마 v0.2 (장치 8종 · 세기 통일 · 결제)](./2026-10-06-function-call-schema-v02.md)
 - [2026-10-06 학습한 LLM의 입력 형식 (짧은 지시문 · chat template · 끝 토큰)](./2026-10-06-llm-input-format.md)
 - [2026-10-09 Safety Guard의 확인 흐름 (결제 요청 → 네·아니요)](./2026-10-09-guard-confirm-flow.md)
+- [2026-10-29 LLM은 llama.cpp(CPU)로, 3명 기준 작업 재분배](./2026-10-29-llamacpp-and-rebalance.md)
 
 ## Template
 
