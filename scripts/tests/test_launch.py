@@ -9,6 +9,7 @@ import sys
 import threading
 
 import pytest
+import yaml
 
 LAUNCH = pathlib.Path(__file__).resolve().parents[1] / "launch.py"
 _spec = importlib.util.spec_from_file_location("launch", LAUNCH)
@@ -90,3 +91,31 @@ def test_cli_rejects_unknown_service() -> None:
     )
     assert result.returncode == 1
     assert "설정에 없는 서비스" in result.stderr
+
+
+def test_config_can_pick_a_python_per_service(tmp_path: pathlib.Path) -> None:
+    rel = os.path.relpath(sys.executable, launch.ROOT)  # 저장소 기준 경로로 적는다
+    config = tmp_path / "c.yaml"
+    config.write_text(
+        f"services:\n  - {{name: a, module: m.a}}\n  - {{name: b, module: m.b, python: '{rel}'}}\n",
+        encoding="utf-8",
+    )
+    specs, _ = launch.load_config(config)
+    assert specs[0].argv[0] == sys.executable  # 지정하지 않으면 런처의 파이썬
+    assert pathlib.Path(specs[1].argv[0]).resolve() == pathlib.Path(sys.executable).resolve()
+
+
+def test_config_with_missing_python_stops_with_a_message(tmp_path: pathlib.Path) -> None:
+    config = tmp_path / "c.yaml"
+    config.write_text("services:\n  - {name: llm, module: m, python: .venv-nope/bin/python}\n")
+    with pytest.raises(SystemExit, match="llm의 python이 없습니다"):
+        launch.load_config(config)
+
+
+def test_demo_config_runs_the_gguf_llm_in_its_own_env() -> None:
+    raw = yaml.safe_load(LAUNCH.with_name("launch_demo.yaml").read_text(encoding="utf-8"))
+    items = {s["name"]: s for s in raw["services"]}
+    assert list(items)[:2] == ["recorder", "fake_kitchen"]  # 받는 쪽을 먼저
+    assert list(items)[-1] == "audio_svc"
+    assert items["llm_svc"]["python"] == ".venv-llm/bin/python"
+    assert items["llm_svc"]["args"][1].endswith(".gguf")

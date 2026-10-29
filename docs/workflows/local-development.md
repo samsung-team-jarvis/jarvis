@@ -83,6 +83,20 @@ python -m bench.latency data/sessions/demo.jsonl                 # 방금 녹화
 - 로그는 `[서비스]` 접두어로 한 화면에 나온다. `--log-dir data/logs`면 서비스별 파일로도 남는다 (git 제외).
 - `--only recorder,llm_svc`로 일부만, `--bus`로 버스 주소 일괄 지정, `--restart`로 비정상 종료 시 재시작.
 - 새 서비스를 만들면 `launch.yaml`에 한 줄 추가한다 ([새 서비스 추가](../../recipes/add-service.md) 9단계).
+- 서비스 항목에 `python: .venv-llm/bin/python`처럼 가상환경을 지정할 수 있다. 서비스 환경과 LLM 환경은 고정 버전이 달라(numpy) 한 환경에 합칠 수 없기 때문이다.
+
+### 노트북 시연 (보드 없이)
+
+[`scripts/launch_demo.yaml`](../../scripts/launch_demo.yaml): 녹화 → 가짜 가상 주방 → kitchen_gw → safety_guard(상태 COOKING 가정 — 상황 인식 전까지) → llm_svc(GGUF, llama.cpp CPU) → audio_svc. Unity를 쓰면 `fake_kitchen` 항목을 빼고 Unity를 브로커에 붙인다.
+
+```bash
+python3 scripts/launch.py --config scripts/launch_demo.yaml                     # 마이크
+python3 scripts/launch.py --config scripts/launch_demo.yaml --arg audio_svc="--input data/stt/mac_tts/four_commands.wav --realtime"
+```
+
+- 준비: `.venv`(requirements.txt), `.venv-llm`(training/llm/requirements-eval.txt), GGUF 모델(`bash training/convert/hf_to_gguf.sh runs/llm/llm_qwen3-0.6b_jarvis_v4 q8_0`), 브로커.
+- wav로 할 때는 마지막 응답이 나온 뒤 Ctrl+C. `--until audio_svc`는 wav가 끝나는 즉시 모두 정리해서 아직 해석 중인 마지막 명령이 잘린다.
+- 확인 기록 (M1 Pro Mac, 2026-10-29, #120): 합성 음성 wav로 발화 끝 → 가상 주방 확인까지 1.2~2.5초 (LLM 구간 0.55~1.8초 — 첫 문장이 가장 느림), 명령 3건 모두 실행 확인, 음성 응답까지. 자세한 값은 [METRICS](../METRICS.md) 측정 로그.
 
 ## 보드 접속
 

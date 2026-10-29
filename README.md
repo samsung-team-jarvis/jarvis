@@ -53,6 +53,8 @@ python3 scripts/setup.py          # 가상환경 · 의존성 · git 훅 · 검�
 python3 scripts/launch.py                                    # recorder → kitchen_gw → safety_guard → llm_svc → audio_svc(마이크)
 python3 scripts/launch.py --arg audio_svc="--input data/stt/cmds.wav --realtime --session demo" --until audio_svc
 python -m bench.latency data/sessions/demo.jsonl             # 발화 끝 → 명령 구간별 지연
+# 노트북 시연 (보드 없이, INFRA-15): 서비스는 .venv, LLM은 .venv-llm의 GGUF(llama.cpp CPU), 가짜 가상 주방
+python3 scripts/launch.py --config scripts/launch_demo.yaml
 
 # 하드웨어 없이
 python -m services.simulator services/simulator/scenarios/overheat.yaml --speed 10

@@ -1,0 +1,31 @@
+# 노트북 시연 설정 (INFRA-15, #120): 보드 없이 노트북 한 대에서 오프라인으로 말 → 가상 장치 제어.
+#   python3 scripts/launch.py --config scripts/launch_demo.yaml
+#   python3 scripts/launch.py --config scripts/launch_demo.yaml --arg audio_svc="--input data/stt/mac_tts/four_commands.wav --realtime"
+#   (wav로 할 때는 마지막 응답이 나온 뒤 Ctrl+C. --until audio_svc는 wav가 끝나는 즉시 모두 정리해 마지막 명령이 잘린다)
+# 준비: 서비스 환경 .venv(requirements.txt), LLM 환경 .venv-llm(training/llm/requirements-eval.txt),
+#       GGUF 모델 (bash training/convert/hf_to_gguf.sh runs/llm/llm_qwen3-0.6b_jarvis_v4 q8_0), MQTT 브로커
+# python 경로는 Mac·Linux 기준 (Windows는 .venv/Scripts/python.exe).
+# 위에서부터 순서대로 띄운다 — 받는 쪽을 먼저 (launch.yaml과 같은 원칙).
+start_delay_s: 1.0
+services:
+  - name: recorder
+    module: services.recorder
+    python: .venv/bin/python
+  - name: fake_kitchen        # Unity 가상 주방을 쓰면 이 항목을 빼고 Unity를 브로커에 붙인다
+    module: services.kitchen_gw.fake_kitchen
+    python: .venv/bin/python
+  - name: kitchen_gw
+    module: services.kitchen_gw
+    python: .venv/bin/python
+  - name: safety_guard
+    module: services.safety_guard
+    python: .venv/bin/python
+    # 상황 인식(fusion_svc, FUS-08) 전까지는 상태를 가정한다. 가정이 없으면 "상태 모름 = 위험"이라 화구가 켜지지 않는다
+    args: [--assume-state, COOKING]
+  - name: llm_svc
+    module: services.llm_svc
+    python: .venv-llm/bin/python
+    args: [--model, runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf]
+  - name: audio_svc
+    module: services.audio_svc
+    python: .venv/bin/python
