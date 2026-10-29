@@ -4,6 +4,7 @@ python3 scripts/launch.py              # launch.yaml의 서비스 모두 (Ctrl+C
 python3 scripts/launch.py --only recorder,llm_svc
 python3 scripts/launch.py --arg audio_svc="--input data/stt/cmds.wav --realtime" --until audio_svc
 python3 scripts/launch.py --bus mqtt://localhost:1883 --log-dir data/logs --restart
+python3 scripts/launch.py --config scripts/launch_demo.yaml   # 노트북 시연 (GGUF LLM)
 
 - 로그는 `[서비스]` 접두어로 한 화면에 모은다. --log-dir를 주면 서비스별 파일로도 남긴다.
 - 종료: Ctrl+C·SIGTERM → 모든 서비스에 SIGTERM (뒤에 띄운 것부터).
@@ -48,11 +49,18 @@ class Running:
 
 
 def load_config(path: pathlib.Path) -> tuple[list[ServiceSpec], float]:
+    """설정 → 서비스 목록. `python`(저장소 기준 경로)을 주면 그 가상환경으로 띄운다.
+
+    서비스 환경과 LLM 환경(.venv-llm)의 고정 버전이 달라 한 환경에 합칠 수 없기 때문이다 (#120).
+    """
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     specs = []
     for item in raw.get("services", []):
         name, module = item["name"], item["module"]
-        argv = [sys.executable, "-u", "-m", module, *[str(a) for a in item.get("args", [])]]
+        python = str(ROOT / item["python"]) if "python" in item else sys.executable
+        if not pathlib.Path(python).exists():
+            raise SystemExit(f"{name}의 python이 없습니다: {item['python']} (가상환경부터)")
+        argv = [python, "-u", "-m", module, *[str(a) for a in item.get("args", [])]]
         specs.append(ServiceSpec(name, argv))
     return specs, float(raw.get("start_delay_s", 1.0))
 
