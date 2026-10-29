@@ -37,7 +37,7 @@ Unity 없이 보드 쪽을 개발할 때는 브로커 → 가짜 가상 주방 �
 
 ## 가짜 가상 주방 (`fake_kitchen.py`)
 
-Unity 쪽이 맞춰야 할 동작([Unity 안내](../../recipes/unity-kitchen-link.md))을 Python으로 옮긴 기준 구현이다. 화면(`kitchen/frame`)은 없다.
+Unity 쪽이 맞춰야 할 동작([Unity 안내](../../recipes/unity-kitchen-link.md))을 Python으로 옮긴 기준 구현이다. 인식용 화면(`kitchen/frame`)은 `--frames <JPEG 폴더|파일>`을 주면 그 이미지를 차례로 1초에 4장 보낸다 (Unity·카메라 없이 `vision_svc`를 돌릴 때, #126).
 
 - 명령을 적용하고 `kitchen/ack`를 보낸다. 같은 `seq`는 한 번만 실행하고 확인만 다시 보낸다 (최근 64개 기억).
 - 가열 장치(`burner_1`, `burner_2`, `fryer`)의 온도를 규칙대로 바꿔 1초마다 `kitchen/temp`로 보낸다 (`common.kitchen_link.next_temperature`).

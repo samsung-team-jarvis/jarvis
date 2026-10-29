@@ -168,7 +168,7 @@
 - [x] ~~HW-10 센서값 BLE notify~~ — 취소 (2026-10-05 → HW-19)
 - [ ] HW-19 가상 온도: 가열 장치(화구·튀김기)의 온도를 규칙대로 계산해 `kitchen/temp`로 1초에 한 번 전송, 265°C에 닿으면 스스로 OFF ([interfaces](./architecture/interfaces.md) §4.5, 기준 구현 `common.kitchen_link.next_temperature`) | 선행: HW-16 | 담당: 최석진
 - [ ] HW-20 인식용 카메라 화면을 `kitchen/frame`으로 전송 (JPEG 640×360, 1초에 4장) — `vision_svc`가 받을 수 있는지 확인 | 선행: HW-15, HW-14 | 담당: 최석진
-- [ ] BOARD-08 동시 구동 부하 측정 — LLM(CPU, llama.cpp) + STT(CPU) + YOLO(NPU)일 때 tok/s 변화, fps, RAM, SoC 온도, CPU 스레드 배분 | 선행: VIS-08, LLM-09 | 담당: 이현종
+- [ ] BOARD-08 동시 구동 부하 측정 — LLM(CPU, llama.cpp) + STT(CPU) + YOLO(NPU)일 때 tok/s 변화, fps, RAM, SoC 온도, CPU 스레드 배분 | 선행: VIS-08, LLM-09 | 담당: 이현종 (#126 — 노트북 먼저: `bench/resources.py`, 시연 구성 전체 합계 CPU 평균 78% · 최대 220%(코어 하나 = 100%), 메모리 2.2 GB. 보드는 받으면 같은 도구로)
 - [ ] BOARD-09 장시간(30분+) 구동 발열·스로틀링 확인 | 선행: BOARD-08 | 담당: 이현종 (2026-10-29 신지호에서 이관)
 
 ---

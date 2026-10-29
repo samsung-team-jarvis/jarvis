@@ -94,6 +94,8 @@ python3 scripts/launch.py --config scripts/launch_demo.yaml                     
 python3 scripts/launch.py --config scripts/launch_demo.yaml --arg audio_svc="--input data/stt/mac_tts/four_commands.wav --realtime"
 ```
 
+- 카메라 없이 비전까지 돌리려면 가짜 가상 주방이 이미지를 화면으로 보내게 한다: `--arg fake_kitchen="--frames <JPEG 폴더>" --arg vision_svc="--input kitchen"`.
+- 서비스별 CPU·메모리: 띄워 둔 채 `python -m bench.resources --duration 60` ([bench](../../bench/README.md)).
 - 준비: `.venv`(requirements.txt), `.venv-llm`(training/llm/requirements-eval.txt), GGUF 모델(`bash training/convert/hf_to_gguf.sh runs/llm/llm_qwen3-0.6b_jarvis_v4 q8_0`), 브로커.
 - 음성 응답이 나오는 동안(과 끝난 뒤 잠깐)은 에코를 막으려고 입력을 무시한다. 말할 때도, wav를 만들 때도 문장 사이를 응답보다 길게(6초 이상) 둔다.
 - wav로 할 때는 마지막 응답이 나온 뒤 Ctrl+C. `--until audio_svc`는 wav가 끝나는 즉시 모두 정리해서 아직 해석 중인 마지막 명령이 잘린다.
