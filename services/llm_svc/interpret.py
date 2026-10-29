@@ -15,7 +15,7 @@ from typing import Any
 from common.function_call import FunctionCallError, parse_tokens
 from services.audio_svc.wake import split_wake
 from services.llm_svc.rule_parser import parse
-from services.llm_svc.stt_fixes import normalize
+from services.llm_svc.stt_fixes import normalize, numerals
 
 # (명령 문장, context) → (LLM이 낸 문자열, 생성 토큰 수). Mac은 hf_engine, 보드는 LLM-08 뒤
 Generate = Callable[[str, dict[str, Any]], tuple[str, int]]
@@ -33,9 +33,9 @@ class Resolved:
 
 
 def command_text(stt_text: str) -> str | None:
-    """호출어가 있으면 파서에 넣을 명령 문장(오인식 사전 적용), 없으면 None."""
+    """호출어가 있으면 파서에 넣을 명령 문장(오인식 사전·숫자 정규화 적용), 없으면 None."""
     command = split_wake(stt_text)
-    return None if command is None else normalize(command)
+    return None if command is None else numerals(normalize(command))
 
 
 def interpret(stt_text: str) -> dict[str, Any] | None:

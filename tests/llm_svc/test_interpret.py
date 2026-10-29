@@ -1,7 +1,7 @@
 import pytest
 
 from services.llm_svc.interpret import command_text, interpret, resolve
-from services.llm_svc.stt_fixes import normalize
+from services.llm_svc.stt_fixes import normalize, numerals
 
 
 @pytest.mark.parametrize(
@@ -97,3 +97,25 @@ def test_wake_word_only_is_not_sent_to_llm() -> None:
     llm = FakeLLM("<jarvis_1>(target=hood)<jarvis_end>")
     r = resolve(".", CTX, llm)
     assert llm.seen == [] and r.call == {"action": "ASK_CLARIFY", "for_action": None, "missing": []}
+
+
+@pytest.mark.parametrize(
+    ("stt", "fixed"),
+    [
+        ("입 번 불 켜줘.", "2번 불 켜줘."),  # spk01 val 받아쓰기 (#130)
+        ("십 분 뒤에 일 번 화구 꺼줘.", "10분 뒤에 1번 화구 꺼줘."),
+        ("입 분 뒤에 후드 꺼죠.", "2분 뒤에 후드 꺼죠."),
+        ("타이머 1 분 삼십초.", "타이머 1분 30초."),
+        ("후드 이단으로.", "후드 2단으로."),
+        ("이십오 분", "25분"),
+        ("이번에는 후드 켜 줘", "이번에는 후드 켜 줘"),  # 장치 앞의 번만 숫자
+        ("일단 후드 켜", "일단 후드 켜"),  # "우선"의 일단
+        ("두 번째 불", "두 번째 불"),  # 고유어 숫자는 그대로
+    ],
+)
+def test_numerals(stt: str, fixed: str) -> None:
+    assert numerals(stt) == fixed
+
+
+def test_command_text_applies_numerals_after_the_dictionary() -> None:
+    assert command_text("자비스 입 번 불 켜줘.") == "2번 불 켜줘."

@@ -79,7 +79,8 @@ def test_llm_output_is_published_with_latest_state_as_context() -> None:
 
     bus.publish(stt("자비스 일번 불 약하게.", wake=True))
 
-    assert seen == [("일번 불 약하게", {"state": "COOKING", "last_target": None})]
+    # 숫자 정규화 (#130): "일번" → "1번"
+    assert seen == [("1번 불 약하게", {"state": "COOKING", "last_target": None})]
     p = got[0].payload
     assert p["call"] == {"action": "SET_LEVEL", "target": "burner_1", "level": 1}
     assert p["raw_text"] == "<jarvis_3>(target=burner_1, level=1)<jarvis_end>"  # LLM 출력
