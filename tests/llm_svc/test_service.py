@@ -131,3 +131,39 @@ def test_background_worker_keeps_the_subscriber_free() -> None:
 
     assert [m.payload["call"] for m in got] == [{"action": "TURN_ON", "target": "hood"}] * 2
     assert service.published == 2
+
+
+def test_last_device_is_given_as_context_until_it_gets_old() -> None:
+    bus, seen = MemoryBus(), []
+    now = [100.0]
+    answers = iter(
+        [
+            "<jarvis_1>(target=hood)<jarvis_end>",  # 후드 켜 줘
+            "<jarvis_2>(target=hood)<jarvis_end>",  # 그거 꺼 줘
+            "<jarvis_2>(target=all)<jarvis_end>",  # 다 꺼 — 전체는 "그거"가 아니다
+            "<jarvis_9>()<jarvis_end>",
+            "<jarvis_9>()<jarvis_end>",
+        ]
+    )
+
+    def llm(text, context):
+        seen.append(context["last_target"])
+        return next(answers), 5
+
+    LlmService(bus, "s_llm", generate=llm, clock=lambda: now[0]).start()
+    for text in ["자비스 후드 켜 줘.", "자비스 그거 꺼 줘.", "자비스 다 꺼."]:
+        bus.publish(stt(text, wake=True))
+    now[0] += 59
+    bus.publish(stt("자비스 그거 켜 줘.", wake=True))
+    now[0] += 61  # 마지막 장치를 말한 지 60초가 지남
+    bus.publish(stt("자비스 그거 켜 줘.", wake=True))
+
+    assert seen == [None, "hood", "hood", "hood", None]
+
+
+def test_rule_parser_results_also_set_the_last_device() -> None:
+    bus = MemoryBus()
+    service = LlmService(bus, "s_llm")
+    service.start()
+    bus.publish(stt("자비스 1번 화구 켜 줘.", wake=True))
+    assert service.context()["last_target"] == "burner_1"
