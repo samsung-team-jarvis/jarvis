@@ -34,7 +34,7 @@
 | `services/safety_guard` · `fusion_svc` | 명령 판정·긴급 정지 (Guard v0) / 상황 인식(State Machine, 예정) | 최지환 ③ | [safety_guard](services/safety_guard/README.md) |
 | `services/kitchen_gw` | 보드 ↔ 가상 주방 연결(제어·결과 확인·온도·생존 신호), 가짜 가상 주방 | 이현종 ② | [README](services/kitchen_gw/README.md) |
 | 가상 주방 (Unity) | 장면·장치·가상 온도·캡처 화면 | 최석진 ④ | (예정 — [결정](docs/decisions/2026-10-05-unity-virtual-kitchen.md), [연결 안내](recipes/unity-kitchen-link.md)) |
-| `services/vision_svc` · `training/yolo` | YOLOv8 RKNN 객체 인식, 데이터·학습 | 신지호 ① · 이현종 | [training](training/README.md) |
+| `services/vision_svc` · `training/yolo` | YOLOv8 RKNN 객체 인식, 데이터·학습 | 최석진(캡처·라벨) · 최지환(클래스) · 이현종(학습·변환) | [training](training/README.md) |
 | `services/recorder` · `simulator` | 모든 메시지 녹화 / 가상 주방 없이 가짜 메시지 재생 | 이현종 ② | [recorder](services/recorder/README.md) · [simulator](services/simulator/README.md) |
 | `training/llm` | LLM 데이터(기획 시트 → Seed·Paraphrase·분할) | 이현종 ② | [README](training/llm/README.md) |
 | `bench` | 지연 분해, STT·LLM 평가, 녹음 도구 | 이현종 ② | [README](bench/README.md) |
