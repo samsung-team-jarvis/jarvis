@@ -2,6 +2,7 @@
 
 python -m bench.llm_eval --engine rule                                   # 규칙 파서 (서비스 환경)
 .venv-llm/bin/python -m bench.llm_eval --engine hf --model Qwen/Qwen3-0.6B   # 기본 모델 + 프롬프트
+.venv-llm/bin/python -m bench.llm_eval --engine gguf --model runs/llm/<이름>-q8_0.gguf  # llama.cpp
 
 데이터: data/llm/split_v2/<split>.jsonl (기본 test — 일반 + Hard Negative).
   `--data v1`은 스키마 v0.1 때의 고정본(장치 3종)이다. 지시문은 v0.2 하나뿐이라
@@ -188,6 +189,19 @@ class HFEngine:
         return (text[: end + len("<jarvis_end>")] if end >= 0 else text).strip()
 
 
+class GGUFEngine:
+    """학습한 모델의 GGUF를 llama.cpp(CPU)로 (LLM-18). 입력은 --finetuned와 같다."""
+
+    def __init__(self, model_path: str, n_threads: int) -> None:
+        from services.llm_svc.gguf_engine import GGUFGenerator
+
+        self.name = f"{pathlib.Path(model_path).name} (llama.cpp CPU {n_threads}스레드)"
+        self._gen = GGUFGenerator(model_path, n_threads=n_threads)
+
+    def generate(self, record: dict) -> str:
+        return self._gen(record["instruction"], record["context"])[0]
+
+
 def evaluate(records: list[dict], engine, limit: int | None = None) -> list[dict]:
     rows = []
     for r in records[:limit]:
@@ -251,8 +265,9 @@ def report(rows: list[dict], name: str) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="명령 해석(규칙 파서·LLM)을 test로 평가한다")
-    parser.add_argument("--engine", choices=["rule", "hf"], required=True)
-    parser.add_argument("--model", default=None, help="hf 엔진의 Hugging Face 모델 id 또는 폴더")
+    parser.add_argument("--engine", choices=["rule", "hf", "gguf"], required=True)
+    parser.add_argument("--model", default=None, help="hf: 모델 id 또는 폴더, gguf: .gguf 파일")
+    parser.add_argument("--threads", type=int, default=4, help="gguf 엔진의 CPU 스레드 수")
     parser.add_argument(
         "--finetuned",
         action="store_true",
@@ -270,6 +285,10 @@ def main() -> int:
     ]
     if args.engine == "rule":
         engine = RuleEngine()
+    elif args.engine == "gguf":
+        if not args.model:
+            parser.error("--engine gguf에는 --model(.gguf)이 필요합니다")
+        engine = GGUFEngine(args.model, args.threads)
     else:
         if not args.model:
             parser.error("--engine hf에는 --model이 필요합니다")
@@ -281,7 +300,8 @@ def main() -> int:
             ]
             engine = HFEngine(args.model, few_shot(train))
     rows = evaluate(records, engine, args.limit)
-    setting = "학습 모델용 짧은 지시문" if args.finetuned else f"지시문 {PROMPT_VERSION} + few-shot"
+    short = args.finetuned or args.engine == "gguf"
+    setting = "학습 모델용 짧은 지시문" if short else f"지시문 {PROMPT_VERSION} + few-shot"
     print(report(rows, f"{engine.name} · split_{args.data}/{args.split} · {setting}"))
     if args.csv:
         with open(args.csv, "w", newline="", encoding="utf-8") as f:
