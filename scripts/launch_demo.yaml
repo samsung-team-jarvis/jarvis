@@ -3,7 +3,8 @@
 #   python3 scripts/launch.py --config scripts/launch_demo.yaml --arg audio_svc="--input data/stt/mac_tts/four_commands.wav --realtime"
 #   (wav로 할 때는 마지막 응답이 나온 뒤 Ctrl+C. --until audio_svc는 wav가 끝나는 즉시 모두 정리해 마지막 명령이 잘린다)
 # 준비: 서비스 환경 .venv(requirements.txt), LLM 환경 .venv-llm(training/llm/requirements-eval.txt),
-#       GGUF 모델 (bash training/convert/hf_to_gguf.sh runs/llm/llm_qwen3-0.6b_jarvis_v4 q8_0), MQTT 브로커
+#       GGUF 모델 (bash training/convert/hf_to_gguf.sh runs/llm/llm_qwen3-0.6b_jarvis_v4 q8_0),
+#       비전 모델 models/yolov8n_rknn_zoo.onnx (services/vision_svc/README.md), MQTT 브로커
 # python 경로는 Mac·Linux 기준 (Windows는 .venv/Scripts/python.exe).
 # 위에서부터 순서대로 띄운다 — 받는 쪽을 먼저 (launch.yaml과 같은 원칙).
 start_delay_s: 1.0
@@ -22,6 +23,10 @@ services:
     python: .venv/bin/python
     # 상황 인식(fusion_svc, FUS-08) 전까지는 상태를 가정한다. 가정이 없으면 "상태 모름 = 위험"이라 화구가 켜지지 않는다
     args: [--assume-state, COOKING]
+  - name: vision_svc          # 사람 감지 (COCO 사전학습 YOLOv8n). Unity 화면을 쓰면 args를 빼서 kitchen/frame을 받는다
+    module: services.vision_svc
+    python: .venv/bin/python
+    args: [--input, camera, --quiet]
   - name: llm_svc
     module: services.llm_svc
     python: .venv-llm/bin/python

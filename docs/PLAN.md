@@ -127,9 +127,9 @@
 ### 데이터
 - [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 녹음 운영: 화자 섭외·일정·취합, [녹음 안내](../recipes/stt-recording.md)) (#53 — 대본 40문장·녹음 도구·안내 완료. 녹음: spk01 val quiet 40/40 MacBook 마이크 — 나머지 화자·소음 진행)
 - [x] STT-06 CER·RTF·STT→Action 정확도 측정 스크립트 (`jiwer`) | 선행: STT-05 (녹음 전 선진행, 합성 음성으로 동작 확인) | 담당: 이현종 (#49, `bench/stt_eval.py`)
-- [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 최지환 (2026-10-29 신지호에서 이관 — 클래스가 상황 인식의 근거)
-- [ ] VIS-03 가상 주방 화면 캡처 1차 (세션별 조명·배치·아바타 위치·장치 상태 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-15 | 담당: 최석진 (2026-10-29 신지호에서 이관)
-- [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT, 또는 Unity가 물체 위치로 상자 라벨을 직접 내보내기), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 최석진 (2026-10-29 신지호에서 이관)
+- [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 최지환 (2026-10-29 신지호에서 이관 — 클래스가 상황 인식의 근거) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
+- [ ] VIS-03 가상 주방 화면 캡처 1차 (세션별 조명·배치·아바타 위치·장치 상태 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-15 | 담당: 최석진 (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
+- [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT, 또는 Unity가 물체 위치로 상자 라벨을 직접 내보내기), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 최석진 (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
 - [x] VIS-10 Colab YOLO 학습·평가 노트북 템플릿 (데이터 경로·클래스만 바꾸면 학습 → mAP 평가 → ONNX export까지) — ①이 코드 수정 없이 VIS-06·07 실행 가능 | 선행: VIS-02 | 담당: 이현종 (#19)
 - [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함, **간접 발화**·**숫자 표기 변형**("3번"/"삼 번") 포함 — SUDA 방식, [school-materials](./school-materials.md)) | 선행: LLM-01 | 담당: 이현종 (#55 — 기획 시트로 627건 생성, 사람 검수 대기)
 - [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 검수·보강: 위험 상황 판정이 Guard 규칙과 직결) (#55 — 84건 생성, 사람 검수 대기)
@@ -143,7 +143,7 @@
 - [ ] STT-07 SenseVoice 기본 설정 Baseline (CER by 소음 조건, RTF) | 선행: STT-06 | 담당: 최석진 (2026-10-05 조정 — [stt_eval](../bench/README.md) 실행, 결과 분석은 이현종이 지원)
 - [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 최석진 (2026-10-05 조정 — 측정 실행. decision log는 이현종과 함께)
 - [ ] STT-09 마이크 비교 (핀마이크 vs 노트북 내장) CER | 선행: STT-06 | 담당: 최석진 (#71 이관 — 마이크는 부품 담당, [stt_eval](../bench/README.md)로 측정)
-- [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 (mAP는 보드 없이) | 담당: 이현종 (2026-10-29 신지호에서 이관)
+- [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 (mAP는 보드 없이) | 담당: 이현종 (2026-10-29 신지호에서 이관) — #122: 사전학습 모델 Mac 속도(전처리 2~4 · 추론 75~91 · 후처리 3~5 ms, CPU 2스레드). mAP·보드 지연은 데이터·보드가 생기면
 - [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종 (#67 — Mac 정확도: Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1% (데이터 v1), #86 — 25.7% · 44.5% (데이터 v2). 남음: Llama-3.2-1B(HF 승인), 보드 tok/s·RAM)
 - [x] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종 (#67 — Action Acc 79.9% (데이터 v1), #86 — 82.5% (데이터 v2), `bench/llm_eval.py`)
 - [ ] FUS-07 단일 조건 판단 Baseline (State F1, 위험 미탐율) | 선행: FUS-05 | 담당: 최지환
@@ -156,9 +156,9 @@
 
 **Gate 4:** 실제 모델(STT·YOLO RKNN·LLM GGUF)이 Skeleton에 들어가 동시에 구동되고, 동시 구동 시 지연·RAM·온도가 측정됨
 
-- [ ] VIS-06 YOLOv8n 파인튜닝 v1 (Colab) | 선행: VIS-04, VIS-10 | 담당: 이현종 (2026-10-29 신지호에서 이관)
-- [ ] VIS-07 ONNX → RKNN INT8 변환 (가상 주방 캡처 화면으로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06 (변환은 Docker amd64, #13) | 담당: 이현종 (2026-10-29 신지호에서 이관)
-- [ ] VIS-08 `vision_svc`: 가상 주방 캡처 화면을 받아 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, HW-20, INFRA-03 | 담당: 이현종
+- [ ] VIS-06 YOLOv8n 파인튜닝 v1 (Colab) | 선행: VIS-04, VIS-10 | 담당: 이현종 (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
+- [ ] VIS-07 ONNX → RKNN INT8 변환 (가상 주방 캡처 화면으로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06 (변환은 Docker amd64, #13) | 담당: 이현종 (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
+- [x] VIS-08 `vision_svc`: 가상 주방 캡처 화면을 받아 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, HW-20, INFRA-03 | 담당: 이현종 — #122: 사전학습 YOLOv8n `person` ([decision](./decisions/2026-10-29-vision-pretrained-person.md)), 입력 `kitchen/frame`·카메라·이미지 폴더, Mac onnxruntime. 보드 RKNN 엔진은 보드를 받으면 (BOARD-08)
 - [x] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 이현종 (#88 — Qwen3-0.6B LoRA를 Mac에서 학습, 데이터 v2 test 72.6%(Mac fp16 참고값, 규칙 파서 82.5%보다 낮음). 입력 형식 [decision](./decisions/2026-10-06-llm-input-format.md). 더 큰 베이스용 Colab 노트북은 미검증)
 - [x] ~~LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정~~ — 취소 (2026-10-29 → LLM-18). Mac Docker 변환 시도는 4시간 넘게 첫 층에서 멈춤(#113)
 - [x] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-18, FUS-02 | 담당: 이현종 (#111 — Mac까지: `llm_svc --model`(HF)로 LLM 연결, 검증 실패 시 규칙 파서 대체, context는 `fusion/state`. v4 + 대체 test 89.2% / 88.8% (Mac 참고값). #118 — llama.cpp(GGUF) 생성기 `llm_svc --model *.gguf`. 보드 확인은 BOARD-08)
@@ -188,7 +188,7 @@
 - [ ] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종
 - [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종 (#61 — spk01 val 기반 첫 사전, `services/llm_svc/stt_fixes.py`)
 - [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종
-- [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 최석진(촬영) · 이현종(학습·변환) (2026-10-29 신지호에서 이관)
+- [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 최석진(촬영) · 이현종(학습·변환) (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
 - [ ] FUS-10 통합 멀티모달 시나리오 20~30개 녹화 (recorder) → State F1·위험 미탐율 | 선행: FUS-08, INFRA-05 | 담당: 최지환
 - [ ] FUS-11 recorder 로그 재생 테스트 (녹화 세션을 다시 흘려 State Machine 회귀 테스트 — `services.recorder.store.read_session`으로 읽기) | 선행: FUS-10 | 담당: 최지환
 - [x] ~~HW-11 BLE 성공률·지연 개선~~ — 취소 (2026-10-05 → HW-22)
