@@ -87,7 +87,7 @@ python -m bench.latency data/sessions/demo.jsonl                 # 방금 녹화
 
 ### 노트북 시연 (보드 없이)
 
-[`scripts/launch_demo.yaml`](../../scripts/launch_demo.yaml): 녹화 → 가짜 가상 주방 → kitchen_gw → safety_guard(상태 COOKING 가정 — 상황 인식 전까지) → llm_svc(GGUF, llama.cpp CPU) → audio_svc. Unity를 쓰면 `fake_kitchen` 항목을 빼고 Unity를 브로커에 붙인다.
+[`scripts/launch_demo.yaml`](../../scripts/launch_demo.yaml): 녹화 → 가짜 가상 주방 → kitchen_gw → safety_guard(상태 COOKING 가정 — 상황 인식 전까지) → vision_svc(노트북 카메라로 사람 감지) → llm_svc(GGUF, llama.cpp CPU) → audio_svc. Unity를 쓰면 `fake_kitchen` 항목을 빼고 Unity를 브로커에 붙인다.
 
 ```bash
 python3 scripts/launch.py --config scripts/launch_demo.yaml                     # 마이크
