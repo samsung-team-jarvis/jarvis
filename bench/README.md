@@ -87,3 +87,17 @@ python -m bench.resources --duration 60 --csv out.csv    # 1초마다의 값
 
 - CPU %는 그 1초 동안 쓴 CPU 시간 ÷ 1초 (100% = 코어 하나). `ps`의 `%cpu`는 Mac·Linux에서 뜻이 달라 쓰지 않고 누적 CPU 시간의 차이로 계산한다 — Mac·보드(Linux) 같은 방식.
 - 메모리는 RSS다. mmap한 모델 파일(GGUF 등)과 공유 라이브러리가 들어가 서비스끼리 겹칠 수 있다.
+
+## rehearsal.py — 시연 리허설 (DOC-09)
+
+시연 대본([`rehearsal/demo.yaml`](rehearsal/demo.yaml): 문장 + Safety Guard가 내야 할 판정)을 합성 음성으로 만들어 노트북 시연 구성으로 흘리고, 녹화의 `guard/decision`을 기대와 **차례대로** 맞춘다. 코드를 바꾼 뒤 시연이 깨지지 않았는지 같은 조건으로 확인한다.
+
+```bash
+python -m bench.rehearsal make        # → data/stt/rehearsal/demo.wav (macOS say, 문장 사이 8초)
+python3 scripts/launch.py --config scripts/launch_demo.yaml \
+    --arg audio_svc="--input data/stt/rehearsal/demo.wav --realtime --session rehearsal"   # 마지막 응답 뒤 Ctrl+C
+python -m bench.rehearsal check data/sessions/rehearsal.jsonl   # 단계별 통과 표, 모두 통과면 종료 코드 0
+```
+
+- 합성 음성(Yuna)은 사람 목소리와 받아쓰기 결과가 다르다 — 실패한 단계는 받아쓴 문장을 보고 시스템 문제인지 합성 음성 문제인지 가른다. 사람이 말하는 리허설(현장 조명·소음)은 따로 한다.
+- 문장 사이는 음성 응답보다 길어야 한다 (재생 중 입력 무시). 6초에서는 긴 응답 뒤 첫 음절이 잘렸다.

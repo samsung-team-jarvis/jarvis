@@ -2,6 +2,9 @@
 
 오디오 청크를 계속 넣으면, 발화가 끝났다고 판단된 구간(앞뒤 무음 제외)을 돌려준다.
 발화 끝 판단은 `min_silence_duration`만큼 조용해진 뒤라서, 구간은 그만큼 늦게 나온다.
+
+VAD는 말이 시작됐다고 판단한 곳부터 자르므로 "자"처럼 약하게 시작하는 첫 음절이 빠질 수 있다
+("자비스" → "비스", 호출어 실패). 받은 오디오를 남겨 두고 구간 앞에 `pre_roll_s`를 붙인다 (#128).
 """
 
 from __future__ import annotations
@@ -24,6 +27,7 @@ class VadConfig:
     min_silence_s: float = 0.5  # 이만큼 조용하면 발화 끝
     min_speech_s: float = 0.25  # 이보다 짧은 소리는 무시
     max_speech_s: float = 20.0  # 이보다 길면 강제로 끊음
+    pre_roll_s: float = 0.3  # 구간 앞에 더 붙이는 길이 (첫 음절이 잘리지 않게)
 
 
 @dataclass(frozen=True)
@@ -34,6 +38,14 @@ class SpeechSegment:
 
 def vad_model_from_env() -> str:
     return os.environ.get("JARVIS_VAD_MODEL", DEFAULT_VAD_MODEL)
+
+
+def with_pre_roll(
+    history: np.ndarray, history_start: int, start: int, length: int, pre_roll: int
+) -> np.ndarray:
+    """남겨 둔 오디오(첫 샘플 번호 history_start)에서 [start - pre_roll, start + length)."""
+    begin = max(start - pre_roll, history_start)
+    return history[begin - history_start : start + length - history_start]
 
 
 def end_mono(segment_end: int, received: int, last_arrival_mono: float) -> float:
@@ -58,6 +70,10 @@ class Segmenter:
         import sherpa_onnx
 
         config = config or VadConfig()
+        self._pre_roll = int(config.pre_roll_s * SAMPLE_RATE)
+        self._keep = int((config.max_speech_s + config.pre_roll_s + 2) * SAMPLE_RATE)
+        self._history = np.zeros(0, dtype=np.float32)  # 최근 오디오 (구간 앞을 붙이려고)
+        self._history_start = 0  # history[0]의 샘플 번호
         cfg = sherpa_onnx.VadModelConfig()
         cfg.sample_rate = SAMPLE_RATE
         cfg.silero_vad.model = str(model)
@@ -78,7 +94,12 @@ class Segmenter:
 
         arrival_mono: 이 청크의 마지막 샘플이 들어온 시각 (마이크 콜백 시각 등).
         """
-        self._pending = np.concatenate([self._pending, samples.astype(np.float32, copy=False)])
+        samples = samples.astype(np.float32, copy=False)
+        self._pending = np.concatenate([self._pending, samples])
+        self._history = np.concatenate([self._history, samples])
+        if len(self._history) > self._keep:
+            cut = len(self._history) - self._keep
+            self._history, self._history_start = self._history[cut:], self._history_start + cut
         self._received += len(samples)
         self._last_arrival = arrival_mono
         while len(self._pending) >= self._window:
@@ -98,8 +119,11 @@ class Segmenter:
         out = []
         while not self._vad.empty():
             seg = self._vad.front
-            samples = np.asarray(seg.samples, dtype=np.float32)
-            end = end_mono(seg.start + len(samples), self._received, self._last_arrival)
+            length = len(seg.samples)
+            samples = with_pre_roll(
+                self._history, self._history_start, seg.start, length, self._pre_roll
+            )
+            end = end_mono(seg.start + length, self._received, self._last_arrival)
             out.append(SpeechSegment(samples=samples, end_mono=end))
             self._vad.pop()
         return out
