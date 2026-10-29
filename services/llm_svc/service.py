@@ -5,10 +5,15 @@
 규칙 파서로 대체한다 (`valid: false`, `fallback: true`) — interpret.resolve, interfaces §2.
 LLM에 주는 상황(context)은 `fusion/state`의 마지막 상태다. 받은 적이 없으면 IDLE로 넣는다
 (학습 문장에 흔한 상태. 위험 판단은 Safety Guard가 따로 한다). `last_target`은 LLM-12에서.
+
+`background=True`면 명령 해석을 작업 스레드 하나에서 차례로 한다. MQTT 구독 핸들러는 통신 스레드에서
+도는데, 거기서 LLM을 돌리면 생성하는 동안 이 서비스의 송수신(발행·생존 신호)이 모두 멈춘다 (#120).
 """
 
 from __future__ import annotations
 
+import queue
+import threading
 import time
 from collections.abc import Callable
 from typing import Any
@@ -30,12 +35,15 @@ class LlmService:
         on_call: Callable[[Envelope], None] | None = None,
         clock: Callable[[], float] = time.monotonic,
         generate: Generate | None = None,
+        background: bool = False,
     ) -> None:
         self.bus = bus
         self.session_id = session_id  # heartbeat용. 명령은 받은 stt/text의 session_id를 이어 쓴다
         self.on_call = on_call
         self.clock = clock
         self.generate = generate
+        self.background = background
+        self._queue: queue.Queue[Envelope] = queue.Queue()
         self.state = DEFAULT_STATE
         self.published = 0
         self.ignored = 0  # 호출어가 없어 처리하지 않은 stt/text
@@ -43,7 +51,11 @@ class LlmService:
         self._last_heartbeat: float | None = None
 
     def start(self) -> None:
-        self.bus.subscribe("stt/text", self.handle)
+        if self.background:
+            threading.Thread(target=self._work, daemon=True, name="llm_svc-worker").start()
+            self.bus.subscribe("stt/text", self._queue.put)
+        else:
+            self.bus.subscribe("stt/text", self.handle)
         self.bus.subscribe("fusion/state", self.on_state)
 
     def on_state(self, msg: Envelope) -> None:
@@ -78,6 +90,18 @@ class LlmService:
         self.published += 1
         if self.on_call:
             self.on_call(out)
+
+    def _work(self) -> None:
+        while True:
+            msg = self._queue.get()
+            try:
+                self.handle(msg)
+            finally:
+                self._queue.task_done()
+
+    def wait_idle(self) -> None:
+        """받은 발화를 모두 처리할 때까지 기다린다 (background일 때, 확인·테스트용)."""
+        self._queue.join()
 
     def heartbeat(self, interval_s: float = 1.0) -> None:
         now = self.clock()

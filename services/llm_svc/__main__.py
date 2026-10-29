@@ -69,7 +69,13 @@ def main() -> int:
 
     session_id = args.session or f"s_{datetime.datetime.now():%Y%m%d_%H%M%S}"
     bus = connect(args.bus, client_id="llm_svc")
-    service = LlmService(bus, session_id, on_call=None if args.quiet else show, generate=generate)
+    service = LlmService(
+        bus,
+        session_id,
+        on_call=None if args.quiet else show,
+        generate=generate,
+        background=True,  # LLM 생성이 MQTT 통신 스레드를 막지 않게
+    )
     service.start()
     mode = f"LLM {args.model} + 규칙 파서 대체" if args.model else "규칙 파서"
     print(f"llm_svc({mode}) 시작: stt/text 구독 중 (Ctrl+C로 종료)")

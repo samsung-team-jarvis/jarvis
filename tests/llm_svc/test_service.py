@@ -1,3 +1,5 @@
+import threading
+
 from common.bus import MemoryBus
 from common.messages import Envelope
 from services.llm_svc.service import LlmService
@@ -106,3 +108,26 @@ def test_state_defaults_to_idle_before_any_fusion_state() -> None:
     LlmService(bus, "s_llm", generate=lambda t, c: (seen.append(c) or "", 0)).start()
     bus.publish(stt("자비스 후드 켜 줘.", wake=True))
     assert seen == [{"state": "IDLE", "last_target": None}]
+
+
+def test_background_worker_keeps_the_subscriber_free() -> None:
+    bus, got = MemoryBus(), []
+    bus.subscribe("llm/function_call", got.append)
+    release = threading.Event()
+
+    def slow_llm(text, context):
+        release.wait(5)  # 생성 중
+        return "<jarvis_1>(target=hood)<jarvis_end>", 7
+
+    service = LlmService(bus, "s_llm", generate=slow_llm, background=True)
+    service.start()
+
+    # 구독 핸들러는 생성을 기다리지 않고 바로 돌아온다
+    bus.publish(stt("자비스 후드 켜 줘.", wake=True))
+    bus.publish(stt("자비스 후드 켜 줘.", wake=True))
+    assert got == []
+    release.set()
+    service.wait_idle()
+
+    assert [m.payload["call"] for m in got] == [{"action": "TURN_ON", "target": "hood"}] * 2
+    assert service.published == 2
