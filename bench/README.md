@@ -75,3 +75,15 @@ python -m bench.llm_eval --engine rule --split val --csv rule_val.csv
 .venv-llm/bin/python -m bench.llm_eval --engine hf --finetuned --model runs/llm/<이름> --split val --csv lora_val.csv
 python -m bench.llm_errors rule_val.csv lora_val.csv     # 나란히 비교 (열 이름 = 파일 이름)
 ```
+
+## resources.py — 서비스별 CPU·메모리 (BOARD-08)
+
+`-m services.*`로 뜬 프로세스를 1초마다 보고 서비스별 CPU 평균·최대와 메모리(RSS) 최대를 표로 낸다. 서비스를 먼저 띄워 둔다 (런처 등).
+
+```bash
+python -m bench.resources --duration 60                  # 60초 (서비스가 모두 끝나면 일찍 멈춤)
+python -m bench.resources --duration 60 --csv out.csv    # 1초마다의 값
+```
+
+- CPU %는 그 1초 동안 쓴 CPU 시간 ÷ 1초 (100% = 코어 하나). `ps`의 `%cpu`는 Mac·Linux에서 뜻이 달라 쓰지 않고 누적 CPU 시간의 차이로 계산한다 — Mac·보드(Linux) 같은 방식.
+- 메모리는 RSS다. mmap한 모델 파일(GGUF 등)과 공유 라이브러리가 들어가 서비스끼리 겹칠 수 있다.

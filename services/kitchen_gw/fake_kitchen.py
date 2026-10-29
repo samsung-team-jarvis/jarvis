@@ -1,9 +1,11 @@
 """가짜 가상 주방: Unity가 없을 때 그 자리를 대신한다 (interfaces.md §4의 기준 동작).
 
-같은 연결 토픽(`kitchen/*`)으로 명령을 받고, 확인·온도·상태를 보낸다. 화면(`kitchen/frame`)은 없다.
+같은 연결 토픽(`kitchen/*`)으로 명령을 받고, 확인·온도·상태를 보낸다. 화면(`kitchen/frame`)은
+`--frames`로 준 이미지(JPEG)를 1초에 4장 차례로 보낸다 (없으면 보내지 않는다).
 보드 쪽 서비스를 Unity 없이 개발·시험하는 데 쓰고, Unity 쪽이 맞춰야 할 동작의 예시이기도 하다.
 
     python -m services.kitchen_gw.fake_kitchen                 # 버스는 JARVIS_BUS (기본 MQTT)
+    python -m services.kitchen_gw.fake_kitchen --frames data/frames/   # + 인식용 화면
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import pathlib
 import signal
 import sys
 import threading
@@ -140,10 +143,42 @@ class FakeKitchen:
         self.bus.publish_raw(link.TOPIC_STATE, link.encode(state))
 
 
+class FrameSender:
+    """이미지(JPEG)를 차례로 돌려 가며 `kitchen/frame`으로 보낸다 (interfaces §4.2, 1초에 4장)."""
+
+    def __init__(
+        self,
+        bus: Bus,
+        frames: list[bytes],
+        fps: float = link.FRAME_FPS,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        if not frames:
+            raise ValueError("보낼 화면이 없습니다")
+        self.bus, self.frames, self.period, self.clock = bus, frames, 1.0 / fps, clock
+        self.sent = 0
+        self._next = clock()
+
+    def tick(self) -> None:
+        now = self.clock()
+        if now >= self._next:
+            self.bus.publish_raw(link.TOPIC_FRAME, self.frames[self.sent % len(self.frames)])
+            self.sent += 1
+            self._next = max(self._next + self.period, now)
+
+
+def load_frames(path: pathlib.Path) -> list[bytes]:
+    files = sorted(path.glob("*.jp*g")) if path.is_dir() else [path]
+    return [f.read_bytes() for f in files]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Unity 대신 연결 토픽에 답하는 가짜 가상 주방")
     parser.add_argument("--bus", default=None, help="생략 시 JARVIS_BUS 환경변수 (기본 MQTT)")
     parser.add_argument("--quiet", action="store_true", help="장치 상태를 출력하지 않음")
+    parser.add_argument(
+        "--frames", type=pathlib.Path, default=None, help="인식용 화면으로 보낼 JPEG 폴더·파일"
+    )
     args = parser.parse_args()
 
     bus = connect(args.bus, client_id="fake_kitchen")
@@ -153,17 +188,21 @@ def main() -> int:
             link.TOPIC_STATE, lambda _t, data: print(f"[kitchen/state] {data.decode()}")
         )
     kitchen.start()
-    print("가짜 가상 주방 시작: kitchen/cmd 구독 중 (Ctrl+C로 종료)")
+    sender = FrameSender(bus, load_frames(args.frames)) if args.frames else None
+    extra = f", 화면 {len(sender.frames)}장 반복" if sender else ""
+    print(f"가짜 가상 주방 시작: kitchen/cmd 구독 중{extra} (Ctrl+C로 종료)")
 
     stop = threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     try:
-        while not stop.wait(0.1):
+        while not stop.wait(0.05):
             kitchen.tick()
+            if sender:
+                sender.tick()
     except KeyboardInterrupt:
         pass
     bus.close()
-    print(f"OK: 명령 {kitchen.applied}건 적용")
+    print(f"OK: 명령 {kitchen.applied}건 적용" + (f", 화면 {sender.sent}장" if sender else ""))
     return 0
 
 
