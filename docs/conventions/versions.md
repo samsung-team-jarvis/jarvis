@@ -11,8 +11,8 @@
 | 커널 / NPU 드라이버 | | RKNPU v0.9.8 (배포 이미지에 사전 설치) | RKLLM은 v0.9.8 이상 필요 | |
 | RKNN-Toolkit2 (변환) | **2.3.2** + onnx 1.16.1 ([constraints](../../training/convert/rknn-constraints.txt)) | 2.3.2 | Linux x86_64 / aarch64, Python 3.6~3.12. aarch64는 onnxoptimizer 소스 빌드 필요 | 2026-10-02 (Docker linux/amd64, Python 3.11에서 YOLOv8n INT8 변환 성공, #13) |
 | rknn-toolkit-lite2 / librknnrt (보드) | | 2.3.2 | aarch64, Python 3.7~3.12. 변환 툴과 같은 버전 | |
-| rkllm-toolkit (변환) | **1.3.0 (학교 제공 도커)** | 1.3.1 (GitHub 최신) | Linux x86_64 전용, Python 3.10~3.12. 보드 런타임과 맞추기 위해 학교 도커 버전을 따른다 | 2026-10-02 (학교 특강2 p.4, 27) |
-| librkllmrt (보드) | **1.3.0** | 1.3.1 | `run.sh build-demo` 산출물의 `lib/librkllmrt.so`를 쓴다 | 2026-10-02 (학교 특강2 p.27) |
+| rkllm-toolkit (변환) — 2026-10-29부터 쓰지 않음 ([decision](../decisions/2026-10-29-llamacpp-and-rebalance.md)) | **1.3.0 (학교 제공 도커)** | 1.3.1 (GitHub 최신) | Linux x86_64 전용, Python 3.10~3.12. 보드 런타임과 맞추기 위해 학교 도커 버전을 따른다 | 2026-10-02 (학교 특강2 p.4, 27) |
+| librkllmrt (보드) — 2026-10-29부터 쓰지 않음 | **1.3.0** | 1.3.1 | `run.sh build-demo` 산출물의 `lib/librkllmrt.so`를 쓴다 | 2026-10-02 (학교 특강2 p.27) |
 | sherpa-onnx | **1.13.8** ([requirements](../../requirements.txt)) | 1.13.8 | NPU 실행은 별도 RKNN 빌드. 보드 배포 이미지에 든 버전은 보드 수령 후 확인 (확인 필요) | 2026-10-02 (Mac, SenseVoice int8 받아쓰기, #33) |
 | ultralytics (학습) | **8.4.171** | 8.4.171 | RKNN export는 x86 Linux 전용이라 쓰지 않음 (포크 사용) | 2026-10-02 (Mac에서 학습·평가 확인, #19) |
 | airockchip/ultralytics_yolov8 (export) | **4674fe6** + torch 2.4.1 · numpy<2 · onnx 1.16.1 ([export-requirements](../../training/yolo/export-requirements.txt)) | (포크, 커밋으로 고정) | 학습 환경과 별도 가상환경 | 2026-10-02 (Mac에서 export 성공, 출력 9개, #19) |

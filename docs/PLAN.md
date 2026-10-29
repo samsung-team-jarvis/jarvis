@@ -17,11 +17,12 @@
 
 | 작업물 | 담당 | 입력 → 출력 | 주요 작업 ID | 대표 지표 |
 |---|---|---|---|---|
-| ① 비전 데이터·모델 + 보드 + 팀 운영 | **신지호** | 가상 주방 캡처 화면 → 학습·변환된 비전 모델(`.rknn`) | BOARD-01~06·09, STT-02, VIS-01~07·09, DOC-01~03·05·07·10 | mAP50, 양자화 전후 mAP |
-| ② 음성 → 명령 AI 서비스 + 공통 런타임 | **이현종** | 음성 → Function Call(JSON) / 서비스 실행 기반 | STT-*(02·05 운영·07~09 제외), LLM-*(03 검수 제외), INFRA-03~06·08, BOARD-07·08, VIS-08·10, FUS-02·06, HW-14·17(보드 쪽 연결) | CER, Action Acc, JSON Valid, E2E 지연, NPU 동시 부하 |
-| ③ 상황 인식 + 안전 | **최지환** | 음성·화면 인식·온도 → 주방 상태·위험 판단·차단 명령 | FUS-01·03~05·07~11, INFRA-07, STT-05(녹음 운영), LLM-03(검수), UI-*(선택) | State F1, 위험 미탐율, 감지→차단 지연 |
-| ④ 가상 주방 + 연결 | **최석진** | 제어 명령 → 가상 장치 동작 / 가상 주방 → 캡처 화면·온도 | HW-13~23(14·17 제외), STT-07~09, DOC-04·06 | 제어 성공률·지연, 생존 신호 끊김 안전 정지 |
+| ① 비전 데이터·모델 (2026-10-29부터 셋이 나눠 맡음) | **최석진**(캡처·라벨) · **최지환**(클래스) · **이현종**(학습·변환) | 가상 주방 캡처 화면 → 학습·변환된 비전 모델(`.rknn`) | VIS-01~07·09 | mAP50, 양자화 전후 mAP |
+| ② 음성 → 명령 AI 서비스 + 공통 런타임 | **이현종** | 음성 → Function Call(JSON) / 서비스 실행 기반 | STT-*(05 운영·07~09 제외), LLM-*(03 검수 제외), INFRA-03~06·08, BOARD-01~04·07~09, VIS-05~08·10, FUS-02·06, HW-14·17(보드 쪽 연결), DOC-03 | CER, Action Acc, JSON Valid, E2E 지연, NPU 동시 부하 |
+| ③ 상황 인식 + 안전 | **최지환** | 음성·화면 인식·온도 → 주방 상태·위험 판단·차단 명령 | FUS-01·03~05·07~11, INFRA-07, STT-05(녹음 운영), LLM-03(검수), UI-*(선택), VIS-01·02 | State F1, 위험 미탐율, 감지→차단 지연 |
+| ④ 가상 주방 + 연결 | **최석진** | 제어 명령 → 가상 장치 동작 / 가상 주방 → 캡처 화면·온도 | HW-13~23(14·17 제외), STT-07~09, VIS-03·04·09, DOC-04·06 | 제어 성공률·지연, 생존 신호 끊김 안전 정지 |
 
+- **2026-10-29 3명 체제 · LLM은 llama.cpp** ([decision](./decisions/2026-10-29-llamacpp-and-rebalance.md)): 신지호가 프로젝트를 진행하지 않아 ①을 셋이 나눠 맡는다 — 화면 캡처·라벨은 ④, 클래스 정의는 ③, 학습·변환·보드는 ②. 팀장은 따로 두지 않고 운영 문서(DOC-05·07)는 공동, 주간보고(DOC-10)는 돌아가며 쓴다. RKLLM(NPU) 변환을 쓸 수 없다고 보고 LLM은 **llama.cpp(GGUF 8비트, CPU)** 로 돌린다(LLM-18) — BOARD-05·06·LLM-08 취소, NPU는 YOLO만. 보드가 없으면 노트북에서 같은 구성으로 오프라인 시연한다.
 - **2026-10-05 시연 환경 변경** ([decision](./decisions/2026-10-05-virtual-kitchen-demo.md)): 시연은 가상 주방(메타버스)에서 하고 실물 제어 하드웨어는 없다. 장치는 8종으로 넓힌다. 작업물 ④는 "제어 하드웨어 + 모형"에서 "가상 주방 + 연결"로 바뀌었고(HW-01~12 취소 → HW-13~23), ②에 스키마 v0.2·데이터 v2(LLM-13·14)가 추가됐다. 플랫폼은 Unity로 정했다(HW-13, [decision](./decisions/2026-10-05-unity-virtual-kitchen.md)). 같은 날 담당 조정: 보드 쪽 연결(HW-14·17)은 ②가, 음성 기준선 측정 실행(STT-07·08)은 ④가 맡는다 — ④는 가상 주방 안쪽(플랫폼·장면·장치·온도)에 집중한다.
 - ①은 **코딩을 최소화**하도록 짰다: 화면 캡처·라벨링(GUI 도구), Colab 노트북 실행(학습·변환), recipe 명령 실행(보드), 제공된 측정 스크립트 실행. 노트북·스크립트는 ②가 만든다 (VIS-10, BOARD-06 노트북).
 - **2026-10-04 재분배** ([decision](./decisions/2026-10-04-task-rebalance.md)): ②의 기반 작업이 끝나 실행 위주 7건을 ①·③·④로 넘겼다. 넘긴 작업은 Gate 2 작업(FUS-03·04, HW-01~05) **다음** 순서다.
@@ -49,8 +50,9 @@
 - [x] DOC-12 학교 제공 자료(마음AI 특강2·SUDA 데이터 시트) 반영 — 문서가 학교 환경·방식과 충돌하지 않음 | 선행: - | 담당: 이현종 (#25)
 - [x] DOC-13 README 정리 — 루트 README에 동작 흐름·구성·빠른 시작·폴더 구조, 서비스 README는 사용법 → 동작 → Spec → 확인 기록 순 | 선행: - | 담당: 이현종 (#68)
 - [x] DOC-14 작업 재분배 — ②(이현종)의 실행 위주 7건을 ①·③·④로 이관 ([decision](./decisions/2026-10-04-task-rebalance.md)) | 선행: - | 담당: 이현종 (#71)
+- [x] DOC-16 3명 체제 작업 재분배, LLM 실행을 RKLLM 대신 llama.cpp로 ([decision](./decisions/2026-10-29-llamacpp-and-rebalance.md)) | 선행: - | 담당: 이현종 (#116)
 - [x] DOC-15 시연 환경 변경 반영 (가상 주방·장치 8종·실물 하드웨어 없음) — 결정 문서, 구조·인터페이스·PLAN·METRICS·budget 갱신 | 선행: - | 담당: 이현종 (#73)
-- [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 신지호
+- [ ] DOC-03 마음AI 멘토 질문 전달 (SUDA 사용 가능 범위, 한국어 STT 추천 모델, RK3588 양자화 경험) — 답변 open-questions에 기록 | 선행: - | 담당: 이현종 (2026-10-29 신지호에서 이관)
 - [x] FUS-01 메시지 봉투·토픽·State 열거형 v0.1 검토·합의 (`docs/architecture/interfaces.md`) — 4명 합의 표시 | 선행: - | 담당: 최지환 (#39 — 2026-10-02 결정권자 확정·팀 통보, 상황 인식 구현 중 변경 가능)
 - [x] LLM-01 Function Call 스키마 v0.1 확정 (Action 10개, target 목록, 파라미터 범위) — interfaces §3 확정 | 선행: FUS-01 | 담당: 이현종 (#39, `common/function_call.py`)
 - [x] ~~HW-01 BLE GATT·패킷 규격 v0.1 확정~~ — 취소 (2026-10-05 실물 하드웨어 없음 → HW-14)
@@ -58,7 +60,7 @@
 - [x] HW-13 메타버스 플랫폼 선정 — 보드와 메시지 주고받기, 인식용 카메라 화면 캡처, 장치 상태를 스크립트로 바꾸기, 비용을 확인해 open-questions Q-11 답 | 선행: - | 담당: 최석진 (#75 — Unity 6.3 LTS, 공식 문서 확인. 실동작은 HW-16·20 ([decision](./decisions/2026-10-05-unity-virtual-kitchen.md)))
 - [x] HW-14 보드 ↔ 가상 주방 연결 규격 v0.1 (제어 명령·결과 확인·온도·캡처 화면·생존 신호의 전달 방식) — interfaces §4 확정 | 선행: HW-13, FUS-01 | 담당: 이현종 (#80 — 연결 토픽 `kitchen/*`, `common/kitchen_link.py`, [Unity 안내](../recipes/unity-kitchen-link.md). Unity와의 실동작은 HW-16)
 - [x] LLM-13 Function Call 스키마 v0.2 (장치 8종: 튀김기·조명·에어컨·선풍기·음악 target 추가, 세기 1~3 통일, 금액 확인·결제 요청·네·아니요 Action → 14개) — interfaces §3·§5 확정, `common/function_call.py`·규칙 파서·응답 문장·테스트 반영 | 선행: LLM-01 | 담당: 이현종 (#84, [decision](./decisions/2026-10-06-function-call-schema-v02.md) — 결제 연결·확인 흐름은 FUS-03·HW-23)
-- [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 신지호
+- [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면)
 
 ### BOM (2026-10-05 갱신)
 
@@ -77,18 +79,18 @@
 
 ## Phase 1 — Hello World (각 모듈 단독 동작)
 
-**Gate 1:** 아래 5개가 각각 단독으로 시연 가능 — ① 보드에서 기본 YOLOv8 RKNN 예제 실행 ② 보드에서 RKLLM 기본 모델 대화 ③ SenseVoice 한국어 받아쓰기 ④ 가상 주방의 장치 1개를 메시지로 켜고 끄기 ⑤ 버스로 가짜 메시지 송수신
+**Gate 1:** 아래 5개가 각각 단독으로 시연 가능 — ① 보드에서 기본 YOLOv8 RKNN 예제 실행 ② 기본 LLM 대화 (2026-10-29부터 llama.cpp) ③ SenseVoice 한국어 받아쓰기 ④ 가상 주방의 장치 1개를 메시지로 켜고 끄기 ⑤ 버스로 가짜 메시지 송수신
 
-- [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 신지호
-- [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN·RKLLM 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 신지호
-- [ ] BOARD-04 `rknn_model_zoo` YOLOv8 예제를 보드에서 실행 (기본 모델) — 이미지 1장 추론 결과 확인 | 선행: BOARD-03 | 담당: 신지호
-- [ ] BOARD-05 RKLLM 데모를 지원 모델 1개로 보드에서 실행 (학교 도커 `run.sh build-demo`의 `llm_demo`, 클럭 고정 후) — 한국어 질의 1건 응답, tok/s 메모 | 선행: BOARD-03 | 담당: 신지호 (#71 이현종에서 이관 — [llm-to-rkllm](../recipes/llm-to-rkllm.md) 절차대로 실행)
-- [ ] BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북 — 변환 1회 성공 | 선행: BOARD-03 (보드 미수령으로 최신 릴리스 기준 선진행) | 담당: 신지호 (#71 이관 — 노트북은 준비됨, 실행만) (#13) — RKNN 변환 성공(Docker amd64), RKLLM은 Colab 실행 대기
+- [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면)
+- [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 이현종 (2026-10-29 신지호에서 이관, RKLLM은 쓰지 않음)
+- [ ] BOARD-04 `rknn_model_zoo` YOLOv8 예제를 보드에서 실행 (기본 모델) — 이미지 1장 추론 결과 확인 | 선행: BOARD-03 | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면)
+- [x] ~~BOARD-05 RKLLM 데모를 지원 모델 1개로 보드에서 실행~~ — 취소 (2026-10-29 RKLLM 대신 llama.cpp → LLM-18, [decision](./decisions/2026-10-29-llamacpp-and-rebalance.md))
+- [x] ~~BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북~~ — 취소 (2026-10-29). RKNN 변환은 Docker amd64로 성공해(#13) VIS-07에서 그대로 쓰고, RKLLM은 쓰지 않는다
 - [x] INFRA-03 `common/` 메시지 봉투 dataclass + 버스 래퍼 (Q-06 결정 방식) — 가짜 publisher/subscriber 예제 동작 | 선행: FUS-01 (v0.1 초안 기준 선진행) | 담당: 이현종 (#20)
 - [x] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종 (#29, `services/simulator`)
 - [x] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 이현종 (#33, `services/audio_svc`)
-- [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 신지호 (#71 이관 — `python -m services.audio_svc.transcribe` 한 줄, [audio_svc](../services/audio_svc/README.md))
-- [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 가상 주방 캡처 화면(장면이 없으면 비슷한 주방 영상) 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 신지호
+- [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 이현종 (2026-10-29 신지호에서 이관, #71 이관 — `python -m services.audio_svc.transcribe` 한 줄, [audio_svc](../services/audio_svc/README.md))
+- [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 가상 주방 캡처 화면(장면이 없으면 비슷한 주방 영상) 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 최지환 (2026-10-29 신지호에서 이관)
 - [x] ~~HW-03 ESP32 BLE 서버~~ — 취소 (2026-10-05 → HW-16)
 - [x] ~~HW-04 열전대·INA219 값 시리얼 출력~~ — 취소 (2026-10-05 → HW-19)
 - [ ] HW-15 가상 주방 장면 1차 (화구 2개·후드·튀김기, 조리 구역, 인식용 카메라 고정) — 화면을 캡처할 수 있는 상태 | 선행: HW-13 | 담당: 최석진
@@ -124,9 +126,9 @@
 ### 데이터
 - [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 녹음 운영: 화자 섭외·일정·취합, [녹음 안내](../recipes/stt-recording.md)) (#53 — 대본 40문장·녹음 도구·안내 완료. 녹음: spk01 val quiet 40/40 MacBook 마이크 — 나머지 화자·소음 진행)
 - [x] STT-06 CER·RTF·STT→Action 정확도 측정 스크립트 (`jiwer`) | 선행: STT-05 (녹음 전 선진행, 합성 음성으로 동작 확인) | 담당: 이현종 (#49, `bench/stt_eval.py`)
-- [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 신지호
-- [ ] VIS-03 가상 주방 화면 캡처 1차 (세션별 조명·배치·아바타 위치·장치 상태 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-15 | 담당: 신지호
-- [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 신지호
+- [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 최지환 (2026-10-29 신지호에서 이관 — 클래스가 상황 인식의 근거)
+- [ ] VIS-03 가상 주방 화면 캡처 1차 (세션별 조명·배치·아바타 위치·장치 상태 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-15 | 담당: 최석진 (2026-10-29 신지호에서 이관)
+- [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT, 또는 Unity가 물체 위치로 상자 라벨을 직접 내보내기), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 최석진 (2026-10-29 신지호에서 이관)
 - [x] VIS-10 Colab YOLO 학습·평가 노트북 템플릿 (데이터 경로·클래스만 바꾸면 학습 → mAP 평가 → ONNX export까지) — ①이 코드 수정 없이 VIS-06·07 실행 가능 | 선행: VIS-02 | 담당: 이현종 (#19)
 - [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함, **간접 발화**·**숫자 표기 변형**("3번"/"삼 번") 포함 — SUDA 방식, [school-materials](./school-materials.md)) | 선행: LLM-01 | 담당: 이현종 (#55 — 기획 시트로 627건 생성, 사람 검수 대기)
 - [ ] LLM-03 Hard Negative 작성 (위험 상황 명령, 모호 발화, 지원 외 요청, 대명사·생략) | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 검수·보강: 위험 상황 판정이 Guard 규칙과 직결) (#55 — 84건 생성, 사람 검수 대기)
@@ -140,7 +142,7 @@
 - [ ] STT-07 SenseVoice 기본 설정 Baseline (CER by 소음 조건, RTF) | 선행: STT-06 | 담당: 최석진 (2026-10-05 조정 — [stt_eval](../bench/README.md) 실행, 결과 분석은 이현종이 지원)
 - [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 최석진 (2026-10-05 조정 — 측정 실행. decision log는 이현종과 함께)
 - [ ] STT-09 마이크 비교 (핀마이크 vs 노트북 내장) CER | 선행: STT-06 | 담당: 최석진 (#71 이관 — 마이크는 부품 담당, [stt_eval](../bench/README.md)로 측정)
-- [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 | 담당: 신지호
+- [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 (mAP는 보드 없이) | 담당: 이현종 (2026-10-29 신지호에서 이관)
 - [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종 (#67 — Mac 정확도: Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1% (데이터 v1), #86 — 25.7% · 44.5% (데이터 v2). 남음: Llama-3.2-1B(HF 승인), 보드 tok/s·RAM)
 - [x] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종 (#67 — Action Acc 79.9% (데이터 v1), #86 — 82.5% (데이터 v2), `bench/llm_eval.py`)
 - [ ] FUS-07 단일 조건 판단 Baseline (State F1, 위험 미탐율) | 선행: FUS-05 | 담당: 최지환
@@ -151,22 +153,22 @@
 
 ## Phase 4 — v1 모델 & 통합
 
-**Gate 4:** 실제 모델(STT·YOLO RKNN·LLM .rkllm)이 Skeleton에 들어가 동시에 구동되고, 동시 구동 시 지연·RAM·온도가 측정됨
+**Gate 4:** 실제 모델(STT·YOLO RKNN·LLM GGUF)이 Skeleton에 들어가 동시에 구동되고, 동시 구동 시 지연·RAM·온도가 측정됨
 
-- [ ] VIS-06 YOLOv8n 파인튜닝 v1 (Colab) | 선행: VIS-04, VIS-10 | 담당: 신지호
-- [ ] VIS-07 ONNX → RKNN INT8 변환 (가상 주방 캡처 화면으로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06, BOARD-06 | 담당: 신지호
+- [ ] VIS-06 YOLOv8n 파인튜닝 v1 (Colab) | 선행: VIS-04, VIS-10 | 담당: 이현종 (2026-10-29 신지호에서 이관)
+- [ ] VIS-07 ONNX → RKNN INT8 변환 (가상 주방 캡처 화면으로 캘리브레이션), fp32/ONNX/INT8 mAP 비교 | 선행: VIS-06 (변환은 Docker amd64, #13) | 담당: 이현종 (2026-10-29 신지호에서 이관)
 - [ ] VIS-08 `vision_svc`: 가상 주방 캡처 화면을 받아 3~5fps 추론 → `vision/objects` 발행, 후처리 최적화 | 선행: VIS-07, HW-20, INFRA-03 | 담당: 이현종
 - [x] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 이현종 (#88 — Qwen3-0.6B LoRA를 Mac에서 학습, 데이터 v2 test 72.6%(Mac fp16 참고값, 규칙 파서 82.5%보다 낮음). 입력 형식 [decision](./decisions/2026-10-06-llm-input-format.md). 더 큰 베이스용 Colab 노트북은 미검증)
-- [ ] LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정 (서버 기본/서버 학습/보드 양자화 3단계 비교) | 선행: LLM-07, BOARD-06 | 담당: 이현종
-- [ ] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-08, FUS-02 | 담당: 이현종 (#111 — Mac까지: `llm_svc --model`(HF)로 LLM 연결, 검증 실패 시 규칙 파서 대체, context는 `fusion/state`. v4 + 대체 test 89.2% / 88.8% (Mac 참고값). 남음: 보드 RKLLM 생성기 (LLM-08 뒤))
+- [x] ~~LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정~~ — 취소 (2026-10-29 → LLM-18). Mac Docker 변환 시도는 4시간 넘게 첫 층에서 멈춤(#113)
+- [ ] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-18, FUS-02 | 담당: 이현종 (#111 — Mac까지: `llm_svc --model`(HF)로 LLM 연결, 검증 실패 시 규칙 파서 대체, context는 `fusion/state`. v4 + 대체 test 89.2% / 88.8% (Mac 참고값). 남음: llama.cpp 생성기 (LLM-18))
 - [ ] FUS-08 State Machine v1 (온도+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환
 - [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 최지환
 - [x] ~~HW-09 ESP32 자체 하드 리밋~~ — 취소 (2026-10-05 → HW-18·HW-19)
 - [x] ~~HW-10 센서값 BLE notify~~ — 취소 (2026-10-05 → HW-19)
 - [ ] HW-19 가상 온도: 가열 장치(화구·튀김기)의 온도를 규칙대로 계산해 `kitchen/temp`로 1초에 한 번 전송, 265°C에 닿으면 스스로 OFF ([interfaces](./architecture/interfaces.md) §4.5, 기준 구현 `common.kitchen_link.next_temperature`) | 선행: HW-16 | 담당: 최석진
 - [ ] HW-20 인식용 카메라 화면을 `kitchen/frame`으로 전송 (JPEG 640×360, 1초에 4장) — `vision_svc`가 받을 수 있는지 확인 | 선행: HW-15, HW-14 | 담당: 최석진
-- [ ] BOARD-08 NPU 코어 배치 (YOLO core0 / LLM 나머지) 및 동시 구동 부하 측정 (tok/s 변화, fps, RAM, SoC 온도) | 선행: VIS-08, LLM-09 | 담당: 이현종
-- [ ] BOARD-09 장시간(30분+) 구동 발열·스로틀링 확인 | 선행: BOARD-08 | 담당: 신지호
+- [ ] BOARD-08 동시 구동 부하 측정 — LLM(CPU, llama.cpp) + STT(CPU) + YOLO(NPU)일 때 tok/s 변화, fps, RAM, SoC 온도, CPU 스레드 배분 | 선행: VIS-08, LLM-09 | 담당: 이현종
+- [ ] BOARD-09 장시간(30분+) 구동 발열·스로틀링 확인 | 선행: BOARD-08 | 담당: 이현종 (2026-10-29 신지호에서 이관)
 
 ---
 
@@ -181,10 +183,11 @@
 - [x] LLM-15 학습 데이터 양·다양성 확장 실험 (train에만 같은 수 875문장, 같은 test): A 기존 train 템플릿의 장치·값 조합 더 / B 새 말투 템플릿 — 어느 쪽이 test를 올리는지 | 선행: LLM-11 | 담당: 이현종 (#105 — Mac fp16 test: 기준 78.5% → A 79.3%(틀린 실행 11 → 33) · **B 83.5%**(Action은 규칙 파서 82.5%를 처음 넘음, Entity 80.6%는 아직 낮음). 양보다 말투 다양성)
 - [x] LLM-16 새 말투 보강 v2 (v3b val 오류·페르소나 말버릇, train에만 526문장) + LoRA v4, 같은 test로 재평가 | 선행: LLM-15 | 담당: 이현종 (#107 — Mac fp16 test: v3b 83.5% / 80.6% → **v4 86.9% / 86.5%**, Action·Entity 모두 규칙 파서를 넘음. 틀린 실행 12 → 11, 규칙 위반 1 → 12)
 - [x] LLM-17 새 말투 보강 v3 (v4 val 오류, train에만 162문장) + LoRA v5, 같은 test로 마지막 재평가 | 선행: LLM-16 | 담당: 이현종 (#109 — Mac fp16 test: v5 87.3% / 86.3%로 v4(86.9% / 86.5%)와 차이 없음. val 오류도 6 → 6 (고친 곳 옆이 다시 틀림) → val 오류로 문장을 더하는 방법은 한계. 대표 모델은 v4)
+- [ ] LLM-18 LoRA v4 병합 모델 → GGUF 8비트(llama.cpp) 변환 → 같은 test로 fp16 대비 정확도·속도(Mac), `llm_svc`에 llama.cpp 생성기. 보드가 오면 같은 파일로 보드 CPU tok/s·RAM | 선행: LLM-16 | 담당: 이현종 (2026-10-29, LLM-08 대체)
 - [ ] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종
 - [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종 (#61 — spk01 val 기반 첫 사전, `services/llm_svc/stt_fixes.py`)
 - [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종
-- [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 신지호
+- [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 최석진(촬영) · 이현종(학습·변환) (2026-10-29 신지호에서 이관)
 - [ ] FUS-10 통합 멀티모달 시나리오 20~30개 녹화 (recorder) → State F1·위험 미탐율 | 선행: FUS-08, INFRA-05 | 담당: 최지환
 - [ ] FUS-11 recorder 로그 재생 테스트 (녹화 세션을 다시 흘려 State Machine 회귀 테스트 — `services.recorder.store.read_session`으로 읽기) | 선행: FUS-10 | 담당: 최지환
 - [x] ~~HW-11 BLE 성공률·지연 개선~~ — 취소 (2026-10-05 → HW-22)
@@ -200,11 +203,11 @@
 
 **Gate 6:** METRICS 최종 표 완성 (모두 보드·고정 Test Set) · 시연 영상 백업 · 최종 발표자료·보고서 제출
 
-- [ ] DOC-05 기능 동결 선언 (이후 버그 수정만) | 선행: Gate 5 | 담당: 신지호
+- [ ] DOC-05 기능 동결 선언 (이후 버그 수정만) | 선행: Gate 5 | 담당: 공동 (2026-10-29)
 - [ ] INFRA-07 전체 시나리오 회귀 테스트 체크리스트 실행 | 선행: DOC-05 | 담당: 최지환
 - [ ] INFRA-08 최종 측정 일괄 스크립트 실행 → METRICS 최종 표 | 선행: DOC-05 | 담당: 이현종
 - [ ] DOC-06 시연 영상 백업 촬영 (정상 조리·음성 제어·과열 차단·방치 경고·LLM 거부 사례) | 선행: DOC-05 | 담당: 최석진
-- [ ] DOC-07 최종 발표자료 (측정 전후 비교표, 한계·원인 분석) | 선행: INFRA-08 | 담당: 신지호
+- [ ] DOC-07 최종 발표자료 (측정 전후 비교표, 한계·원인 분석) | 선행: INFRA-08 | 담당: 공동 (2026-10-29)
 - [ ] DOC-08 최종 보고서 | 선행: INFRA-08 | 담당: 공동
 - [ ] DOC-09 시연 리허설 (현장 조명·소음 조건) | 선행: DOC-06 | 담당: 공동
 
@@ -212,18 +215,18 @@
 
 ## 상시 작업
 
-- [ ] DOC-10 주간보고 작성 (금주 수행 결과 · 문제점 · 해결 방법 · 다음 예정작업) — 매주 반복 | 담당: 신지호 (각자 자기 작업물 내용 제공)
+- [ ] DOC-10 주간보고 작성 (금주 수행 결과 · 문제점 · 해결 방법 · 다음 예정작업) — 매주 반복 | 담당: 돌아가며 (2026-10-29, 각자 자기 작업물 내용 제공)
 - [ ] INFRA-09 정기 통합: 각자 작업을 main에 합치고 Skeleton이 여전히 동작하는지 확인 — 주 1회 반복 | 담당: 공동 (이현종 주관)
 
 ## 리스크 & 대체 계획
 
 | 리스크 | 조기 신호 | 대체 계획 |
 |---|---|---|
-| RKLLM 변환·실행 실패 / 모델 미지원 | BOARD-05, LLM-08 실패 | 지원 목록의 다른 모델 → CPU llama.cpp → 규칙 파서 + 소형 분류기 |
+| RKLLM 변환·실행 실패 / 모델 미지원 | BOARD-05, LLM-08 실패 | 지원 목록의 다른 모델 → CPU llama.cpp → 규칙 파서 + 소형 분류기 — **2026-10-29 발동: llama.cpp로 전환 (LLM-18)** |
 | 한국어 STT 소음 취약 | STT-07 mixed CER 급등 | 명령 어휘 제한, 마이크 게인·VAD 조정, ASK_CLARIFY로 재확인 |
 | NPU 동시 구동 경합 | BOARD-08에서 tok/s 급락 | YOLO fps 하향, 발화 처리 중 YOLO 일시정지 |
 | 발열 스로틀링 | BOARD-09 성능 저하 | 방열판·팬 강화, 부하 분산 |
-| 보드 도착/고장 지연 | BOARD-01 | Mac·Colab에서 ONNX/CPU로 개발 지속 |
+| 보드 도착/고장 지연 | BOARD-01 | Mac·Colab에서 ONNX/CPU로 개발 지속. 끝내 없으면 노트북에서 같은 구성으로 오프라인 시연 (2026-10-29 기준 보드 미정) |
 | 메타버스 플랫폼이 보드와 연결되지 않거나 화면 캡처가 안 됨 | HW-13·HW-16 실패 | 다른 플랫폼 → 직접 만든 간단한 3D/2D 장면 → [simulator](../services/simulator/README.md)의 가짜 메시지 + 로컬 화면으로 시연 |
 | 장치 확장으로 데이터·기준선을 다시 만들어야 함 | LLM-13 지연 | 화구·후드 3종(v1)으로 Gate 2를 먼저 통과하고, 나머지 장치는 뒤에 붙인다 |
 | 통합 막판 실패 | Gate 2 지연 | Phase 2를 최우선, 정기 통합(INFRA-09) |
