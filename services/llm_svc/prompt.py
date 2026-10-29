@@ -16,3 +16,15 @@ def user_message(instruction: str, context: dict[str, Any]) -> str:
     """호출어를 뺀 명령 문장 + 상황(interfaces §3.4의 context) → 사용자 메시지."""
     last = context.get("last_target") or "없음"
     return f"상황: state={context['state']}, 마지막 장치={last}\n말: {instruction}"
+
+
+def chat_prompt(instruction: str, context: dict[str, Any]) -> str:
+    """chat template(Qwen3, thinking 끔)을 적용한 입력. tokenizer 없이 만든다 (llama.cpp, LLM-18).
+
+    학습(train_lora.render_prompt)이 tokenizer로 만든 문자열과 글자까지 같아야 한다 (테스트).
+    """
+    return (
+        f"<|im_start|>system\n{FINETUNED_SYSTEM_PROMPT}<|im_end|>\n"
+        f"<|im_start|>user\n{user_message(instruction, context)}<|im_end|>\n"
+        "<|im_start|>assistant\n<think>\n\n</think>\n\n"
+    )

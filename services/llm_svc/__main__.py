@@ -3,8 +3,8 @@
 python -m services.llm_svc                               # 규칙 파서만, 버스는 JARVIS_BUS
 python -m services.llm_svc --bus mqtt://localhost:1883
 python -m services.llm_svc parse "후드 세게 틀어 줘"       # 버스 없이 결과만 보기
-# Mac LLM + 검증 실패 시 규칙 파서 (LLM-09)
-.venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4
+# LLM + 검증 실패 시 규칙 파서 (LLM-09). 실행용은 GGUF(llama.cpp CPU, LLM-18), HF 폴더는 Mac 비교용
+.venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf
 .venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4 parse "후드 세게"
 """
 
@@ -42,12 +42,18 @@ def main() -> int:
     parser.add_argument("--session", default=None, help="heartbeat session_id (생략 시 s_<시각>)")
     parser.add_argument("--quiet", action="store_true", help="발행할 때마다 출력하지 않음")
     parser.add_argument(
-        "--model", default=None, help="학습한 LLM 폴더 (Mac HF, .venv-llm). 생략 시 규칙 파서만"
+        "--model",
+        default=None,
+        help="학습한 LLM: .gguf 파일(llama.cpp CPU) 또는 HF 폴더 (.venv-llm). 생략 시 규칙 파서만",
     )
     args = parser.parse_args()
 
     generate = None
-    if args.model:
+    if args.model and args.model.endswith(".gguf"):
+        from services.llm_svc.gguf_engine import GGUFGenerator
+
+        generate = GGUFGenerator(args.model)
+    elif args.model:
         from services.llm_svc.hf_engine import HFGenerator
 
         generate = HFGenerator(args.model)

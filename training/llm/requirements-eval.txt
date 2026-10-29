@@ -8,3 +8,5 @@ pyyaml==6.0.3
 numpy==2.4.6
 peft==0.21.2  # LoRA 학습 (2026-10-06 Mac 확인, #88)
 paho-mqtt==2.1.0  # llm_svc --model을 MQTT로 띄울 때 (requirements.txt와 같은 버전, 2026-10-16 Mac 확인, #114)
+llama-cpp-python==0.3.36  # GGUF를 CPU로 실행 (LLM-18, 2026-10-29 Mac 확인, #118). Mac Metal 빌드: CMAKE_ARGS="-DGGML_METAL=on"
+sentencepiece==0.2.2  # GGUF 변환 스크립트가 import한다 (training/convert/hf_to_gguf.sh)
