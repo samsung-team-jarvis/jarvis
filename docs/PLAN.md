@@ -105,7 +105,7 @@
 
 - [x] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 (보드 미수령으로 Mac 기준 선진행) | 담당: 이현종 (#35 — wav·MQTT 확인, 2026-10-02 MacBook 마이크로 사람 음성 확인 #57)
 - [x] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 이현종 (#37, `services/audio_svc/wake.py`)
-- [ ] STT-12 TTS 음성 응답 v0: `guard/decision`·위험 경고를 한국어 VITS(sherpa-onnx, 배포 이미지 제공 모델)로 읽어 줌, 재생 중 마이크 입력 무시 — "자비스 후드 켜줘" → "후드를 켰습니다" | 선행: STT-03 | 담당: 이현종 (#51 — 응답·무음 처리 구현, wav 저장으로 확인. 스피커 재생·실제 에코 차단 확인 대기)
+- [ ] STT-12 TTS 음성 응답 v0: `guard/decision`·위험 경고를 한국어 VITS(sherpa-onnx, 배포 이미지 제공 모델)로 읽어 줌, 재생 중 마이크 입력 무시 — "자비스 후드 켜줘" → "후드를 켰습니다" | 선행: STT-03 | 담당: 이현종 (#51 — 응답·무음 처리 구현, wav 저장으로 확인. 스피커 재생·실제 에코 차단 확인 대기) (#136 — 되받아쓰기 CER 17.0~17.9%, macOS 음성 9.6%: 장치 이름을 흐리게 발음, `bench/speech_check.py tts`)
 - [x] FUS-02 규칙 기반 파서 v0 (키워드 → Function Call) — Action 10개 중 최소 TURN_ON/TURN_OFF/EMERGENCY_STOP | 선행: LLM-01 | 담당: 이현종 (#41, `services/llm_svc` — 10개 모두)
 - [x] FUS-03 `safety_guard` v0: 화이트리스트·스키마 검증, 위험 상태에서 REJECT, 결제 요청은 항상 확인(`ASK`) 뒤 실행 (`CONFIRM`·`DENY`) — 단위 테스트 통과 | 선행: LLM-01 | 담당: 최지환 (#96, `services/safety_guard` — 장치 8종·결제 확인 10초 대기([decision](./decisions/2026-10-09-guard-confirm-flow.md)). MQTT·보드·가상 주방 미검증, 결제 실행은 HW-23)
 - [x] FUS-04 긴급 빠른 경로: "정지/멈춰/그만" 등은 LLM 없이 즉시 EMERGENCY_STOP | 선행: FUS-03 | 담당: 최지환 (#96, `services/safety_guard/emergency.py`)
@@ -187,7 +187,7 @@
 - [x] LLM-18 LoRA v4 병합 모델 → GGUF 8비트(llama.cpp) 변환 → 같은 test로 fp16 대비 정확도·속도(Mac), `llm_svc`에 llama.cpp 생성기. 보드가 오면 같은 파일로 보드 CPU tok/s·RAM | 선행: LLM-16 | 담당: 이현종 (2026-10-29, LLM-08 대체. #118 — Mac CPU 4스레드: q8_0 test 87.1% / 86.7% (HF fp16 86.9% / 86.5%, 손실 없음), + 대체 89.7% / 89.2%, 287 ms/건, 639 MB. 보드 CPU 측정은 BOARD-08)
 - [x] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종 (#124 — `last_target` = 마지막 명령의 장치, 60초. 재학습 없이 v4가 사용: test의 `last_target` 문장 7/7 전체 일치(GGUF q8_0), 노트북 시연 "후드 켜 줘" → "그거 세게 해 줘" → 후드 세기 3. State는 FUS-08 뒤 같은 자리)
 - [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종 (#61 — spk01 val 기반 첫 사전, `services/llm_svc/stt_fixes.py`) (#128 — "세 개 해" → "세게 해" 추가. 받아쓰기가 어미를 띄어 쓰는 꼴("약하 게")에 LLM이 약하다 — 사전 규칙은 "하는 게"까지 붙여 버려 빼고, 학습 데이터에 받아쓰기식 띄어쓰기를 섞는 쪽으로) (#130 — 숫자 정규화(서비스 입력에만): spk01 val 서비스 경로 전체 일치 25/34 → 28/34)
-- [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종 (#128 — VAD 앞여유 0.3 s: spk01 val을 서비스와 같은 경로로 받아쓰면 호출어 인식 19/34 → 31/34, 음성 → 명령 전체 일치 16/34 → 25/34 (GGUF LLM + 규칙 파서))
+- [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종 (#128 — VAD 앞여유 0.3 s: spk01 val을 서비스와 같은 경로로 받아쓰면 호출어 인식 19/34 → 31/34, 음성 → 명령 전체 일치 16/34 → 25/34 (GGUF LLM + 규칙 파서)) (#136 — 잡음 기준선: 백색 잡음 SNR 20 · 10 dB에서 호출어 34개 중 28 · 15, `bench/speech_check.py noise`. 실제 소음 녹음(STT-05)으로 다시 잰다)
 - [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 최석진(촬영) · 이현종(학습·변환) (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
 - [ ] FUS-10 통합 멀티모달 시나리오 20~30개 녹화 (recorder) → State F1·위험 미탐율 | 선행: FUS-08, INFRA-05 | 담당: 최지환
 - [ ] FUS-11 recorder 로그 재생 테스트 (녹화 세션을 다시 흘려 State Machine 회귀 테스트 — `services.recorder.store.read_session`으로 읽기) | 선행: FUS-10 | 담당: 최지환

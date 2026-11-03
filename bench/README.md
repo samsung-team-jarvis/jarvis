@@ -101,3 +101,15 @@ python -m bench.rehearsal check data/sessions/rehearsal.jsonl   # 단계별 통�
 
 - 합성 음성(Yuna)은 사람 목소리와 받아쓰기 결과가 다르다 — 실패한 단계는 받아쓴 문장을 보고 시스템 문제인지 합성 음성 문제인지 가른다. 사람이 말하는 리허설(현장 조명·소음)은 따로 한다.
 - 문장 사이는 음성 응답보다 길어야 한다 (재생 중 입력 무시). 6초에서는 긴 응답 뒤 첫 음절이 잘렸다.
+
+## speech_check.py — 잡음 세기별 STT, TTS 되받아쓰기 (STT-11 · STT-12)
+
+```bash
+python -m bench.speech_check noise data/stt/manifest.csv          # val 발화 + 백색 잡음 → SNR별 CER · 호출어 · RTF
+python -m bench.speech_check noise data/stt/manifest.csv --snr clean 15 5
+python -m bench.speech_check tts                                   # 응답 문장 23개 VITS 합성 → 되받아쓰기 CER · 합성 시간
+python -m bench.speech_check tts --engine say --out data/tts/say   # 비교: macOS 음성 (보드 불가), wav 저장
+```
+
+- **noise**: SNR(신호 대 잡음비)은 말의 평균 전력 ÷ 잡음의 평균 전력(dB). 0 dB면 같은 세기다. 잡음은 시드 0으로 고정한 백색 잡음이라 실제 주방 소음(후드 · 튀김)과 소리 결이 다르다 — 소음 녹음(STT-05)이 생기면 그 녹음으로 잰다. 파일을 통째로 받아쓰므로 서비스의 VAD 경로와 다르다.
+- **tts**: 합성한 음성을 같은 STT로 다시 받아써 원문과 비교한 CER로 알아듣기 쉬움을 대신 잰다. STT 오류도 섞이므로 값 하나보다 **같은 STT로 잰 다른 TTS와의 차이**를 본다. VITS는 합성할 때마다 조금씩 달라 여러 번 잰다. 사람이 듣고 매기는 점수(MOS)가 아니다.
