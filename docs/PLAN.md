@@ -113,6 +113,7 @@
 - [x] ~~HW-06 ESP32 하트비트 감시~~ — 취소 (2026-10-05 → HW-18)
 - [x] HW-17 `kitchen_gw` 서비스: `control/command` → `kitchen/cmd`, `kitchen/ack` → `control/result`(재시도·`rtt_ms`), `kitchen/temp` → `sensor/reading`, `kitchen/heartbeat` 발행. Unity 없이 개발할 수 있게 같은 토픽을 쓰는 가짜 가상 주방 포함 | 선행: HW-14, INFRA-03 | 담당: 이현종 (#82, `services/kitchen_gw` — Mac·가짜 가상 주방으로 확인. Unity와의 연결은 HW-16)
 - [ ] HW-18 가상 주방 안전장치 (안전 계층 L0): `kitchen/heartbeat`가 3초 끊기면 가열 장치 OFF, `kitchen/state`의 `safe_stop` 보고 ([interfaces](./architecture/interfaces.md) §4.4) | 선행: HW-16 | 담당: 최석진
+- [x] HW-24 가상 주방 규격 자동 검사: 보드 역할로 `kitchen/*`를 주고받아 HW-16·18·19·20 동작을 항목별 통과/실패로 판정 — Unity 쪽은 화면·동작을 만들고, 맞는지는 이 도구로 본다 | 선행: HW-14, HW-17 | 담당: 이현종 (#134, `bench/kitchen_check.py` — 가짜 가상 주방(MQTT)에서 12/12 통과, 규격 위반 가상 주방은 해당 항목 실패. Unity 미검증)
 - [x] INFRA-05 `recorder`: 모든 토픽을 세션별 JSONL로 저장 | 선행: INFRA-03 | 담당: 이현종 (#31, `services/recorder`)
 - [x] INFRA-06 지연 분해 스크립트: 발화 끝 → STT → 파서 → Guard → 제어 결과 확인 구간별 ms — METRICS E2E 항목 첫 기록 | 선행: INFRA-05 | 담당: 이현종 (#45, `bench/latency.py` — 첫 기록은 Mac·명령 발행까지, Guard·가상 주방 구간은 해당 서비스가 생기면 같은 명령으로)
 - [x] BOARD-07 서비스 일괄 기동/종료 스크립트 (systemd 또는 단일 런처) | 선행: INFRA-03 | 담당: 이현종 (#47, `scripts/launch.py` — Mac 확인, systemd 예시는 보드 미검증)
