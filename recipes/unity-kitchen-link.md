@@ -98,6 +98,15 @@ while true; do mosquitto_pub -t kitchen/heartbeat -m '{"alive":true}'; sleep 1; 
 | HW-19 | 화구를 세기 3으로 두면 `kitchen/temp`가 1초마다 오르고, 265°C에서 스스로 꺼진다 |
 | HW-20 | `kitchen/frame`이 1초에 4장 온다. 받은 바이트를 `.jpg`로 저장하면 640×360 그림이 열린다 |
 
+**자동 검사 (HW-24)** — 위 목록을 명령 하나로 확인한다. Unity를 Play로 띄워 두고, 같은 브로커에서 실행한다. 이 스크립트가 보드 대신 생존 신호·명령을 보내므로 `kitchen_gw`는 함께 띄우지 않는다.
+
+```bash
+python -m bench.kitchen_check                     # 약 15초, 항목별 통과/실패 표 (모두 통과면 종료 코드 0)
+python -m bench.kitchen_check --long --require-frames   # + 265°C 자체 끄기(약 80초 더), 화면 필수
+```
+
+실패한 항목의 "결과" 칸이 무엇이 달랐는지 알려 준다 (예: "후드 다시 켜짐 (같은 번호를 또 실행)"). 가짜 가상 주방(`services/kitchen_gw/fake_kitchen.py`)은 전 항목을 통과한다 — 같은 상황에서 어떻게 동작해야 하는지는 그 코드를 본다.
+
 ### 5.3 보드와 함께
 
 보드의 브로커가 같은 네트워크의 접속을 받도록 설정하고([`scripts/mosquitto/jarvis.conf`](../scripts/mosquitto/jarvis.conf), 보드 미검증), Unity의 접속 주소를 보드의 IP와 포트 1883으로 바꾼다. 보드에서 `python -m services.kitchen_gw`를 띄우고 `python -m services.kitchen_gw send ON hood`를 보내면 Unity의 후드가 켜지고 왕복 시간(`rtt_ms`)이 나온다.

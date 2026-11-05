@@ -101,3 +101,24 @@ python -m bench.rehearsal check data/sessions/rehearsal.jsonl   # 단계별 통�
 
 - 합성 음성(Yuna)은 사람 목소리와 받아쓰기 결과가 다르다 — 실패한 단계는 받아쓴 문장을 보고 시스템 문제인지 합성 음성 문제인지 가른다. 사람이 말하는 리허설(현장 조명·소음)은 따로 한다.
 - 문장 사이는 음성 응답보다 길어야 한다 (재생 중 입력 무시). 6초에서는 긴 응답 뒤 첫 음절이 잘렸다.
+
+## kitchen_check.py — 가상 주방 규격 자동 검사 (HW-24)
+
+보드 역할(생존 신호 1초, 명령 발행)로 `kitchen/*`를 주고받아 가상 주방(Unity 또는 가짜 가상 주방)이 [연결 규격](../recipes/unity-kitchen-link.md) §5.2를 지키는지 항목별로 판정한다.
+
+```bash
+python -m bench.kitchen_check                             # 약 15초
+python -m bench.kitchen_check --long --require-frames     # + 265°C 자체 끄기(약 80초 더), 화면 필수
+```
+
+| 항목 | 기대 |
+|---|---|
+| 명령 확인 | `ON hood` → 0.5초 안에 `ack ok=true`, 상태에 후드 켜짐 (왕복 시간 표시) |
+| 같은 seq | 처리한 번호로 다른 명령(`ON`)을 보내도 실행하지 않고 확인만 다시 |
+| 세기 · 거절 | `LEVEL` 반영, 규격에 없는 장치는 `ok=false` |
+| 가상 온도 | 1초마다, 규칙(`next_temperature`)과 차이 ≤ 1.5°C |
+| 생존 신호 | 끊으면 3~4.5초 뒤 가열 장치 OFF · `safe_stop`, 후드는 그대로, 끊긴 동안 켜기 거절, 돌아오면 다시 켜짐 |
+| 상태 주기 · 화면 | 상태 간격 ≤ 6초, 화면 JPEG 640×360 · 1초에 3~5장 (안 보내면 "해당 없음", `--require-frames`면 실패) |
+
+- 보드의 `kitchen_gw`와 함께 띄우지 않는다 — 생존 신호와 명령이 섞인다.
+- 시작할 때와 끝날 때 모든 장치를 끈다. 화면 크기는 JPEG 머리(SOF)만 읽어 확인한다.
