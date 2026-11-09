@@ -2,9 +2,10 @@ import pathlib
 
 import pytest
 
+from common import kitchen_link as link
 from common.bus import MemoryBus
-from services.simulator.runner import build_events, play
-from services.simulator.scenario import ScenarioError, interpolate, load, parse
+from services.simulator.runner import build_events, heater_readings, play
+from services.simulator.scenario import ScenarioError, expected_at, interpolate, load, parse
 
 SCENARIO_DIR = pathlib.Path(__file__).parents[2] / "services/simulator/scenarios"
 SCENARIOS = sorted(SCENARIO_DIR.glob("*.yaml"))
@@ -74,8 +75,41 @@ def test_play_waits_according_to_speed() -> None:
         (minimal(sensor={"temperature_c": "hot"}), "sensor.temperature_c"),
         (minimal(vision={"objects": [[0, "pan"]]}), "vision.objects"),
         (minimal(stt=[["자비스"]]), "stt 항목"),
+        (minimal(heaters={"hood": [[0, 1]]}), "가열 장치"),
+        (minimal(heaters={"burner_1": [[0, 4]]}), "세기 0~3"),
+        (minimal(heaters={"burner_1": [[0, 1]]}, sensor={"temperature_c": [[0, 25]]}), "함께"),
+        (minimal(expected=[[0, "COOK"]]), "expected"),
+        (minimal(expected=[[5, "IDLE"]]), "0초부터"),
+        (minimal(expected=[[0, "IDLE"], [0, "PREHEAT"]]), "늘어나야"),
     ],
 )
 def test_invalid_scenarios_explain_the_problem(raw: dict, message: str) -> None:
     with pytest.raises(ScenarioError, match=message):
         parse(raw)
+
+
+def test_heater_temperature_follows_virtual_kitchen_rule() -> None:
+    sc = parse(minimal(duration_s=5, heaters={"burner_1": [[0, 0], [2, 2]]}))
+    readings = heater_readings(sc.heaters, sc.duration_s)
+    temp = link.TARGET_C[0]
+    for t, temps in readings:
+        assert temps["burner_1"] == round(temp, 1)
+        assert temps["burner_2"] == temps["fryer"] == link.TARGET_C[0]  # 시간표에 없으면 꺼짐
+        temp = link.next_temperature(temp, 2 if t >= 2 else 0)
+    events = [e for e in build_events(sc) if e.type == "sensor/reading"]
+    assert len(events) == 6 * len(link.HEATERS)  # 0~5초, 가열 장치마다 1초에 1번
+
+
+def test_heater_turns_itself_off_at_hard_limit_until_next_command() -> None:
+    sc = parse(minimal(duration_s=200, heaters={"burner_1": [[0, 3], [150, 3]]}))
+    temps = [r["burner_1"] for _, r in heater_readings(sc.heaters, sc.duration_s)]
+    peak = temps.index(max(temps[:150]))
+    assert link.HARD_LIMIT_C <= temps[peak] < link.TARGET_C[3]  # 265°C에서 꺼져 270°C까지 못 간다
+    assert temps[peak + 1] < temps[peak]  # 꺼진 뒤 식는다
+    assert temps[160] > temps[150]  # 새 세기 명령을 받으면 다시 데워진다
+
+
+def test_expected_at_returns_current_label() -> None:
+    sc = parse(minimal(expected=[[0, "IDLE"], [3, "PREHEAT"]]))
+    assert [expected_at(sc, t) for t in (0, 2.9, 3, 9)] == ["IDLE", "IDLE", "PREHEAT", "PREHEAT"]
+    assert expected_at(parse(minimal()), 0) is None

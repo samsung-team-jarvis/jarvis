@@ -6,10 +6,11 @@ import dataclasses
 import time
 from collections.abc import Callable
 
+from common import kitchen_link as link
 from common.bus import Bus
 from common.messages import Envelope
 from services.audio_svc.wake import is_wake
-from services.simulator.scenario import Scenario, interpolate
+from services.simulator.scenario import HeaterStream, Scenario, interpolate
 
 SOURCE = "simulator"
 
@@ -30,6 +31,30 @@ def _ticks(duration: float, hz: float) -> list[float]:
     return [round(i * step, 6) for i in range(n) if i * step <= duration]
 
 
+def heater_readings(heaters: HeaterStream, duration: float) -> list[tuple[float, dict[str, float]]]:
+    """1초마다 가열 장치 3개의 온도. 가상 주방과 같은 규칙이다 (interfaces §4.4·§4.5).
+
+    - 시작은 모두 실온(꺼짐 목표 온도), 1초마다 `next_temperature`로 세기의 목표 온도에 다가간다.
+    - 켜진 장치가 265°C에 닿으면 스스로 꺼진다 (L0). 시간표의 다음 세기 항목이 올 때까지 꺼져 있다.
+    """
+    temps = {h: link.TARGET_C[0] for h in link.HEATERS}
+    tripped: dict[str, float] = {}  # 장치 → 스스로 꺼진 시각
+    readings = []
+    for t in _ticks(duration, 1.0 / link.TEMP_PERIOD_S):
+        readings.append((t, {h: round(v, 1) for h, v in temps.items()}))
+        for h in link.HEATERS:
+            level = heaters.level_at(h, t)
+            if h in tripped:
+                if any(tripped[h] < start <= t for start, _ in heaters.levels.get(h, [])):
+                    del tripped[h]  # 새 명령을 받음
+                else:
+                    level = 0
+            temps[h] = link.next_temperature(temps[h], level)
+            if level > 0 and temps[h] >= link.HARD_LIMIT_C:
+                tripped[h] = t
+    return readings
+
+
 def build_events(sc: Scenario) -> list[Event]:
     events: list[Event] = []
 
@@ -43,6 +68,12 @@ def build_events(sc: Scenario) -> list[Event]:
             cur = round(interpolate(s.current_a, t), 3)
             payload = {"device_id": s.device_id, "temperature_c": temp, "current_a": cur}
             events.append(Event(t, "sensor/reading", lambda p=payload: p))
+
+    if sc.heaters:
+        for t, temps in heater_readings(sc.heaters, sc.duration_s):
+            for device, temp in temps.items():
+                payload = {"device_id": device, "temperature_c": temp}
+                events.append(Event(t, "sensor/reading", lambda p=payload: p))
 
     if sc.vision:
         v = sc.vision
