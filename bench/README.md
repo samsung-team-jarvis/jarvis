@@ -113,6 +113,19 @@ python -m bench.speech_check tts --engine say --out data/tts/say   # 비교: mac
 
 - **noise**: SNR(신호 대 잡음비)은 말의 평균 전력 ÷ 잡음의 평균 전력(dB). 0 dB면 같은 세기다. 잡음은 시드 0으로 고정한 백색 잡음이라 실제 주방 소음(후드 · 튀김)과 소리 결이 다르다 — 소음 녹음(STT-05)이 생기면 그 녹음으로 잰다. 파일을 통째로 받아쓰므로 서비스의 VAD 경로와 다르다.
 - **tts**: 합성한 음성을 같은 STT로 다시 받아써 원문과 비교한 CER로 알아듣기 쉬움을 대신 잰다. STT 오류도 섞이므로 값 하나보다 **같은 STT로 잰 다른 TTS와의 차이**를 본다. VITS는 합성할 때마다 조금씩 달라 여러 번 잰다. 사람이 듣고 매기는 점수(MOS)가 아니다.
+## fusion_eval.py — 상황 인식 평가 (FUS-07 · FUS-08)
+
+simulator 시나리오의 메시지를 판정기에 시간 순으로 넣고, 1초마다 판정 State를 정답(`expected`)과 비교한다. 버스·서비스 없이 돈다.
+
+```bash
+python -m bench.fusion_eval --judge temp --judge person --split val --per-scenario   # 분석은 val로
+python -m bench.fusion_eval --judge temp --judge person --split test                 # test는 비교에만
+```
+
+- 판정기: `temp`(온도만), `person`(사람만) — 단일 조건 Baseline. FUS-08 State Machine은 `update(t, topic, payload)`·`state(t)`를 갖춰 `JUDGES`에 넣는다.
+- 지표: State F1(macro)·State별 F1, 위험 미탐율(위험 구간 단위)·감지 지연, 위험 오탐. 정의는 [METRICS](../docs/METRICS.md) §1.
+- 분할: `data/fusion/split_v1.json` (시나리오 단위 val 17 · test 9, 종류별 비율, 고정 시드).
+
 ## kitchen_check.py — 가상 주방 규격 자동 검사 (HW-24)
 
 보드 역할(생존 신호 1초, 명령 발행)로 `kitchen/*`를 주고받아 가상 주방(Unity 또는 가짜 가상 주방)이 [연결 규격](../recipes/unity-kitchen-link.md) §5.2를 지키는지 항목별로 판정한다.
