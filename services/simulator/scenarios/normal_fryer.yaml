@@ -1,0 +1,23 @@
+# 정상 조리: 튀김기를 쓰고 타이머로 끈다.
+# 값은 개발용 가상 값이다 (측정값 아님). 온도는 세기 시간표로 계산한다 (interfaces §4.5).
+name: normal_fryer
+description: 튀김기 세기 2, 2분 타이머로 꺼짐 (타이머 만료 OFF를 세기 시간표로 표현)
+duration_s: 180
+
+heaters:            # [시각, 세기 0~3] — 그 시각부터 다음 항목 전까지
+  fryer: [[0, 0], [5, 2], [150, 0]]
+
+vision:
+  fps: 2
+  objects:          # [시각, 보이는 클래스] — person이 없으면 조리 구역에 사람 없음
+    - [0, [person]]
+
+stt:
+  - [5, "자비스 튀김기 중간으로 해줘"]
+  - [30, "자비스 이 분 뒤에 튀김기 꺼 줘"]
+
+expected:          # 정답 State (FUS-05 규칙으로 계산)
+  - [0, IDLE]
+  - [5, PREHEAT]
+  - [18, COOKING]
+  - [150, IDLE]

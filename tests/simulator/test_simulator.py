@@ -88,6 +88,15 @@ def test_invalid_scenarios_explain_the_problem(raw: dict, message: str) -> None:
         parse(raw)
 
 
+@pytest.mark.parametrize("path", SCENARIOS, ids=lambda p: p.stem)
+def test_bundled_scenarios_have_heaters_and_expected_states(path: pathlib.Path) -> None:
+    """FUS-05: 시나리오마다 가열 장치 시간표와 정답 State가 있다 (FUS-07 State F1 계산용)."""
+    sc = load(path)
+    assert sc.heaters is not None and sc.expected
+    assert expected_at(sc, 0) == "IDLE"  # 가상 주방은 모두 꺼진 채 시작한다 (§4.4)
+    assert all(t <= sc.duration_s for t, _ in sc.expected)
+
+
 def test_heater_temperature_follows_virtual_kitchen_rule() -> None:
     sc = parse(minimal(duration_s=5, heaters={"burner_1": [[0, 0], [2, 2]]}))
     readings = heater_readings(sc.heaters, sc.duration_s)

@@ -1,24 +1,23 @@
-# 방치: 화구를 켠 채 사람이 자리를 비운다. 온도는 서서히 오른다.
-# 값은 개발용 가상 값이다 (측정값 아님). 방치 판정 시간은 FUS 작업에서 정한다.
+# 방치: 화구를 켠 채 사람이 자리를 비우고 돌아오지 않는다.
+# 값은 개발용 가상 값이다 (측정값 아님). 온도는 세기 시간표로 계산한다 (interfaces §4.5).
 name: unattended
-description: 화구 켜짐 상태에서 30초 뒤 사람이 화면에서 사라지고 돌아오지 않음
+description: 1번 화구 세기 2, 30초에 사람이 사라짐 → 30초 뒤 방치
 duration_s: 150
-heartbeat_hz: 1
 
-sensor:
-  device_id: esp32-1
-  hz: 1
-  temperature_c:
-    - [0, 25]
-    - [30, 150]
-    - [150, 210]
-  current_a:
-    - [0, 1.2]
+heaters:            # [시각, 세기 0~3] — 그 시각부터 다음 항목 전까지
+  burner_1: [[0, 0], [3, 2]]
 
 vision:
   fps: 2
-  objects:
-    - [0, [pan, burner_on, person]]
-    - [30, [pan, burner_on]]          # 사람 사라짐
+  objects:          # [시각, 보이는 클래스] — person이 없으면 조리 구역에 사람 없음
+    - [0, [person]]
+    - [30, []]
 
-stt: []
+stt:
+  - [3, "자비스 1번 화구 중간으로 해줘"]
+
+expected:          # 정답 State (FUS-05 규칙으로 계산)
+  - [0, IDLE]
+  - [3, PREHEAT]
+  - [16, COOKING]
+  - [60, UNATTENDED]
