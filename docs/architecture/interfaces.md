@@ -87,7 +87,18 @@
 - 켤 때(`TURN_ON`) 세기는 1. 결제시스템은 장치(target)가 아니라 Action으로 다룬다 (§3.1).
 
 ### 2.3 State (FUS-01 확정)
-`IDLE, PREHEAT, COOKING, UNATTENDED, DANGER, SAFE_STOP` — 전이 조건은 상황 인식(FUS-05)에서 정한다.
+`IDLE, PREHEAT, COOKING, UNATTENDED, DANGER, SAFE_STOP` — 판정 기준은 FUS-05에서 정했다 ([decision](../decisions/2026-11-09-state-rules.md)). 1초마다 위에서부터 먼저 맞는 것:
+
+| State | 조건 |
+|---|---|
+| `SAFE_STOP` | 긴급 정지 또는 가상 주방의 자체 차단(§4.4) 뒤, 가열 장치가 모두 꺼지고 모두 100°C 아래로 식을 때까지 |
+| `DANGER` | 가열 장치 하나라도 240°C 이상 (230°C 아래로 내려가면 해제) |
+| `UNATTENDED` | 가열 장치가 켜진 채 사람(`person`)이 30초 연속 없음 |
+| `COOKING` | 켜진 가열 장치 중 하나라도 100°C 이상 |
+| `PREHEAT` | 가열 장치가 켜져 있고 모두 100°C 아래 |
+| `IDLE` | 가열 장치가 모두 꺼짐 |
+
+`risk`: `DANGER`·`UNATTENDED`는 `danger`, 아니면 200°C 이상이거나 켜진 채 사람이 10초 이상 없으면 `warn`, 그 밖은 `none`. `evidence`의 필드는 State Machine(FUS-08)에서 정한다.
 
 ## 3. Function Call 스키마 (LLM 출력)
 
@@ -247,7 +258,7 @@
 - 가열 장치마다 온도를 하나 둔다. 1초마다 목표 온도와의 차이의 5%씩 다가간다: `T ← T + (목표 − T) × 0.05`
 - 목표 온도: 꺼짐 25°C · 세기 1 → 120°C · 세기 2 → 180°C · 세기 3 → 270°C
 - 기준 구현: `common.kitchen_link.next_temperature` (Unity 코드도 같은 식을 쓴다)
-- 주의·위험 구간(200°C·240°C)과 방치 판단은 가상 주방이 아니라 보드(`fusion_svc`·`safety_guard`)가 한다 — 값은 FUS-05에서 확정.
+- 주의·위험 구간(200°C·240°C)과 방치 판단은 가상 주방이 아니라 보드(`fusion_svc`·`safety_guard`)가 한다 — §2.3 (FUS-05 확정).
 
 ### 4.6 접속
 
@@ -284,3 +295,4 @@
 | 2026-10-13 | v0.2 | §2 `llm/function_call`에 LLM 출력이 쓰일 때와 검증 실패로 규칙 파서가 대체할 때의 필드 의미 명시 (대체 시 `gen_ms`·`tokens`에 LLM 몫 포함) — 필드 변경 없음 (#111, LLM-09) | 이현종 |
 | 2026-10-29 | v0.2 | §2.1 비전 클래스는 COCO 사전학습 이름을 쓰고 기본 발행은 `person` (`vision/objects` 필드 변경 없음), §5 캡처 화면·클래스 항목 갱신 (#122, VIS-08) | 이현종 |
 | 2026-10-29 | v0.2 | §3.4 서비스에서 `context`를 채우는 출처 명시 (`state` ← `fusion/state`, `last_target` ← `llm_svc`의 마지막 명령 장치, 60초) — 필드 변경 없음 (#124, LLM-12) | 이현종 |
+| 2026-11-09 | v0.2 | §2.3 State 판정 기준과 `risk` 기준 확정 (주의 200°C · 위험 240°C, 방치 30초, `SAFE_STOP`은 100°C 아래로 식으면 해제), §4.5 구간 값 확정 — **필드 변경 없음** (#97, FUS-05) | 최지환 |
