@@ -4,6 +4,7 @@ import pytest
 
 from bench import danger_path as dp
 from common import messages
+from common.messages import Envelope
 from services.recorder.store import SessionWriter
 from tests.safety_guard.test_auto_stop import Kitchen
 
@@ -65,3 +66,34 @@ def test_cli_without_auto_stop_fails(tmp_path, capsys) -> None:
     (tmp_path / "empty.jsonl").write_text("", encoding="utf-8")
     assert dp.main([str(tmp_path)]) == 1
     assert "자동 차단이 없습니다" in capsys.readouterr().out
+
+
+def test_trigger_is_the_state_that_justifies_the_stop_even_with_equal_mono() -> None:
+    """시계 해상도가 거칠면 차단 뒤의 fusion/state(이미 꺼짐)가 판정과 같은 mono가 된다."""
+
+    def env(type_, payload, mono):
+        return Envelope(type_, "t", "s_f", payload, ts=mono, mono=mono)
+
+    def fs(on, absent):
+        heaters = {
+            h: {"on": False, "level": 0, "temperature_c": 25.0} for h in ("burner_1", "fryer")
+        }
+        heaters["fryer"] = {"on": on, "level": 1, "temperature_c": 110.0}
+        ev = {
+            "heaters": heaters,
+            "person": None,
+            "absent_s": absent,
+            "safe_stop": None,
+            "stale": [],
+        }
+        return {"state": "UNATTENDED", "prev_state": "COOKING", "evidence": ev, "risk": "danger"}
+
+    call = {"action": "TURN_OFF", "target": "fryer"}
+    decision = {"call": call, "decision": "ALLOW", "reason": "자동 차단: 방치 (사람 없음 60초)"}
+    msgs = [
+        env("fusion/state", fs(True, 60.0), 1.0),
+        env("fusion/state", fs(False, 0.0), 1.0),  # 차단 뒤의 상태가 같은 mono로 앞에 놓임
+        env("guard/decision", decision, 1.0),
+    ]
+    [stop] = dp.find_stops(msgs)
+    assert stop.trigger is msgs[0] and stop.unattended_s == 30.0

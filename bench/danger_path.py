@@ -21,9 +21,9 @@ import sys
 from collections.abc import Iterable
 
 from common.messages import Envelope
-from services.fusion_svc.state_machine import DANGER_C
+from services.fusion_svc.state_machine import DANGER_C, UNATTENDED_S
 from services.recorder.store import read_session
-from services.safety_guard.auto_stop import REASON_PREFIX
+from services.safety_guard.auto_stop import REASON_PREFIX, STOP_ABSENT_S
 
 STAGE_ORDER = {
     t: i
@@ -49,7 +49,7 @@ class Stop:
     reading: Envelope | None = None  # 과열: 240°C 이상이 된 첫 온도
     command: Envelope | None = None
     result: Envelope | None = None
-    unattended_s: float | None = None  # 방치: UNATTENDED가 된 때부터 차단 판정까지 (유예)
+    unattended_s: float | None = None  # 방치: 방치 판정(30초) 뒤 차단까지 (유예)
 
     def segments(self) -> dict[str, float | None]:
         def gap(a: Envelope | None, b: Envelope | None) -> float | None:
@@ -84,11 +84,20 @@ def find_stops(messages: list[Envelope]) -> list[Stop]:
         kind = "과열" if "과열" in msg.payload["reason"] else "방치"
         stop = Stop(kind, target, msg)
         before = messages[:i]
-        stop.trigger = next((m for m in reversed(before) if m.type == "fusion/state"), None)
+        # 차단의 근거가 된 판정: 그 장치가 켜져 있고 과열·방치 조건을 만족한 마지막 fusion/state
+        # (같은 mono로 뒤이어 나온 판정 — 꺼진 뒤의 상태 — 을 근거로 잡지 않게 조건으로 찾는다)
+        stop.trigger = next(
+            (
+                m
+                for m in reversed(before)
+                if m.type == "fusion/state" and _justifies(m, target, kind)
+            ),
+            None,
+        )
         if kind == "과열":
             stop.reading = _first_hot_reading(before, target)
         else:
-            stop.unattended_s = _unattended_for(before, msg)
+            stop.unattended_s = _grace_s(stop.trigger)
         for m in messages[i + 1 :]:
             p = m.payload
             if stop.command is None:
@@ -106,6 +115,16 @@ def find_stops(messages: list[Envelope]) -> list[Stop]:
     return stops
 
 
+def _justifies(state: Envelope, target: str, kind: str) -> bool:
+    evidence = state.payload["evidence"]
+    heater = evidence["heaters"].get(target) or {}
+    if not heater.get("on"):
+        return False
+    if kind == "과열":
+        return (heater.get("temperature_c") or 0.0) >= DANGER_C
+    return evidence["absent_s"] >= STOP_ABSENT_S
+
+
 def _first_hot_reading(before: list[Envelope], device: str) -> Envelope | None:
     """이번 과열에서 그 장치가 처음 240°C 이상이 된 온도 (그 앞의 값은 240°C 아래)."""
     first = None
@@ -118,16 +137,14 @@ def _first_hot_reading(before: list[Envelope], device: str) -> Envelope | None:
     return first
 
 
-def _unattended_for(before: list[Envelope], decision: Envelope) -> float | None:
-    """지금 이어지는 UNATTENDED가 시작된 fusion/state부터 차단 판정까지 초."""
-    start = None
-    for m in reversed(before):
-        if m.type != "fusion/state":
-            continue
-        if m.payload["state"] != "UNATTENDED":
-            break
-        start = m
-    return round(decision.mono - start.mono, 1) if start else None
+def _grace_s(trigger: Envelope | None) -> float | None:
+    """방치 판정(사람 없음 30초) 뒤 차단까지 기다린 초 = 판정 근거의 사람 없는 시간 − 30초.
+
+    중간에 DANGER가 끼어 UNATTENDED가 끊겨도 사람 없는 시간은 이어지므로 이것으로 센다.
+    """
+    if trigger is None:
+        return None
+    return round(trigger.payload["evidence"]["absent_s"] - UNATTENDED_S, 1)
 
 
 def _fmt(v: float | None) -> str:
