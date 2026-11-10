@@ -1,0 +1,25 @@
+# 방치 중 음성으로 끄기: 사람은 화면 밖에 있지만 말로 불을 끈다.
+# 값은 개발용 가상 값이다 (측정값 아님). 온도는 세기 시간표로 계산한다 (interfaces §4.5).
+name: unattended_voice_off
+description: 1번 화구 세기 2, 20초에 자리 비움 → 50초 방치 → 60초 화면 밖에서 "불 꺼줘" → IDLE
+duration_s: 90
+
+heaters:            # [시각, 세기 0~3] — 그 시각부터 다음 항목 전까지
+  burner_1: [[0, 0], [3, 2], [60, 0]]
+
+vision:
+  fps: 2
+  objects:          # [시각, 보이는 클래스] — person이 없으면 조리 구역에 사람 없음
+    - [0, [person]]
+    - [20, []]
+
+stt:
+  - [3, "자비스 1번 화구 중간으로 해줘"]
+  - [60, "자비스 1번 불 꺼줘"]
+
+expected:          # 정답 State (FUS-05 규칙으로 계산)
+  - [0, IDLE]
+  - [3, PREHEAT]
+  - [16, COOKING]
+  - [50, UNATTENDED]
+  - [60, IDLE]

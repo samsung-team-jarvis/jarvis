@@ -31,7 +31,8 @@ def test_session_filename_is_safe(session: str, expected: str) -> None:
 def test_records_every_simulated_message(tmp_path: pathlib.Path) -> None:
     bus, writer = MemoryBus(), SessionWriter(tmp_path)
     bus.subscribe("#", writer.write)
-    sent = play(load(SCENARIO), bus, "sim_test", speed=0)
+    scenario = load(SCENARIO)
+    sent = play(scenario, bus, "sim_test", speed=0)
     writer.close()
 
     path = tmp_path / "sim_test.jsonl"
@@ -40,7 +41,7 @@ def test_records_every_simulated_message(tmp_path: pathlib.Path) -> None:
     summary = summarize(path)
     assert summary["messages"] == sent
     assert summary["sessions"] == ["sim_test"]
-    assert summary["by_topic"]["stt/text"] == 2
+    assert summary["by_topic"]["stt/text"] == len(scenario.stt)
 
 
 def test_sessions_go_to_separate_files(tmp_path: pathlib.Path) -> None:

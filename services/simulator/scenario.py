@@ -13,6 +13,9 @@ from typing import Any
 
 import yaml
 
+from common.kitchen_link import HEATERS, TARGET_C
+from services.safety_guard.rules import STATES
+
 
 class ScenarioError(ValueError):
     pass
@@ -53,6 +56,20 @@ class SensorStream:
 
 
 @dataclasses.dataclass(frozen=True)
+class HeaterStream:
+    """가열 장치별 세기 시간표. 온도는 가상 온도 규칙으로 계산한다 (runner.heater_readings)."""
+
+    levels: dict[str, list[tuple[float, int]]]  # 장치 → [(시각, 그 시각부터의 세기 0~3)]
+
+    def level_at(self, device: str, t: float) -> int:
+        current = 0
+        for start, level in self.levels.get(device, []):
+            if start <= t:
+                current = level
+        return current
+
+
+@dataclasses.dataclass(frozen=True)
 class VisionStream:
     fps: float
     objects: list[tuple[float, list[str]]]  # (시각, 그 시각부터 보이는 클래스 목록)
@@ -74,6 +91,8 @@ class Scenario:
     sensor: SensorStream | None
     vision: VisionStream | None
     stt: list[tuple[float, str]]
+    heaters: HeaterStream | None = None
+    expected: list[tuple[float, str]] = dataclasses.field(default_factory=list)  # 정답 State 구간
 
 
 def _positive(value: Any, field: str) -> float:
@@ -89,12 +108,24 @@ def _positive(value: Any, field: str) -> float:
 def parse(raw: dict[str, Any]) -> Scenario:
     if not isinstance(raw, dict):
         raise ScenarioError("시나리오 최상위는 key: value 형식이어야 합니다")
-    known = {"name", "description", "duration_s", "heartbeat_hz", "sensor", "vision", "stt"}
+    known = {
+        "name",
+        "description",
+        "duration_s",
+        "heartbeat_hz",
+        "sensor",
+        "heaters",
+        "vision",
+        "stt",
+        "expected",
+    }
     unknown = set(raw) - known
     if unknown:
         raise ScenarioError(f"알 수 없는 키: {sorted(unknown)} (사용 가능: {sorted(known)})")
     if "name" not in raw or "duration_s" not in raw:
         raise ScenarioError("name, duration_s는 필수입니다")
+    if raw.get("sensor") is not None and raw.get("heaters") is not None:
+        raise ScenarioError("sensor와 heaters는 함께 쓸 수 없습니다 (둘 다 sensor/reading을 보냄)")
 
     sensor = None
     if raw.get("sensor") is not None:
@@ -119,6 +150,8 @@ def parse(raw: dict[str, Any]) -> Scenario:
             objects.append((float(entry[0]), [str(c) for c in entry[1]]))
         vision = VisionStream(fps=_positive(v.get("fps", 2), "vision.fps"), objects=sorted(objects))
 
+    heaters = _heaters(raw["heaters"]) if raw.get("heaters") is not None else None
+
     stt = []
     for entry in raw.get("stt") or []:
         if not (isinstance(entry, list) and len(entry) == 2):
@@ -133,7 +166,56 @@ def parse(raw: dict[str, Any]) -> Scenario:
         sensor=sensor,
         vision=vision,
         stt=sorted(stt),
+        heaters=heaters,
+        expected=_expected(raw.get("expected")),
     )
+
+
+def _heaters(raw: Any) -> HeaterStream:
+    if not isinstance(raw, dict) or not raw:
+        raise ScenarioError("heaters: {장치: [[시각, 세기], ...]} 형식이어야 합니다")
+    levels: dict[str, list[tuple[float, int]]] = {}
+    for device, entries in raw.items():
+        if device not in HEATERS:
+            raise ScenarioError(f"heaters: 가열 장치는 {HEATERS} 중 하나여야 합니다: {device!r}")
+        if not isinstance(entries, list) or not entries:
+            raise ScenarioError(f"heaters.{device}: [[시각, 세기], ...] 목록이어야 합니다")
+        timeline = []
+        for entry in entries:
+            ok = isinstance(entry, list) and len(entry) == 2 and isinstance(entry[1], int)
+            if not ok or isinstance(entry[1], bool) or entry[1] not in TARGET_C:
+                message = f"heaters.{device}: 항목은 [시각, 세기 0~3]이어야 합니다: {entry!r}"
+                raise ScenarioError(message)
+            timeline.append((float(entry[0]), entry[1]))
+        levels[device] = sorted(timeline)
+    return HeaterStream(levels=levels)
+
+
+def _expected(raw: Any) -> list[tuple[float, str]]:
+    """정답 State 구간 [[시각, State], ...] — 0초부터 시작, 시각이 늘어나야 한다."""
+    if raw is None:
+        return []
+    if not isinstance(raw, list) or not raw:
+        raise ScenarioError("expected: [[시각, State], ...] 목록이어야 합니다")
+    labels: list[tuple[float, str]] = []
+    for entry in raw:
+        if not (isinstance(entry, list) and len(entry) == 2) or entry[1] not in STATES:
+            states = "|".join(STATES)
+            raise ScenarioError(f"expected: 항목은 [시각, {states}]이어야 합니다: {entry!r}")
+        labels.append((float(entry[0]), entry[1]))
+    times = [t for t, _ in labels]
+    if times[0] != 0 or any(b <= a for a, b in zip(times, times[1:], strict=False)):
+        raise ScenarioError("expected: 0초부터 시작하고 시각이 늘어나야 합니다")
+    return labels
+
+
+def expected_at(sc: Scenario, t: float) -> str | None:
+    """시각 t의 정답 State (정답이 없는 시나리오면 None)."""
+    current = None
+    for start, state in sc.expected:
+        if start <= t:
+            current = state
+    return current
 
 
 def load(path: str | pathlib.Path) -> Scenario:
