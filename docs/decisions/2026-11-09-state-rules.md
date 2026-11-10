@@ -45,6 +45,7 @@
 
 ## Verification
 - `tests/simulator`: 시나리오 26개가 모두 읽히고 규격에 맞는 메시지를 낸다. 정답 State는 0초 `IDLE`로 시작한다. 가열 장치 온도는 `common.kitchen_link.next_temperature`와 같고, 265°C에서 스스로 꺼진다.
+- `tests/simulator/test_expected.py` (2026-11-11, #139): 위 표를 시나리오 시간표에서 바로 다시 계산해 26개의 `expected`와 1초마다 비교한다 — 정답을 만든 규칙. State Machine(`fusion_svc`)과 따로 구현했다.
 - 실제 가상 주방(Unity)과 보드에서는 미검증이다.
 
 ## Revisit

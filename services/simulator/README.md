@@ -60,7 +60,7 @@ expected:                      # 정답 State [시각, State] — 0초부터, �
 ```
 
 - `heaters`: 가상 주방과 같은 온도를 낸다 — 가열 장치 3개(`burner_1`·`burner_2`·`fryer`) 모두 1초에 한 번 `sensor/reading`, 실온에서 시작해 `common.kitchen_link.next_temperature`로 세기의 목표 온도에 다가가고, 켜진 장치가 265°C에 닿으면 시간표의 다음 세기 항목까지 꺼진다 ([interfaces](../../docs/architecture/interfaces.md) §4.4·§4.5). 세기 시간표는 "명령이 실행된 결과"다 — 시나리오의 발화와 맞춰 적는다 (Guard가 거부할 명령이면 세기를 바꾸지 않는다). 시간표는 가상 주방이 보낼 장치 상태(`device/state` — 가열 장치 3개의 `on`·`level`, 265°C 자체 차단이면 `safe_stop: true`)로 나간다: 바뀔 때와 5초마다, 자체 차단은 265°C를 넘은 온도가 나가는 시각에 (#139).
-- `expected`: [State 판정 기준](../../docs/decisions/2026-11-09-state-rules.md)으로 정한 정답. 시각 `t`의 정답은 `scenario.expected_at(sc, t)`.
+- `expected`: [State 판정 기준](../../docs/decisions/2026-11-09-state-rules.md)으로 정한 정답. 시각 `t`의 정답은 `scenario.expected_at(sc, t)`. 판정 기준으로 다시 계산해 비교하는 테스트가 `tests/simulator/test_expected.py`다 — 기준이나 시나리오를 고치면 `expected`도 같이 고친다.
 - `heaters`로 온도를 내는 시나리오는 `kitchen_gw`·가짜 가상 주방과 함께 띄우지 않는다 (같은 `sensor/reading`·`device/state`를 두 곳에서 낸다).
 - 비전 객체의 `conf`는 0.9, `bbox`는 고정값, 처리 시간(`*_ms`)은 0이다. 상황 판단 로직 개발용이라 위치·신뢰도는 의미가 없다.
 - 가상 주방(메타버스)이 연결되기 전에 그 자리를 대신한다 — 같은 토픽(`sensor/reading` 등)을 내므로 서비스는 구분하지 못한다. `device_id`의 `esp32-1`은 이전 계획의 이름이며 값일 뿐이다 (HW-14에서 정리).
