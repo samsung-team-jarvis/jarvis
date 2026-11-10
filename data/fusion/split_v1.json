@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "note": "FUS-07 (#140). 시나리오 단위 분할. 종류(이름 앞부분)별로 random.Random(0).sample, 종류 순서 normal·overheat·unattended·forgotten. test는 비교에만 쓴다.",
+  "val": [
+    "forgotten_fryer_closing",
+    "forgotten_second_burner",
+    "normal_cooking",
+    "normal_fryer",
+    "normal_idle",
+    "normal_short_absence",
+    "normal_simmer",
+    "overheat_bare_stop",
+    "overheat_fryer",
+    "overheat_restart",
+    "overheat_second_burner",
+    "overheat_turn_off",
+    "unattended",
+    "unattended_flicker",
+    "unattended_fryer",
+    "unattended_overheat",
+    "unattended_returns"
+  ],
+  "test": [
+    "forgotten_low_burner",
+    "normal_off_while_hot",
+    "normal_two_burners",
+    "normal_warn_peak",
+    "overheat",
+    "overheat_emergency",
+    "overheat_near_miss",
+    "unattended_on_from_afar",
+    "unattended_voice_off"
+  ]
+}
