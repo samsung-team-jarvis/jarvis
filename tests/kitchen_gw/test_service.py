@@ -25,8 +25,10 @@ class Rig:
         self.readings: list[Envelope] = []
         self.sent: list[dict] = []
         self.states: list[dict] = []
+        self.device_states: list[Envelope] = []
         self.bus.subscribe("control/result", self.results.append)
         self.bus.subscribe("sensor/reading", self.readings.append)
+        self.bus.subscribe("device/state", self.device_states.append)
         self.bus.subscribe_raw(link.TOPIC_CMD, lambda _t, d: self.sent.append(json.loads(d)))
         self.bus.subscribe_raw(link.TOPIC_STATE, lambda _t, d: self.states.append(json.loads(d)))
         self.gateway = KitchenGateway(self.bus, "s_gw", clock=self.clock)
@@ -267,3 +269,40 @@ def test_state_is_published_on_change_and_periodically() -> None:
     rig.run(5)
     assert len(rig.states) == count + 1
     link.decode_state(link.encode(rig.states[-1]))
+
+
+def test_kitchen_state_reaches_the_bus_as_is() -> None:
+    rig = Rig()
+    states = rig.device_states
+    rig.command(1, "LEVEL", "burner_1", 3)
+
+    assert states[-1].source == "kitchen_gw"
+    assert states[-1].session_id == "s_gw"
+    assert states[-1].payload == rig.states[-1]  # kitchen/state의 {devices, safe_stop} 그대로
+    assert states[-1].payload["devices"]["burner_1"] == {"on": True, "level": 3}
+    assert rig.gateway.states == len(states)
+
+
+def test_kitchen_turning_itself_off_reaches_the_bus() -> None:
+    rig = Rig()
+    states = rig.device_states
+    rig.command(1, "LEVEL", "burner_1", 3)
+    rig.run(5, heartbeat=False)  # 생존 신호가 끊겨 가상 주방이 스스로 끈다 (보드 명령 없음)
+
+    assert states[-1].payload["safe_stop"] is True
+    assert states[-1].payload["devices"]["burner_1"] == {"on": False, "level": 0}
+
+
+def test_malformed_kitchen_state_is_logged_and_dropped(caplog) -> None:
+    rig = Rig(with_kitchen=False)
+    states = rig.device_states
+    for bad in (
+        b"not json",
+        b'{"devices": {}}',
+        b'{"devices": {"hood": {"on": 1, "level": 0}}, "safe_stop": false}',
+    ):
+        rig.bus.publish_raw(link.TOPIC_STATE, bad)
+
+    assert states == []
+    assert rig.gateway.states == 0
+    assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 3
