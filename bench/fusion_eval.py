@@ -6,6 +6,7 @@ python -m bench.fusion_eval --judge temp --judge person --split test  # 나란�
 
 판정기(Judge)는 시나리오의 메시지를 시간 순으로 받고(`update`), 1초마다 지금 State를
 답한다(`state`). 버스 없이 `services.simulator.runner.build_events`의 메시지를 그대로 넣는다.
+상태는 `update`에서만 바꾸고 `state`는 읽기만 한다 (부르는 횟수·시점에 따라 답이 달라지지 않게).
 FUS-08 State Machine도 같은 두 메서드를 가지면 `JUDGES`에 넣어 같은 방식으로 평가한다.
 
 지표 (METRICS §State F1·위험 미탐율, 정의: #140):
@@ -68,10 +69,12 @@ class TemperatureOnly:
         previous = self.temps.get(device)
         self.rising[device] = previous is not None and temp - previous >= RISE_C
         self.temps[device] = temp
+        # DANGER 해제 기준(230°C)은 온도가 들어올 때 갱신한다 — state()는 읽기만 한다
+        hottest = max(self.temps.values())
+        self.danger = hottest >= DANGER_C or (self.danger and hottest >= DANGER_EXIT_C)
 
     def state(self, t: float) -> str:
         hottest = max(self.temps.values(), default=0.0)
-        self.danger = hottest >= DANGER_C or (self.danger and hottest >= DANGER_EXIT_C)
         if self.danger:
             return "DANGER"
         if hottest >= COOK_C:
