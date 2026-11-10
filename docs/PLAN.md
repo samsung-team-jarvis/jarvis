@@ -164,7 +164,7 @@
 - [x] ~~LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정~~ — 취소 (2026-10-29 → LLM-18). Mac Docker 변환 시도는 4시간 넘게 첫 층에서 멈춤(#113)
 - [x] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-18, FUS-02 | 담당: 이현종 (#111 — Mac까지: `llm_svc --model`(HF)로 LLM 연결, 검증 실패 시 규칙 파서 대체, context는 `fusion/state`. v4 + 대체 test 89.2% / 88.8% (Mac 참고값). #118 — llama.cpp(GGUF) 생성기 `llm_svc --model *.gguf`. 보드 확인은 BOARD-08)
 - [x] FUS-08 State Machine v1 (온도+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환 (#139 — `services/fusion_svc`. 장치 상태는 `kitchen_gw`가 `kitchen/state`를 옮긴 `device/state`로 안다(합의: 이현종). simulator 시나리오 26개 재생: test State F1 1.000 · 위험 미탐 0/5, val 1.000 · 0/12 — 정답과 같은 규칙이라 구현 확인. MQTT·보드·Unity 미검증)
-- [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 최지환 (#143 — 자동 차단: 과열은 240°C에서 그 장치만 바로, 방치는 60초(경고 뒤 30초 유예) 뒤 켜진 가열 장치 ([decision](./decisions/2026-11-11-auto-stop.md)). 지연 측정 도구 `bench/danger_path.py`. **지연은 보드에서 측정 예정** (Windows는 시계 해상도 15.6 ms))
+- [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 최지환 (#143 — 자동 차단: 과열은 240°C에서 그 장치만 바로, 방치는 60초(경고 뒤 30초 유예) 뒤 켜진 가열 장치 ([decision](./decisions/2026-11-11-auto-stop.md)). 지연 측정 도구 `bench/danger_path.py`. Windows·MQTT 참고값: 과열 47 ms · 방치 0~16 ms (3회). **최종 지연은 보드에서 측정 예정** (Windows는 시계 해상도 15.6 ms))
 - [x] ~~HW-09 ESP32 자체 하드 리밋~~ — 취소 (2026-10-05 → HW-18·HW-19)
 - [x] ~~HW-10 센서값 BLE notify~~ — 취소 (2026-10-05 → HW-19)
 - [ ] HW-19 가상 온도: 가열 장치(화구·튀김기)의 온도를 규칙대로 계산해 `kitchen/temp`로 1초에 한 번 전송, 265°C에 닿으면 스스로 OFF ([interfaces](./architecture/interfaces.md) §4.5, 기준 구현 `common.kitchen_link.next_temperature`) | 선행: HW-16 | 담당: 최석진
