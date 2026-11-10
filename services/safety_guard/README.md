@@ -107,3 +107,4 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 | 2026-10-05 | Windows PC, `memory://` | 단위 테스트: 판정 규칙, 긴급어, 서비스 발행·중복 정지 무시, llm_svc와 이은 "후드 켜 줘" → `control/command`. MQTT·보드는 미검증 (이 PC에 브로커 없음) |
 | 2026-10-09 | Windows PC, `memory://` | 스키마 v0.2: 튀김기 판정, 결제 확인 흐름, `control/command`가 `kitchen_link.validate_command`를 통과, Hard Negative v2 `expect_guard` 34건 일치. MQTT·보드·가상 주방은 미검증 |
 | 2026-11-11 | Windows PC, `memory://` | 자동 차단(FUS-09, #143): 가짜 가상 주방 + `kitchen_gw` + `fusion_svc`와 이어 세기 3 화구가 240°C에서 꺼짐(265°C 자체 차단 전), 후드 유지, 방치 60초 차단·사람이 돌아오면 다시 셈. MQTT·보드·Unity는 미검증 |
+| 2026-11-11 | Windows PC, MQTT (Docker mosquitto, 프로세스 5개) | 자동 차단 3회: 과열(1번 화구 240.6°C에서 OFF)·방치(사람 없음 61초에 OFF) 모두 `control/result` ok. 지연은 [METRICS](../../docs/METRICS.md). 보드·Unity는 미검증 |
