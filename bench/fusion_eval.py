@@ -7,7 +7,7 @@ python -m bench.fusion_eval --judge temp --judge person --split test  # 나란�
 판정기(Judge)는 시나리오의 메시지를 시간 순으로 받고(`update`), 1초마다 지금 State를
 답한다(`state`). 버스 없이 `services.simulator.runner.build_events`의 메시지를 그대로 넣는다.
 상태는 `update`에서만 바꾸고 `state`는 읽기만 한다 (부르는 횟수·시점에 따라 답이 달라지지 않게).
-FUS-08 State Machine도 같은 두 메서드를 가지면 `JUDGES`에 넣어 같은 방식으로 평가한다.
+FUS-08 State Machine(`fusion`)도 같은 방식으로 평가한다.
 
 지표 (METRICS §State F1·위험 미탐율, 정의: #140):
 - State F1: 1초마다 비교, State별 F1을 모든 시나리오의 초를 모아 계산하고 평균(macro).
@@ -28,6 +28,7 @@ import sys
 from collections import Counter
 from typing import Any, Protocol
 
+from services.fusion_svc.state_machine import StateMachine
 from services.safety_guard.rules import RISKY_STATES, STATES
 from services.simulator.runner import build_events
 from services.simulator.scenario import Scenario, expected_at, load
@@ -108,7 +109,7 @@ class PersonOnly:
         return "IDLE"
 
 
-JUDGES = {"temp": TemperatureOnly, "person": PersonOnly}
+JUDGES = {"temp": TemperatureOnly, "person": PersonOnly, "fusion": StateMachine}
 
 
 @dataclasses.dataclass(frozen=True)
