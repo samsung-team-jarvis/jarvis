@@ -36,6 +36,7 @@
 | `stt/text` | audio_svc | `{text, wake: bool, conf?, audio_ms, stt_ms, speech_end_mono}` |
 | `vision/objects` | vision_svc | `{objects:[{cls, conf, bbox:[x1,y1,x2,y2]}], frame_id, pre_ms, npu_ms, post_ms}` |
 | `sensor/reading` | kitchen_gw | `{device_id, temperature_c, current_a?, raw?}` |
+| `device/state` | kitchen_gw | `{devices:{이름:{on, level}}, safe_stop: bool}` — `kitchen/state`(§4.2) 그대로 |
 | `fusion/state` | fusion_svc | `{state, prev_state, evidence:{...}, risk: none\|warn\|danger}` |
 | `llm/function_call` | llm_svc | `{call: <§3>, raw_text, valid: bool, fallback: bool, gen_ms, tokens}` |
 | `guard/decision` | safety_guard | `{call, decision: ALLOW\|REJECT\|ASK, reason}` |
@@ -53,6 +54,7 @@
 
   `seq`는 0 이상 2³¹−1 이하의 정수다(Unity의 C# `int`). `safety_guard`가 하나씩 올리고, **시작 번호는 시각에서 정해** 다시 시작해도 앞 번호와 겹치지 않게 한다 (`common.kitchen_link.first_seq`) — 가상 주방은 최근 `seq`를 기억해 같은 번호를 다시 실행하지 않기 때문이다 (§4.3). 타이머는 보드가 세고, 끝났을 때 `OFF`를 보낸다 (가상 주방은 타이머를 모른다).
 - `sensor/reading`의 `device_id`는 가열 장치 이름(`burner_1`, `burner_2`, `fryer`)이다. 전류(`current_a`)는 가상 주방에 없어 선택 필드로 바꿨다.
+- `device/state`는 가상 주방의 실제 장치 상태다 (FUS-08, #139). 보드 명령 없이 바뀐 경우(265°C 자체 차단, 생존 신호 끊김, 실패로 처리한 명령의 늦은 실행 — §4.3·§4.4)도 여기서 안다. `fusion_svc`는 이것을 가열 장치가 켜졌는지의 기준으로 쓴다. 봉투 시각은 `kitchen_gw`가 받은 순간이다.
 - `llm/function_call`의 필드 의미 (LLM-09, 코드: [`services/llm_svc/interpret.py`](../../services/llm_svc/interpret.py) `resolve`). `session_id`는 원래 `stt/text`의 것을 이어 쓴다.
 
   | 경우 | `valid` | `fallback` | `raw_text` | `gen_ms` | `tokens` |
@@ -210,7 +212,7 @@
  control/result   ◀─────────  kitchen/ack        ◀─────  바꿨다고 알린다
  sensor/reading   ◀─────────  kitchen/temp       ◀─────  온도를 계산해 보낸다 (1Hz)
                               kitchen/heartbeat  ─────▶  3초 끊기면 가열 장치 OFF (L0)
-                              kitchen/state      ◀─────  장치 상태
+ device/state     ◀─────────  kitchen/state      ◀─────  장치 상태
  vision_svc 입력  ◀────────────────────────────  kitchen/frame  (인식용 카메라, 4fps)
 ```
 
@@ -240,7 +242,7 @@
 2. 없으면 **같은 `seq`로 한 번** 다시 보낸다. 그래도 없으면 `control/result`를 `ok: false, retries: 1`로 낸다.
 3. 가상 주방은 이미 처리한 `seq`를 다시 받으면 **장치를 다시 바꾸지 않고** 확인만 다시 보낸다 (최근 `seq`를 기억한다).
 4. `control/result`의 `rtt_ms`는 `kitchen_gw`가 처음 보낸 때부터 확인을 받을 때까지의 시간이다. 실패하면 이유를 `reason`에 넣는다: `no_ack`(확인 없음), `invalid_command`(규격에 안 맞음), 또는 가상 주방이 준 이유.
-5. 알려진 한계: 확인을 못 받아 실패로 끝낸 명령을 가상 주방이 나중에 실행할 수 있다. 실제 상태는 `kitchen/state`가 기준이다.
+5. 알려진 한계: 확인을 못 받아 실패로 끝낸 명령을 가상 주방이 나중에 실행할 수 있다. 실제 상태는 `kitchen/state`(버스 `device/state`)가 기준이다.
 
 ### 4.4 가상 주방의 자체 안전장치 (안전 계층 L0)
 
@@ -296,3 +298,4 @@
 | 2026-10-29 | v0.2 | §2.1 비전 클래스는 COCO 사전학습 이름을 쓰고 기본 발행은 `person` (`vision/objects` 필드 변경 없음), §5 캡처 화면·클래스 항목 갱신 (#122, VIS-08) | 이현종 |
 | 2026-10-29 | v0.2 | §3.4 서비스에서 `context`를 채우는 출처 명시 (`state` ← `fusion/state`, `last_target` ← `llm_svc`의 마지막 명령 장치, 60초) — 필드 변경 없음 (#124, LLM-12) | 이현종 |
 | 2026-11-09 | v0.2 | §2.3 State 판정 기준과 `risk` 기준 확정 (주의 200°C · 위험 240°C, 방치 30초, `SAFE_STOP`은 100°C 아래로 식으면 해제), §4.5 구간 값 확정 — **필드 변경 없음** (#97, FUS-05) | 최지환 |
+| 2026-11-11 | v0.2 | §2 `device/state` 토픽 추가 — `kitchen_gw`가 `kitchen/state`를 그대로 옮긴다 (가상 주방이 스스로 바꾼 장치 상태를 보드가 알게). §4.1 그림 (#139, FUS-08) | 최지환 |
