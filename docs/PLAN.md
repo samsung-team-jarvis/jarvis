@@ -163,7 +163,7 @@
 - [x] LLM-07 LoRA/QLoRA v1 학습 (Colab), chat template·eos 고정 | 선행: LLM-05 | 담당: 이현종 (#88 — Qwen3-0.6B LoRA를 Mac에서 학습, 데이터 v2 test 72.6%(Mac fp16 참고값, 규칙 파서 82.5%보다 낮음). 입력 형식 [decision](./decisions/2026-10-06-llm-input-format.md). 더 큰 베이스용 Colab 노트북은 미검증)
 - [x] ~~LLM-08 fp16 병합 → rkllm-toolkit W8A8 변환 → 보드 측정~~ — 취소 (2026-10-29 → LLM-18). Mac Docker 변환 시도는 4시간 넘게 첫 층에서 멈춤(#113)
 - [x] LLM-09 `llm_svc`: `stt/text`+context → Function Call JSON, 검증 실패 시 규칙 파서 대체 | 선행: LLM-18, FUS-02 | 담당: 이현종 (#111 — Mac까지: `llm_svc --model`(HF)로 LLM 연결, 검증 실패 시 규칙 파서 대체, context는 `fusion/state`. v4 + 대체 test 89.2% / 88.8% (Mac 참고값). #118 — llama.cpp(GGUF) 생성기 `llm_svc --model *.gguf`. 보드 확인은 BOARD-08)
-- [ ] FUS-08 State Machine v1 (온도+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환
+- [x] FUS-08 State Machine v1 (온도+비전+음성 evidence 결합, stale context 만료) → `fusion/state` 발행 | 선행: FUS-05, VIS-08 | 담당: 최지환 (#139 — `services/fusion_svc`. 장치 상태는 `kitchen_gw`가 `kitchen/state`를 옮긴 `device/state`로 안다(합의: 이현종). simulator 시나리오 26개 재생: test State F1 1.000 · 위험 미탐 0/5, val 1.000 · 0/12 — 정답과 같은 규칙이라 구현 확인. MQTT·보드·Unity 미검증)
 - [ ] FUS-09 위험 감지 경로 (과열·방치) — LLM 무관, 감지→차단 지연 측정 | 선행: FUS-08 | 담당: 최지환
 - [x] ~~HW-09 ESP32 자체 하드 리밋~~ — 취소 (2026-10-05 → HW-18·HW-19)
 - [x] ~~HW-10 센서값 BLE notify~~ — 취소 (2026-10-05 → HW-19)

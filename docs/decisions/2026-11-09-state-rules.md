@@ -40,7 +40,7 @@
 ## Consequences
 - 장점: 정답 State를 같은 규칙으로 계산할 수 있다 (시나리오 26개의 `expected`, [simulator](../../services/simulator/README.md)). FUS-08은 이 표를 구현한다.
 - 단점: 정답과 State Machine이 같은 규칙에서 나오므로, 시나리오 F1은 "규칙을 맞게 구현했는가"를 본다. 실제 상황을 잘 판단하는지는 가상 주방 녹화(FUS-10)로 본다.
-- 열린 문제 (FUS-08에서 정함): 보드가 "가열 장치가 켜졌다"와 "가상 주방이 스스로 껐다(`safe_stop`)"를 어디서 아는가. `kitchen/state`는 지금 버스로 옮겨지지 않는다 (`kitchen_gw`는 온도만 `sensor/reading`으로 옮긴다).
+- 열린 문제 (FUS-08에서 정함): 보드가 "가열 장치가 켜졌다"와 "가상 주방이 스스로 껐다(`safe_stop`)"를 어디서 아는가. `kitchen/state`는 지금 버스로 옮겨지지 않는다 (`kitchen_gw`는 온도만 `sensor/reading`으로 옮긴다). → 2026-11-11 `kitchen_gw`가 `kitchen/state`를 버스 `device/state`로 옮기기로 정했다 (합의: 이현종, #139).
 - 영향: [interfaces](../architecture/interfaces.md) §2.3·§4.5, [simulator](../../services/simulator/README.md), [`safety_guard`](../../services/safety_guard/README.md) (규칙 변경 없음), PLAN FUS-05·07·08·09
 
 ## Verification
