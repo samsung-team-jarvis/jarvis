@@ -100,7 +100,20 @@
 | `PREHEAT` | 가열 장치가 켜져 있고 모두 100°C 아래 |
 | `IDLE` | 가열 장치가 모두 꺼짐 |
 
-`risk`: `DANGER`·`UNATTENDED`는 `danger`, 아니면 200°C 이상이거나 켜진 채 사람이 10초 이상 없으면 `warn`, 그 밖은 `none`. `evidence`의 필드는 State Machine(FUS-08)에서 정한다.
+`risk`: `DANGER`·`UNATTENDED`는 `danger`, 아니면 200°C 이상이거나 켜진 채 사람이 10초 이상 없으면 `warn`, 그 밖은 `none`.
+`fusion/state` (FUS-08, 코드: [`services/fusion_svc`](../../services/fusion_svc/README.md)):
+
+- State나 `risk`가 바뀌면 바로, 아니면 1초마다 낸다. `prev_state`는 지금 State 직전의 (다른) State다 (시작한 뒤 바뀐 적이 없으면 지금 State와 같다). `session_id`는 `fusion_svc`의 것이다 (여러 토픽의 근거를 묶어 이어 쓸 하나가 없다).
+- 가열 장치가 켜졌는지는 `device/state`, 온도는 `sensor/reading`, 사람은 `vision/objects`의 `person`, 긴급 정지는 `stt/text`의 긴급어(Safety Guard 빠른 경로와 같은 판단)와 허용된 `EMERGENCY_STOP`(`guard/decision`)으로 안다.
+- 오래된 근거는 믿지 않는다: 화면이 2초, 온도가 3초 끊기면 그 값을 버린다. 화면이 끊기면 사람이 없는 것으로 본다. 온도를 모르는 장치로는 `DANGER`·`COOKING`을 판정하지 않고, `SAFE_STOP`도 풀지 않으며, 켜져 있으면 `risk`를 `warn`으로 올린다.
+
+| `evidence` 필드 | 값 |
+|---|---|
+| `heaters` | `{burner_1·burner_2·fryer: {on, level, temperature_c}}` — `temperature_c`는 끊겼거나 받은 적 없으면 `null` |
+| `person` | 사람이 보이면 `true`, 안 보이면 `false`, 화면이 끊겼으면 `null` |
+| `absent_s` | 가열 장치가 켜진 채 사람이 없는 시간(초, 켜진 때부터) |
+| `safe_stop` | `SAFE_STOP`의 원인 `emergency`(긴급 정지)·`kitchen`(가상 주방의 자체 차단), 아니면 `null` |
+| `stale` | 믿지 않는 근거 목록: `vision`, `devices`(장치 상태가 12초 넘게 없음 — 마지막 값은 유지), 온도가 끊긴 가열 장치 이름 |
 
 ## 3. Function Call 스키마 (LLM 출력)
 
@@ -299,3 +312,4 @@
 | 2026-10-29 | v0.2 | §3.4 서비스에서 `context`를 채우는 출처 명시 (`state` ← `fusion/state`, `last_target` ← `llm_svc`의 마지막 명령 장치, 60초) — 필드 변경 없음 (#124, LLM-12) | 이현종 |
 | 2026-11-09 | v0.2 | §2.3 State 판정 기준과 `risk` 기준 확정 (주의 200°C · 위험 240°C, 방치 30초, `SAFE_STOP`은 100°C 아래로 식으면 해제), §4.5 구간 값 확정 — **필드 변경 없음** (#97, FUS-05) | 최지환 |
 | 2026-11-11 | v0.2 | §2 `device/state` 토픽 추가 — `kitchen_gw`가 `kitchen/state`를 그대로 옮긴다 (가상 주방이 스스로 바꾼 장치 상태를 보드가 알게). §4.1 그림 (#139, FUS-08) | 최지환 |
+| 2026-11-11 | v0.2 | §2.3 `fusion/state`의 발행 시점·`prev_state`·`evidence` 필드, 근거 만료 (#139, FUS-08) | 최지환 |
