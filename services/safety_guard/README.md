@@ -62,6 +62,19 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 
 - 명령 해석(llm_svc)도 같은 말을 `EMERGENCY_STOP`으로 낸다. 빠른 경로로 정지한 뒤 3초 안에 온 `EMERGENCY_STOP`은 같은 요청으로 보고 다시 실행하지 않는다.
 
+## 자동 차단 (`auto_stop.py`, FUS-09)
+
+`fusion/state`의 근거(`evidence`)를 받을 때마다 본다 ([decision](../../docs/decisions/2026-11-11-auto-stop.md)). LLM·사람을 기다리지 않는다.
+
+| 위험 | 언제 끄나 | 무엇을 | `guard/decision`의 `reason` |
+|---|---|---|---|
+| 과열 | 켜진 가열 장치가 240°C 이상이면 바로 | 그 장치만 | `자동 차단: 과열 (1번 화구 241°C)` |
+| 방치 | 켜진 채 사람이 60초 없으면 (방치 30초 + 경고 뒤 유예 30초) | 켜진 가열 장치 | `자동 차단: 방치 (사람 없음 60초)` |
+
+- 판정은 `ALLOW`인 `TURN_OFF`로 내고, `control/command`(`OFF`)로 보낸다 — 음성 응답은 평소처럼 "1번 화구를 껐습니다." `session_id`는 받은 `fusion/state`의 것이다.
+- 후드·조명 등은 끄지 않는다. 끄라고 보낸 장치가 3초 뒤에도 켜져 있으면 다시 보낸다.
+- 감지 → 차단 지연: `python -m bench.danger_path data/sessions/` ([bench](../../bench/README.md)).
+
 ## 제어 명령 (`control/command`)
 
 | 허용된 명령 | `cmd` | `target` | `value` |
@@ -81,11 +94,11 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 | 항목 | 내용 |
 |---|---|
 | 입력 | `llm/function_call`, `fusion/state`, `stt/text` |
-| 출력 | `guard/decision` (명령마다), `control/command` (허용된 제어만), `system/heartbeat` (1초) |
+| 출력 | `guard/decision` (명령마다, 자동 차단마다), `control/command` (허용된 제어·자동 차단만), `system/heartbeat` (1초) |
 | 설정 | `--bus`, `--session`, `--assume-state`(개발용), `--quiet` |
 | 자원 | CPU 무시할 수준 (규칙 판정 1건 1ms 미만) |
 | 실패 시 | 상태 입력이 없으면 화구 켜기·세기 거부. 형식이 틀린 명령은 거부. 이 서비스가 죽으면 제어 명령이 나가지 않는다 (장치는 그대로) — 가열 장치의 최종 안전은 가상 주방 쪽 안전장치(L0, HW-18)가 맡는다 |
-| 하지 않는 일 | 과열·방치 자동 차단(FUS-09), 결제 실행(HW-23), 타이머 실행 |
+| 하지 않는 일 | 결제 실행(HW-23), 타이머 실행 |
 
 ## 확인 기록
 
@@ -93,3 +106,4 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 |---|---|---|
 | 2026-10-05 | Windows PC, `memory://` | 단위 테스트: 판정 규칙, 긴급어, 서비스 발행·중복 정지 무시, llm_svc와 이은 "후드 켜 줘" → `control/command`. MQTT·보드는 미검증 (이 PC에 브로커 없음) |
 | 2026-10-09 | Windows PC, `memory://` | 스키마 v0.2: 튀김기 판정, 결제 확인 흐름, `control/command`가 `kitchen_link.validate_command`를 통과, Hard Negative v2 `expect_guard` 34건 일치. MQTT·보드·가상 주방은 미검증 |
+| 2026-11-11 | Windows PC, `memory://` | 자동 차단(FUS-09, #143): 가짜 가상 주방 + `kitchen_gw` + `fusion_svc`와 이어 세기 3 화구가 240°C에서 꺼짐(265°C 자체 차단 전), 후드 유지, 방치 60초 차단·사람이 돌아오면 다시 셈. MQTT·보드·Unity는 미검증 |
