@@ -1,3 +1,5 @@
+import threading
+
 from common.bus import MemoryBus
 from common.messages import Envelope
 from services.llm_svc.service import LlmService
@@ -57,3 +59,112 @@ def test_stt_fixes_applied_before_parsing() -> None:
 
     assert got[0].payload["call"] == {"action": "CANCEL_TIMER"}
     assert got[0].payload["raw_text"] == "타이머 취소해줘."  # 파서가 본 문장 (원문은 stt/text에)
+
+
+def state(name: str) -> Envelope:
+    payload = {"state": name, "prev_state": "IDLE", "evidence": {}, "risk": "none"}
+    return Envelope.new("fusion/state", "fusion_svc", payload, "s_fusion")
+
+
+def test_llm_output_is_published_with_latest_state_as_context() -> None:
+    bus, got, seen = MemoryBus(), [], []
+
+    def llm(text: str, context: dict) -> tuple[str, int]:
+        seen.append((text, context))
+        return "<jarvis_3>(target=burner_1, level=1)<jarvis_end>", 9
+
+    bus.subscribe("llm/function_call", got.append)
+    LlmService(bus, "s_llm", generate=llm).start()
+    bus.publish(state("COOKING"))
+
+    bus.publish(stt("자비스 일번 불 약하게.", wake=True))
+
+    # 숫자 정규화 (#130): "일번" → "1번"
+    assert seen == [("1번 불 약하게", {"state": "COOKING", "last_target": None})]
+    p = got[0].payload
+    assert p["call"] == {"action": "SET_LEVEL", "target": "burner_1", "level": 1}
+    assert p["raw_text"] == "<jarvis_3>(target=burner_1, level=1)<jarvis_end>"  # LLM 출력
+    assert (p["valid"], p["fallback"], p["tokens"]) == (True, False, 9)
+
+
+def test_invalid_llm_output_falls_back_to_rule_parser() -> None:
+    bus, got = MemoryBus(), []
+    bus.subscribe("llm/function_call", got.append)
+    service = LlmService(
+        bus, "s_llm", generate=lambda t, c: ("<jarvis_1>(target=sonar)<jarvis_end>", 8)
+    )
+    service.start()
+
+    bus.publish(stt("자비스 후드 켜 줘.", wake=True))
+
+    p = got[0].payload
+    assert p["call"] == {"action": "TURN_ON", "target": "hood"}
+    assert p["raw_text"] == "후드 켜 줘."  # 규칙 파서에 넣은 문장
+    assert (p["valid"], p["fallback"], p["tokens"]) == (False, True, 8)
+    assert service.fallbacks == 1
+
+
+def test_state_defaults_to_idle_before_any_fusion_state() -> None:
+    bus, seen = MemoryBus(), []
+    LlmService(bus, "s_llm", generate=lambda t, c: (seen.append(c) or "", 0)).start()
+    bus.publish(stt("자비스 후드 켜 줘.", wake=True))
+    assert seen == [{"state": "IDLE", "last_target": None}]
+
+
+def test_background_worker_keeps_the_subscriber_free() -> None:
+    bus, got = MemoryBus(), []
+    bus.subscribe("llm/function_call", got.append)
+    release = threading.Event()
+
+    def slow_llm(text, context):
+        release.wait(5)  # 생성 중
+        return "<jarvis_1>(target=hood)<jarvis_end>", 7
+
+    service = LlmService(bus, "s_llm", generate=slow_llm, background=True)
+    service.start()
+
+    # 구독 핸들러는 생성을 기다리지 않고 바로 돌아온다
+    bus.publish(stt("자비스 후드 켜 줘.", wake=True))
+    bus.publish(stt("자비스 후드 켜 줘.", wake=True))
+    assert got == []
+    release.set()
+    service.wait_idle()
+
+    assert [m.payload["call"] for m in got] == [{"action": "TURN_ON", "target": "hood"}] * 2
+    assert service.published == 2
+
+
+def test_last_device_is_given_as_context_until_it_gets_old() -> None:
+    bus, seen = MemoryBus(), []
+    now = [100.0]
+    answers = iter(
+        [
+            "<jarvis_1>(target=hood)<jarvis_end>",  # 후드 켜 줘
+            "<jarvis_2>(target=hood)<jarvis_end>",  # 그거 꺼 줘
+            "<jarvis_2>(target=all)<jarvis_end>",  # 다 꺼 — 전체는 "그거"가 아니다
+            "<jarvis_9>()<jarvis_end>",
+            "<jarvis_9>()<jarvis_end>",
+        ]
+    )
+
+    def llm(text, context):
+        seen.append(context["last_target"])
+        return next(answers), 5
+
+    LlmService(bus, "s_llm", generate=llm, clock=lambda: now[0]).start()
+    for text in ["자비스 후드 켜 줘.", "자비스 그거 꺼 줘.", "자비스 다 꺼."]:
+        bus.publish(stt(text, wake=True))
+    now[0] += 59
+    bus.publish(stt("자비스 그거 켜 줘.", wake=True))
+    now[0] += 61  # 마지막 장치를 말한 지 60초가 지남
+    bus.publish(stt("자비스 그거 켜 줘.", wake=True))
+
+    assert seen == [None, "hood", "hood", "hood", None]
+
+
+def test_rule_parser_results_also_set_the_last_device() -> None:
+    bus = MemoryBus()
+    service = LlmService(bus, "s_llm")
+    service.start()
+    bus.publish(stt("자비스 1번 화구 켜 줘.", wake=True))
+    assert service.context()["last_target"] == "burner_1"

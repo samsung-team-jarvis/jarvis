@@ -68,6 +68,8 @@ cd ..
 
 소리 중 말하는 구간만 골라낸다. 말이 끝나고 `min_silence`(0.5 s)만큼 조용해야 "발화 끝"이다. 발화 끝 → 발행 시간의 대부분이 이 대기다 (조정은 STT-11).
 
+VAD는 말이 시작됐다고 판단한 곳부터 자르므로 "자"처럼 약하게 시작하는 첫 음절이 빠진다 ("자비스" → "비스" → 호출어 실패). 그래서 받은 오디오를 남겨 두고 **구간 앞에 0.3초를 더 붙인다** (`pre_roll_s`, #128). spk01 val 40문장을 서비스와 같은 구간 자르기로 받아쓰면 호출어 인식 19/34 → 31/34, CER 18.5% → 7.9% (Mac, 2026-10-29). 아래 2026-10-02 확인 기록은 파일을 통째로 받아쓴 값이라 이 문제가 드러나지 않았다.
+
 ### 호출어
 
 `wake.py` (Q-08) — 받아쓴 문장이 호출어로 **시작할 때만** 명령으로 본다.
@@ -98,7 +100,7 @@ TTS 모델이 없으면 경고만 내고 STT는 계속 동작한다. `CHECK_STAT
 | 입력 | 마이크(`sounddevice`, 16kHz mono) / wav · `guard/decision` · `fusion/state` |
 | 출력 | `stt/text` `{text, wake, audio_ms, stt_ms, speech_end_mono}` ([interfaces](../../docs/architecture/interfaces.md) §2), `system/heartbeat` 1초마다, 스피커 |
 | `speech_end_mono` | 발화 마지막 샘플이 들어온 시각(`time.monotonic`) — 지연 측정의 출발점. 마이크는 콜백 시각 기준이라 실제보다 수십 ms 늦다 |
-| VAD | threshold 0.5, min_silence 0.5 s, min_speech 0.25 s, max_speech 20 s (특강 p.36) |
+| VAD | threshold 0.5, min_silence 0.5 s, min_speech 0.25 s, max_speech 20 s (특강 p.36), 앞여유 0.3 s (#128) |
 | 실행 장치 | CPU — STT 4스레드, TTS 2스레드 (특강 p.34). NPU는 LLM·YOLO 몫 |
 | 실패 시 | 모델 없음 → 원인·받는 방법 안내 후 종료(코드 1). 빈 받아쓰기(잡음)는 발행하지 않음. 마이크 입력이 3초간 완전히 0이면 권한 경고 |
 | 아직 안 하는 일 | 호출어만 말한 뒤 다음 발화를 이어 받기, 소음 대응 VAD 조정(STT-11) |

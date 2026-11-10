@@ -11,7 +11,7 @@
                                                                               ▼
              ┌──────────── fusion_svc (State Machine + 현재 Context) ────────────┐
              │     stt/text + context ↓              ↑ llm/function_call         │
-             │   llm_svc : 제공 FastAPI LLM 서버(RKLLM .rkllm, NPU)에 HTTP 요청   │
+             │   llm_svc : llama.cpp(GGUF 8비트, CPU)로 생성 (2026-10-29~)       │
              │              (출력 파싱·검증, 실패 시 규칙 파서로 대체)            │
              └─────────────────────────────┬─────────────────────────────────────┘
                                            ▼
@@ -70,8 +70,8 @@ RK3588/RK3588S NPU: 6 TOPS, 3코어. 하드웨어 상세는 [hardware](./hardwar
 |---|---|---|
 | VAD, STT | CPU 4스레드 | 학교 특강 기본 배치. sherpa-onnx RKNN 빌드로 NPU 실행도 가능하지만 NPU는 LLM·YOLO가 쓰므로 CPU 유지 |
 | TTS (한국어 VITS) | CPU 2스레드 | 음성 응답·경고. 재생 중에는 마이크 입력을 무시(에코 방지) |
-| YOLOv8n | NPU (LLM과 공유) | 3~5fps면 "방치" 판단에 충분. 입력은 가상 주방의 캡처 화면. LLM이 3코어를 모두 쓰므로 **동시 구동 시 서로 느려지는 정도를 BOARD-08에서 측정**하고, 필요하면 LLM 생성 중 YOLO를 잠시 멈추거나 fps를 낮춘다 |
-| LLM | NPU 3코어 | 학교 도커 기준 `num_npu_core: 3` 전 팀 고정. 제공 FastAPI 서버로 서빙 |
+| YOLOv8n | NPU (단독) | 3~5fps면 "방치" 판단에 충분. 입력은 가상 주방의 캡처 화면. 2026-10-29부터 LLM이 NPU를 쓰지 않아 NPU를 혼자 쓴다 |
+| LLM | CPU (llama.cpp, GGUF 8비트) | 2026-10-29 RKLLM(NPU) 대신 ([decision](../decisions/2026-10-29-llamacpp-and-rebalance.md)). STT와 CPU를 나눠 쓰므로 스레드 배분·동시 구동 속도를 BOARD-08에서 측정 |
 | 전처리·후처리(NMS) | CPU | 병목이 되기 쉬움 → 구간별 시간 측정 |
 | 가상 주방 (장면 그리기) | 보드 밖의 PC | 보드 자원을 쓰지 않는다 |
 

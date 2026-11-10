@@ -180,3 +180,140 @@ LoRA로 학습해 베이스에 병합하고 fp16 HF 모델로 저장한다. 같�
 7. 군말·머뭇거림 — 네로 답함
 
 보드의 양자화 모델은 LLM-08 뒤에 같은 도구로 다시 분류한다.
+
+## 보강과 LoRA v2 (LLM-11)
+
+val 오류 유형(위 표)마다 새 템플릿을 [`augment_sheet.yaml`](./augment_sheet.yaml)에 쓰고 train에만 더한다. **데이터 v2 시트는 고치지 않는다** — 고치면 val·test가 바뀌어 같은 test로 비교할 수 없다.
+
+```bash
+python -m training.llm.build_augment                                                  # → data/llm/augment_v1.jsonl
+.venv-llm/bin/python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --name llm_qwen3-0.6b_jarvis_v2
+```
+
+- **누수 방지**: val·test·STT 대본과 띄어쓰기를 지운 문장이 같거나, 글자 두 개 조각이 60% 이상 겹치는 문장은 뺀다 (테스트로 확인). train과 같은 문장도 뺀다.
+- 템플릿 하나에서 최대 12문장 (장치·값을 돌아가며) — 슬롯이 많은 템플릿이 보강을 다 차지하지 않게.
+- 보강 v1: **208문장** (템플릿 21개, 비슷해서 뺀 문장 18개). 겨냥한 유형: 지원 외를 실행 74 · 다른 함수 62 · 규칙 위반 24 · 지원 외로 거절 24 · 불필요한 되묻기 12 · 값 틀림 12.
+
+### 결과 (2026-10-06, Mac 참고값)
+
+바꾼 것은 학습 데이터 하나다 (베이스·설정·지시문·평가 모두 v1과 같음).
+
+| 데이터 v2 test (n=474) | Action Acc | Entity Acc | Valid Rate | 틀린 수 | 틀린 실행 |
+|---|---|---|---|---|---|
+| 규칙 파서 | 82.5% | 82.1% | 100% | | |
+| LoRA v1 | 72.6% | 71.1% | 96.0% | 137 | 20 |
+| **LoRA v2** (+ 보강 208) | **78.5%** | **77.6%** | **96.6%** | **106** | **11** |
+
+- test에서 6%p 올랐고, 장치·결제를 잘못 움직이는 오류(틀린 실행)가 20건에서 11건으로 줄었다. 아직 규칙 파서보다 낮다.
+- test의 "불필요한 되묻기"는 42건 그대로다 (오류 유형 수만 셌고, test 문장은 보지 않았다).
+- val은 83.9% → 94.9%, 틀린 수 86 → 29건. **보강 방향을 val 오류로 정했으므로 v2의 val 수치는 낙관적이다.** 비교는 test로 한다.
+- loss: val 0.038 → 0.024 → 0.021 (v1과 달리 3 epoch째에도 내려갔다).
+
+## 데이터 양·다양성 실험 (LLM-15)
+
+다른 팀(기능 5개)은 기능 하나에 학습 문장이 약 1,500개, 우리는 약 170개다. 문장을 늘리는 방법 두 가지를 **같은 수(875문장)**로 비교했다. 둘 다 train에만 더하고 val·test는 그대로다.
+
+```bash
+python -m training.llm.build_augment --sheet training/llm/variety_sheet.yaml \
+    --out data/llm/variety_v1.jsonl --exclude data/llm/augment_v1.jsonl     # B: 새 말투
+python -m training.llm.build_more                                           # A: 같은 말투 (B와 같은 수)
+.venv-llm/bin/python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl \
+    --extra data/llm/variety_v1.jsonl --name llm_qwen3-0.6b_jarvis_v3b
+```
+
+- **A — 같은 말투 더** ([`build_more.py`](./build_more.py)): 가족이 train인 템플릿에서 아직 안 쓴 장치·세기·시간 조합을 뽑는다. 문장이 고정된 템플릿(긴급 정지·결제)은 더 뽑을 게 없어 켜기·타이머·되묻기에 몰린다.
+- **B — 새 말투** ([`variety_sheet.yaml`](./variety_sheet.yaml)): 새 템플릿 131개, Action 14개에 고르게. val·test 오류를 보고 정하지 않았다 (생성: Claude, 사람 검수 전). 비슷해서 뺀 문장 934개.
+
+### 결과 (2026-10-13, Mac 참고값)
+
+바꾼 것은 더한 문장 묶음 하나다 (베이스·설정·지시문·평가 모두 LoRA v2와 같음. 문장이 늘어 갱신 횟수는 453 → 618).
+
+| 데이터 v2 test (n=474) | Action Acc | Entity Acc | Valid Rate | 틀린 수 | 틀린 실행 |
+|---|---|---|---|---|---|
+| 규칙 파서 | 82.5% | **82.1%** | 100% | 85 | 13 |
+| LoRA v2 (기준, 2,406문장) | 78.5% | 77.6% | 96.6% | 106 | 11 |
+| v3a: A 같은 말투 +875 | 79.3% | 75.3% | 97.0% | 117 | **33** |
+| **v3b: B 새 말투 +875** | **83.5%** | 80.6% | **99.8%** | **92** | 12 |
+
+- **양보다 말투 다양성이다.** 같은 수를 더했는데 A는 틀린 수가 늘고(106 → 117) B는 줄었다(106 → 92).
+- A는 "지원 외로 거절"이 26 → 6건으로 줄었지만 "다른 함수"가 11 → 33건으로 늘어, **틀린 실행이 3배**가 됐다. 같은 템플릿을 더 보면 처음 보는 말에도 실행하는 쪽으로 기운다.
+- B는 Action이 처음으로 규칙 파서를 넘었지만 Entity(80.6%)는 아직 낮다. "값 틀림"이 3 → 12건 — 주로 되묻기에서 빠진 항목(`missing`)을 틀린다.
+- test는 오류 유형 수만 셌고 문장은 보지 않았다. val: v3a 94.5% · v3b 95.9% (v2 94.9%).
+
+### v3b의 val 오류 (22건) — 다음 보강의 방향
+
+| 묶음 | 건수 | 예 |
+|---|---|---|
+| 긴급 정지를 다른 함수로 | 4 | "스탑" → 네, "그만해" → 아니요, "사고 났어 다 꺼" → 끄기(all) |
+| 머뭇거림을 "네"·지원 외로 | 4 | "음 그러니까", "아 그러니까" → 네 |
+| 되물어야 하는데 실행·거절 | 7 | "타이머 90분" → 90분(범위 밖), "에어컨 18도로" → 지원 외, "음악 더 작게" → 세기 1 |
+| 가게 일을 결제 함수로 | 4 | "주문 받아 줘" → 네, "오늘 매출 얼마야" → 금액 확인 |
+| 그 밖 | 3 | "요리 다 끝났어 불 다 꺼도 돼" → 장치 되묻기 |
+
+## 새 말투 v2와 LoRA v4 (LLM-16)
+
+v3b의 val 오류(위 표)와 페르소나 말버릇으로 새 템플릿 63개를 [`variety_sheet_v2.yaml`](./variety_sheet_v2.yaml)에 쓰고 train에만 526문장을 더했다 (비슷해서 뺀 문장 608개). val·test는 그대로다.
+
+```bash
+python -m training.llm.build_augment --sheet training/llm/variety_sheet_v2.yaml --out data/llm/variety_v2.jsonl \
+    --exclude data/llm/augment_v1.jsonl --exclude data/llm/variety_v1.jsonl
+.venv-llm/bin/python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/variety_v1.jsonl \
+    --extra data/llm/variety_v2.jsonl --name llm_qwen3-0.6b_jarvis_v4
+```
+
+- 긴급 빠른 경로(`services/safety_guard/emergency.py`)가 긴급 정지로 처리하는 말은 정답도 긴급 정지인지 테스트로 확인한다 (`tests/training/test_variety_sheets.py`).
+
+### 결과 (2026-10-13, Mac 참고값)
+
+바꾼 것은 더한 문장 묶음 하나다 (v3b 학습 데이터 + `variety_v2.jsonl`, 3,807문장. 갱신 횟수 618 → 714, 49분).
+
+| 데이터 v2 test (n=474) | Action Acc | Entity Acc | Valid Rate | 틀린 수 | 틀린 실행 |
+|---|---|---|---|---|---|
+| 규칙 파서 | 82.5% | 82.1% | 100% | 85 | 13 |
+| v3b (새 말투 v1) | 83.5% | 80.6% | 99.8% | 92 | 12 |
+| **v4 (+ 새 말투 v2)** | **86.9%** | **86.5%** | 97.5% | **64** | **11** |
+
+- **Entity도 처음으로 규칙 파서를 넘었다** (82.1% → 86.5%). 틀린 실행은 늘지 않았다 (12 → 11).
+- 줄어든 것: 불필요한 되묻기 37 → 20, 다른 함수 14 → 6, 값 틀림 12 → 2, 지원 외로 거절 24 → 20. 되묻기(ASK_CLARIFY) Entity 50.0% → 88.6%.
+- 늘어난 것: **규칙 위반 1 → 12** (모양은 맞는데 없는 이름·인자 — Guard가 막지만 Valid가 99.8% → 97.5%로 내려갔다).
+- 그대로인 것: 긴급 정지 오판 7 → 7 (EMERGENCY_STOP Action 71.4%), SET_LEVEL 66.0%. 실제 흐름에서는 긴급 단어를 빠른 경로가 LLM보다 먼저 처리한다.
+- val은 98.8% / 98.8% / 100% (v3b 95.9%)이지만 **v2 시트를 v3b val 오류로 만들었으니 낙관적이다.** 비교는 test로 한다.
+- test는 v2부터 다섯 번 비교에 썼다. 비교에만 쓰고 보강 방향은 정하지 않았지만, 같은 test로 고르기를 거듭할수록 test도 조금씩 낙관적이 된다.
+- 기록: 이 실험의 오류 집계 중 `bench/llm_errors.py`가 test 오답 예시 문장 16개를 한 번 출력했다. 그 문장은 보강에 쓰지 않는다. 그 뒤로 test는 `--counts-only`(건수 표만)로 센다.
+
+### v4의 val 오류 (6건)
+
+| 묶음 | 건수 | 예 |
+|---|---|---|
+| 머뭇거림을 네·아니요로 | 3 | "어/음/아 그러니까" → 네·아니요 (되물어야 함) |
+| 결제 요청으로 실행 | 2 | "주문 확인해 줘"(지원 외), "결제하지 마"(아니요) → 결제 요청 — "결제할까요?" 확인 단계가 막는다 |
+| 끄기를 되물음 | 1 | "요리 다 끝났어 불 다 꺼도 돼" → 장치 되묻기 (v3b부터 그대로) |
+
+- 틀린 실행은 val에서 12 → 4건이다. 남은 넷 중 둘이 결제 요청이라 다음 보강은 "결제하지 마"류 부정과 주문·매출 같은 가게 일이다.
+
+## 새 말투 v3와 LoRA v5 (LLM-17) — 같은 test로 마지막 비교
+
+v4의 val 오류 6건만 보고 새 템플릿 18개를 [`variety_sheet_v3.yaml`](./variety_sheet_v3.yaml)에 쓰고 train에만 162문장을 더했다: 결제를 하지 말라는 말(→ 아니요, 기존 보강에 하나도 없었다), 주문·결제 내역(→ 지원 외), 머뭇거림만(→ 되묻기)과 머뭇거린 뒤 네·아니요, "불 다 꺼"(→ 전체 끄기)와 "불 꺼"(→ 장치 되묻기)의 대비. test에서만 늘어난 규칙 위반은 겨냥하지 않았다.
+
+```bash
+python -m training.llm.build_augment --sheet training/llm/variety_sheet_v3.yaml --out data/llm/variety_v3.jsonl \
+    --exclude data/llm/augment_v1.jsonl --exclude data/llm/variety_v1.jsonl --exclude data/llm/variety_v2.jsonl
+.venv-llm/bin/python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/variety_v1.jsonl \
+    --extra data/llm/variety_v2.jsonl --extra data/llm/variety_v3.jsonl --name llm_qwen3-0.6b_jarvis_v5
+```
+
+### 결과 (2026-10-13, Mac 참고값)
+
+바꾼 것은 더한 문장 묶음 하나다 (v4 학습 데이터 + `variety_v3.jsonl`, 3,969문장. 갱신 횟수 714 → 747, 52분).
+
+| 데이터 v2 test (n=474) | Action Acc | Entity Acc | Valid Rate | 틀린 수 | 틀린 실행 | 긴급 정지 오판 |
+|---|---|---|---|---|---|---|
+| 규칙 파서 | 82.5% | 82.1% | 100% | 85 | 13 | 8 |
+| v4 | 86.9% | 86.5% | 97.5% | 64 | 11 | 7 |
+| v5 (+ 새 말투 v3) | 87.3% | 86.3% | 98.3% | 65 | 10 | 8 |
+
+- **v4와 v5는 같다고 본다.** 차이가 문장 한두 개(0.2~0.4%p)라 학습 한 번의 흔들림보다 작다고 말할 수 없다.
+- val도 6 → 6건이다. v4가 틀린 6건 중 5건은 고쳤지만 다른 5건이 새로 틀렸다 ("스탑" → 네, "타이머 90분" → 90분, "타이머" → 타이머 취소, "계란 반숙으로 7분만 알려줘" → 타이머에 장치 자리만 넣음(규칙 위반), "주문 들어왔어" → 결제 요청). 고친 곳 옆이 다시 틀리는 모양이라, **val 오류를 보고 문장을 더하는 방법은 이 모델(0.6B LoRA)에서 한계에 왔다.**
+- 그래서 대표 모델은 **v4로 둔다** (더 적은 데이터로 같은 결과). v5는 기록만 남긴다.
+- 같은 test로 고르는 일은 여기서 멈춘다. 다음 비교는 보드 변환(LLM-08) 뒤, 또는 새 test에서 한다.
+- 남은 방향 (데이터를 더 넣는 것 말고): 출력 검증 실패(규칙 위반·범위 밖 값)를 규칙 파서나 되묻기로 넘기는 처리, 더 큰 모델(1B급), 여러 seed로 학습해 흔들림 재기.

@@ -6,6 +6,9 @@ services:
     module: services.recorder
   - name: kitchen_gw          # 가상 주방(또는 services.kitchen_gw.fake_kitchen)이 없어도 뜬다
     module: services.kitchen_gw
+  - name: safety_guard
+    module: services.safety_guard
+    # args: [--assume-state, COOKING]   # 상황 인식(fusion_svc) 전에 화구까지 켜 보려면
   - name: llm_svc
     module: services.llm_svc
   - name: audio_svc

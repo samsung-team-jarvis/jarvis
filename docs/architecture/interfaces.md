@@ -51,12 +51,20 @@
   | `OFF` | 개별 장치 또는 `all` | `0` | `TURN_OFF`, `EMERGENCY_STOP`(`all`), 타이머 만료 |
   | `LEVEL` | 개별 장치 | `1`·`2`·`3` | `SET_LEVEL` |
 
-  `seq`는 0 이상의 정수이고 `safety_guard`가 세션 안에서 하나씩 올린다. 타이머는 보드가 세고, 끝났을 때 `OFF`를 보낸다 (가상 주방은 타이머를 모른다).
+  `seq`는 0 이상 2³¹−1 이하의 정수다(Unity의 C# `int`). `safety_guard`가 하나씩 올리고, **시작 번호는 시각에서 정해** 다시 시작해도 앞 번호와 겹치지 않게 한다 (`common.kitchen_link.first_seq`) — 가상 주방은 최근 `seq`를 기억해 같은 번호를 다시 실행하지 않기 때문이다 (§4.3). 타이머는 보드가 세고, 끝났을 때 `OFF`를 보낸다 (가상 주방은 타이머를 모른다).
 - `sensor/reading`의 `device_id`는 가열 장치 이름(`burner_1`, `burner_2`, `fryer`)이다. 전류(`current_a`)는 가상 주방에 없어 선택 필드로 바꿨다.
-- `llm/function_call`을 규칙 파서가 만들면(LLM 연결 전, 또는 LLM 출력 검증 실패 시 대체): `fallback: true`, `tokens: 0`, `raw_text`는 파서에 넣은 명령 문장, `gen_ms`는 파싱 시간. `session_id`는 원래 `stt/text`의 것을 이어 쓴다.
+- `llm/function_call`의 필드 의미 (LLM-09, 코드: [`services/llm_svc/interpret.py`](../../services/llm_svc/interpret.py) `resolve`). `session_id`는 원래 `stt/text`의 것을 이어 쓴다.
 
-### 2.1 비전 클래스 (VIS-02에서 확정)
-후보: `pan, pot, burner_on, burner_off, fryer_basket, spatula, hand` + COCO 기본 `person` 활용 검토
+  | 경우 | `valid` | `fallback` | `raw_text` | `gen_ms` | `tokens` |
+  |---|---|---|---|---|---|
+  | 규칙 파서만 (LLM 없음) | `true` | `true` | 파서에 넣은 명령 문장 | 파싱 시간 | `0` |
+  | LLM 출력이 검증 통과 | `true` | `false` | LLM 출력 (함수 토큰) | LLM 생성 + 검증 시간 | LLM 생성 토큰 수 |
+  | LLM 출력이 검증 실패 → 규칙 파서로 대체 | `false` | `true` | 파서에 넣은 명령 문장 | LLM 생성 + 검증 + 파싱 시간 | LLM 생성 토큰 수 |
+
+  검증은 `parse_tokens`(형식·함수 번호·장치 이름·꼭 필요한 인자·값 범위)다. `call`은 어느 경우든 §3 스키마를 통과한다.
+
+### 2.1 비전 클래스
+2026-10-29부터 COCO 사전학습 YOLOv8n의 클래스 이름을 그대로 쓴다. 기본 발행은 `person` 하나 — 방치 판단(가열 장치 켜짐 + 사람 없음)에 필요한 것이다 ([decision](../decisions/2026-10-29-vision-pretrained-person.md), [vision_svc](../../services/vision_svc/README.md)). 맞춤 클래스 후보 `pan, pot, burner_on, burner_off, fryer_basket, spatula, hand`는 가상 주방 화면 캡처가 생기면 학습한다 (VIS-02~04).
 
 ### 2.2 장치 target (v0.2, LLM-13)
 
@@ -79,7 +87,18 @@
 - 켤 때(`TURN_ON`) 세기는 1. 결제시스템은 장치(target)가 아니라 Action으로 다룬다 (§3.1).
 
 ### 2.3 State (FUS-01 확정)
-`IDLE, PREHEAT, COOKING, UNATTENDED, DANGER, SAFE_STOP` — 전이 조건은 상황 인식(FUS-05)에서 정한다.
+`IDLE, PREHEAT, COOKING, UNATTENDED, DANGER, SAFE_STOP` — 판정 기준은 FUS-05에서 정했다 ([decision](../decisions/2026-11-09-state-rules.md)). 1초마다 위에서부터 먼저 맞는 것:
+
+| State | 조건 |
+|---|---|
+| `SAFE_STOP` | 긴급 정지 또는 가상 주방의 자체 차단(§4.4) 뒤, 가열 장치가 모두 꺼지고 모두 100°C 아래로 식을 때까지 |
+| `DANGER` | 가열 장치 하나라도 240°C 이상 (230°C 아래로 내려가면 해제) |
+| `UNATTENDED` | 가열 장치가 켜진 채 사람(`person`)이 30초 연속 없음 |
+| `COOKING` | 켜진 가열 장치 중 하나라도 100°C 이상 |
+| `PREHEAT` | 가열 장치가 켜져 있고 모두 100°C 아래 |
+| `IDLE` | 가열 장치가 모두 꺼짐 |
+
+`risk`: `DANGER`·`UNATTENDED`는 `danger`, 아니면 200°C 이상이거나 켜진 채 사람이 10초 이상 없으면 `warn`, 그 밖은 `none`. `evidence`의 필드는 State Machine(FUS-08)에서 정한다.
 
 ## 3. Function Call 스키마 (LLM 출력)
 
@@ -121,7 +140,7 @@
 - 확인이 필요한 명령인지는 LLM이 아니라 **Safety Guard가 판정**한다 (`guard/decision`의 `ASK`). 그래서 명령에 `need_confirmation`을 두지 않는다.
 - `REJECT`는 LLM Action이 아니라 Safety Guard의 판정이다.
 - **결제**: 금액을 말로 받지 않는다 (숫자를 잘못 들어 틀린 금액을 결제하지 않게). 금액은 가상 결제 단말이 가진 현재 금액이다. `CHECK_AMOUNT`는 그 금액을 읽어 주고, `REQUEST_PAYMENT`는 **Safety Guard가 항상 `ASK`로 확인을 받은 뒤** 실행한다.
-- **`CONFIRM`·`DENY`**: Safety Guard가 `ASK`로 물은 뒤의 대답이다. LLM은 "네"·"아니요"를 말 그대로 이 Action으로 내고, 기다리는 질문이 있는지는 Safety Guard가 판단한다 (없으면 실행할 것이 없다). 기다리는 시간과 그동안 호출어 없이 받는 방법은 FUS-03에서 정한다.
+- **`CONFIRM`·`DENY`**: Safety Guard가 `ASK`로 물은 뒤의 대답이다. LLM은 "네"·"아니요"를 말 그대로 이 Action으로 내고, 기다리는 질문이 있는지는 Safety Guard가 판단한다 (없으면 실행할 것이 없다). Guard는 `ASK` 뒤 **10초** 동안 대답을 기다리고, 그동안에는 호출어 없이 말한 "네"·"아니요"도 받는다. 다른 명령·긴급 정지·시간 초과면 질문을 버리고, 그 뒤의 대답은 `REJECT`다 ([decision](../decisions/2026-10-09-guard-confirm-flow.md), FUS-03).
 
 ### 3.2 함수 토큰 문법
 
@@ -174,6 +193,8 @@
  "output": {"action": "SET_LEVEL", "target": "hood", "level": 3},
  "meta": {"template_id": "t_017", "source": "seed|paraphrase|real", "split": "train"}}
 ```
+
+서비스에서 `context`는 `llm_svc`가 채운다: `state`는 `fusion/state`의 마지막 값(받은 적이 없으면 `IDLE`), `last_target`은 `llm_svc`가 마지막으로 발행한 명령의 장치(`all` 제외, 60초가 지나면 `null`). 나머지 필드는 학습 데이터에만 있다.
 
 학습용 정답 문자열은 `to_tokens(output)`으로 만든다 → `<jarvis_3>(target=hood, level=3)<jarvis_end>`.
 
@@ -237,7 +258,7 @@
 - 가열 장치마다 온도를 하나 둔다. 1초마다 목표 온도와의 차이의 5%씩 다가간다: `T ← T + (목표 − T) × 0.05`
 - 목표 온도: 꺼짐 25°C · 세기 1 → 120°C · 세기 2 → 180°C · 세기 3 → 270°C
 - 기준 구현: `common.kitchen_link.next_temperature` (Unity 코드도 같은 식을 쓴다)
-- 주의·위험 구간(200°C·240°C)과 방치 판단은 가상 주방이 아니라 보드(`fusion_svc`·`safety_guard`)가 한다 — 값은 FUS-05에서 확정.
+- 주의·위험 구간(200°C·240°C)과 방치 판단은 가상 주방이 아니라 보드(`fusion_svc`·`safety_guard`)가 한다 — §2.3 (FUS-05 확정).
 
 ### 4.6 접속
 
@@ -251,10 +272,9 @@
 
 | 항목 | 지금 | 남은 일 | 작업 |
 |---|---|---|---|
-| 결제의 연결 | `CHECK_AMOUNT`·`REQUEST_PAYMENT`는 명령으로만 있다 | 가상 결제 단말의 금액을 받아 오고 결제를 실행하는 연결 메시지(`kitchen/*`) | HW-23, FUS-03 |
-| 확인을 기다리는 흐름 | `CONFIRM`·`DENY`는 명령으로만 있다 | Safety Guard가 `ASK` 뒤의 대답을 기다리는 시간, 그동안 호출어 없이 받기 | FUS-03, STT |
-| 캡처 화면 | `kitchen/frame` 규격만 있다 (§4.2) | `vision_svc`가 구독해 받은 시각을 찍는다 | HW-20·VIS-08 |
-| 비전 클래스 (§2.1) | 후보 7개 + person | 가상 주방 장면에서 실제로 보이는 물체로 확정 | VIS-02 |
+| 결제의 연결 | Safety Guard가 확인을 받은 결제 요청을 `ALLOW`로 판정한다 (FUS-03). 실행은 없다 | 가상 결제 단말의 금액을 받아 오고 결제를 실행하는 연결 메시지(`kitchen/*`) | HW-23 |
+| 캡처 화면 | `kitchen/frame` 규격과 `vision_svc` 구독(#122)이 있다. Unity 쪽 전송은 없다 | 가상 주방이 화면을 보낸다 | HW-20 |
+| 비전 맞춤 클래스 (§2.1) | 사전학습 `person`만 | 화면 캡처가 생기면 맞춤 클래스 학습 | VIS-02~04 |
 
 ## 변경 이력
 
@@ -270,3 +290,9 @@
 | 2026-10-06 | v0.1 | §4.3 `control/result`의 `reason`, §4.4 생존 신호가 끊긴 동안 가열 장치 켜기 거절 — `kitchen_gw` 구현하며 명시 (#82, HW-17) | 이현종 |
 | 2026-10-06 | **v0.2** | §2.2 target에 `fryer`·`light`·`aircon`·`fan`·`music` 추가(세기 1~3 통일, 타이머는 가열 장치·후드·전체), §3.1 Action 11~14(`CHECK_AMOUNT`·`REQUEST_PAYMENT`·`CONFIRM`·`DENY`) 추가, §3.3 예시, §5를 남은 변경으로 정리. 기존 이름·번호는 그대로 (#84, LLM-13) | 이현종 |
 | 2026-10-06 | v0.2 | §3.2 함수 토큰은 특수 토큰으로 넣지 않고, 학습한 모델은 `<jarvis_end>` 뒤에 모델의 대화 끝 토큰을 낸다 — **필드·문법 변경 없음** (#88, LLM-07) | 이현종 |
+| 2026-10-09 | v0.2 | §3.1 확인을 기다리는 흐름 확정(10초, 기다리는 동안 호출어 없는 대답), §5에서 해당 항목 삭제 — **필드 변경 없음** (#96, FUS-03) | 최지환 |
+| 2026-10-12 | v0.2 | §2 `seq` 범위(2³¹−1 이하)와 시작 번호 규칙(시각에서 정함 — 재시작 후 중복으로 무시되던 문제) (#103) | 이현종 |
+| 2026-10-13 | v0.2 | §2 `llm/function_call`에 LLM 출력이 쓰일 때와 검증 실패로 규칙 파서가 대체할 때의 필드 의미 명시 (대체 시 `gen_ms`·`tokens`에 LLM 몫 포함) — 필드 변경 없음 (#111, LLM-09) | 이현종 |
+| 2026-10-29 | v0.2 | §2.1 비전 클래스는 COCO 사전학습 이름을 쓰고 기본 발행은 `person` (`vision/objects` 필드 변경 없음), §5 캡처 화면·클래스 항목 갱신 (#122, VIS-08) | 이현종 |
+| 2026-10-29 | v0.2 | §3.4 서비스에서 `context`를 채우는 출처 명시 (`state` ← `fusion/state`, `last_target` ← `llm_svc`의 마지막 명령 장치, 60초) — 필드 변경 없음 (#124, LLM-12) | 이현종 |
+| 2026-11-09 | v0.2 | §2.3 State 판정 기준과 `risk` 기준 확정 (주의 200°C · 위험 240°C, 방치 30초, `SAFE_STOP`은 100°C 아래로 식으면 해제), §4.5 구간 값 확정 — **필드 변경 없음** (#97, FUS-05) | 최지환 |

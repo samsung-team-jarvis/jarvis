@@ -44,7 +44,7 @@ kitchen/state      {"devices": {"hood": {"on": true, "level": 1}, "burner_1": {"
 
 ## 2. 지켜야 할 동작
 
-1. **같은 `seq`를 두 번 실행하지 않는다.** 보드는 0.5초 안에 확인을 못 받으면 같은 `seq`로 한 번 다시 보낸다. 이미 처리한 `seq`가 다시 오면 장치는 그대로 두고 `kitchen/ack`만 다시 보낸다 (최근 `seq` 몇 개를 기억해 둔다).
+1. **같은 `seq`를 두 번 실행하지 않는다.** 보드는 0.5초 안에 확인을 못 받으면 같은 `seq`로 한 번 다시 보낸다. 이미 처리한 `seq`가 다시 오면 장치는 그대로 두고 `kitchen/ack`만 다시 보낸다 (최근 `seq` 몇 개를 기억해 둔다). `seq`는 1부터 시작하지 않고 큰 수(최대 2³¹−1)일 수 있다 — C# `int`로 받는다. 순서대로 온다고 가정하지 말고 "이미 받은 번호인지"만 본다.
 2. **장치를 바꾼 뒤에 `kitchen/ack`를 보낸다.** 보드는 이 확인을 받은 뒤에 "후드를 켰습니다"라고 말한다.
 3. **시작하면 모든 장치가 꺼져 있다.**
 4. **`kitchen/heartbeat`가 3초 동안 안 오면 가열 장치(`burner_1`, `burner_2`, `fryer`)를 끈다.** 후드와 매장 장치는 끄지 않는다. 이때 `kitchen/state`의 `safe_stop`을 `true`로 보낸다. 끊긴 동안 가열 장치를 켜는 명령이 오면 실행하지 않고 `{"seq": …, "ok": false, "reason": "no_heartbeat"}`로 답한다.
@@ -97,6 +97,15 @@ while true; do mosquitto_pub -t kitchen/heartbeat -m '{"alive":true}'; sleep 1; 
 | HW-18 | 생존 신호를 멈추면 3초 뒤 가열 장치가 꺼지고 `safe_stop: true`가 온다. 후드는 그대로다 |
 | HW-19 | 화구를 세기 3으로 두면 `kitchen/temp`가 1초마다 오르고, 265°C에서 스스로 꺼진다 |
 | HW-20 | `kitchen/frame`이 1초에 4장 온다. 받은 바이트를 `.jpg`로 저장하면 640×360 그림이 열린다 |
+
+**자동 검사 (HW-24)** — 위 목록을 명령 하나로 확인한다. Unity를 Play로 띄워 두고, 같은 브로커에서 실행한다. 이 스크립트가 보드 대신 생존 신호·명령을 보내므로 `kitchen_gw`는 함께 띄우지 않는다.
+
+```bash
+python -m bench.kitchen_check                     # 약 15초, 항목별 통과/실패 표 (모두 통과면 종료 코드 0)
+python -m bench.kitchen_check --long --require-frames   # + 265°C 자체 끄기(약 80초 더), 화면 필수
+```
+
+실패한 항목의 "결과" 칸이 무엇이 달랐는지 알려 준다 (예: "후드 다시 켜짐 (같은 번호를 또 실행)"). 가짜 가상 주방(`services/kitchen_gw/fake_kitchen.py`)은 전 항목을 통과한다 — 같은 상황에서 어떻게 동작해야 하는지는 그 코드를 본다.
 
 ### 5.3 보드와 함께
 

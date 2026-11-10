@@ -53,3 +53,10 @@ scp vision_kitchen_v1_i8.rknn jarvis-board:~/models/
 | 파일 | 크기 | sha256(앞 12) | 만든 방법 (커밋 · 노트북/명령) | 보관자 | 날짜 |
 |---|---|---|---|---|---|
 | `llm_qwen3-0.6b_jarvis_v1/model.safetensors` (폴더째: 토크나이저·`train_log.json` 포함) | 1.2 GB | `865bea892252` | 1079e3c · `python -m training.llm.train_lora` (Mac MPS, 데이터 v2) | 이현종 | 2026-10-06 |
+| `llm_qwen3-0.6b_jarvis_v2/model.safetensors` (폴더째) | 1.2 GB | `ca82bf78bc66` | 8d926e1 · `python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --name llm_qwen3-0.6b_jarvis_v2` (Mac MPS) | 이현종 | 2026-10-06 |
+| `llm_qwen3-0.6b_jarvis_v3a/model.safetensors` (폴더째) | 1.2 GB | `497cbd4374d4` | f5eace7 · `python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/more_v1.jsonl --name llm_qwen3-0.6b_jarvis_v3a` (Mac MPS, LLM-15 실험 A) | 이현종 | 2026-10-13 |
+| `llm_qwen3-0.6b_jarvis_v3b/model.safetensors` (폴더째) | 1.2 GB | `01bec0ce7b0c` | f5eace7 · `python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/variety_v1.jsonl --name llm_qwen3-0.6b_jarvis_v3b` (Mac MPS, LLM-15 실험 B) | 이현종 | 2026-10-13 |
+| `llm_qwen3-0.6b_jarvis_v4/model.safetensors` (폴더째) | 1.2 GB | `799a49253d63` | c5cab1a · `python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/variety_v1.jsonl --extra data/llm/variety_v2.jsonl --name llm_qwen3-0.6b_jarvis_v4` (Mac MPS, LLM-16) | 이현종 | 2026-10-13 |
+| `llm_qwen3-0.6b_jarvis_v4-q8_0.gguf` | 639.4 MB | `5cd2e5eb3d08` | 513ac59 · `bash training/convert/hf_to_gguf.sh runs/llm/llm_qwen3-0.6b_jarvis_v4 q8_0` (LLM-18, **실행용 대표**) | 이현종 | 2026-10-29 |
+| `llm_qwen3-0.6b_jarvis_v4-f16.gguf` | 1.2 GB | `19431ce1b559` | 513ac59 · `bash training/convert/hf_to_gguf.sh runs/llm/llm_qwen3-0.6b_jarvis_v4 f16` (LLM-18, 비교용) | 이현종 | 2026-10-29 |
+| `llm_qwen3-0.6b_jarvis_v5/model.safetensors` (폴더째) | 1.2 GB | `374ee58250e4` | fb32b33 · `python -m training.llm.train_lora --extra data/llm/augment_v1.jsonl --extra data/llm/variety_v1.jsonl --extra data/llm/variety_v2.jsonl --extra data/llm/variety_v3.jsonl --name llm_qwen3-0.6b_jarvis_v5` (Mac MPS, LLM-17 — v4와 차이 없음, 대표는 v4) | 이현종 | 2026-10-13 |

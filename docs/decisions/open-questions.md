@@ -10,7 +10,7 @@
 | Q-01 | 보드: Orange Pi 5인가 5 Plus인가, RAM은? | 학교 특강 기준 **Orange Pi 5 Plus · RK3588 · RAM 16GB · Ubuntu 22.04 배포 이미지**(RKNPU v0.9.8·음성 모델 사전 설치)로 안내됨 ([school-materials](../school-materials.md)). 문서는 이 기준으로 쓴다. 수령 시 BOARD-01에서 실물 확인(0절 3분 검증) | ⏳ 보드 수령 (기준은 확정) |
 | Q-02 | 학사 일정(중간·최종 발표) | 날짜별 일정 대신 PLAN의 Phase·Gate로 진행한다. 발표 일정이 나오면 "발표 전 도달할 Gate"만 PLAN에 적는다 (예: 중간발표 = Gate 2 시연) | ⏳ 학교 공지 (진행에는 영향 없음) |
 | Q-03 | 학습·변환용 x86 PC·GPU | LLM 학습·변환은 **학교 제공 클라우드 GPU 서버(A100) + 변환 도커(`run.sh`)** 를 기본으로 한다. YOLO 학습은 Colab 무료(`train_yolo.ipynb`). Colab RKLLM 노트북은 서버를 못 쓸 때의 대체. 💰 서버가 유료 대여인지는 확인 필요 ([budget](../budget.md)) | ✅ (서버 비용 여부 확인) |
-| Q-04 | 역할 분담 | 작업물 4개 — ① 신지호 ② 이현종 ③ 최지환 ④ 최석진 ([decision](./2026-10-02-deliverables-split.md)) | ✅ |
+| Q-04 | 역할 분담 | 작업물 4개 — ① 신지호 ② 이현종 ③ 최지환 ④ 최석진 ([decision](./2026-10-02-deliverables-split.md)). 2026-10-29부터 ①은 ②·③·④가 나눠 맡음 ([decision](./2026-10-29-llamacpp-and-rebalance.md)) | ✅ |
 | Q-05 | 마음AI SUDA 사용 여부 | SUDA 플랫폼 자체에 의존하지 않되, **SUDA 방식을 이식**한다: 함수 토큰 출력 형식(Q-10), docstring 함수 정의, 간접 발화·STT 오인식·숫자 표기 변형 데이터, 생성 프롬프트+키워드+어투로 데이터 구축, 차수별 개선 (학교 SUDA 데이터 시트 2종). 발표에는 "SUDA 데이터 구축·출력 형식을 주방 도메인에 이식"으로 서술 | ✅ |
 | Q-06 | 모듈 간 통신 | 로컬 MQTT (mosquitto) ([decision](./2026-10-02-message-bus-mqtt.md)) | ✅ |
 | Q-07 | LLM 후보 | LLM-06 Baseline 비교: **Llama-3.2-1B-Instruct**(학교 특강 예시 모델 — 도커·서버·예제 지원이 가장 확실), **Qwen3.5-2B**(특강의 한국어 비교 모델), **Qwen3-0.6B**(가장 빠름, RK3588 공식 벤치마크 32.2 tok/s 참고값). 선택 기준: 보드 Action Accuracy·형식 Valid Rate, tok/s ≥ 10, 메모리, E2E 지연. 결과로 decision log 작성 | ✅ (최종 모델은 LLM-06 측정으로) |

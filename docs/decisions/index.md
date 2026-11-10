@@ -36,6 +36,10 @@ YYYY-MM-DD-short-decision-title.md
 - [2026-10-06 가상 주방은 연결 토픽으로 붙고, 보드의 kitchen_gw가 버스로 옮긴다](./2026-10-06-kitchen-link.md)
 - [2026-10-06 Function Call 스키마 v0.2 (장치 8종 · 세기 통일 · 결제)](./2026-10-06-function-call-schema-v02.md)
 - [2026-10-06 학습한 LLM의 입력 형식 (짧은 지시문 · chat template · 끝 토큰)](./2026-10-06-llm-input-format.md)
+- [2026-10-09 Safety Guard의 확인 흐름 (결제 요청 → 네·아니요)](./2026-10-09-guard-confirm-flow.md)
+- [2026-10-29 LLM은 llama.cpp(CPU)로, 3명 기준 작업 재분배](./2026-10-29-llamacpp-and-rebalance.md)
+- [2026-11-09 주방 상태(State) 판정 기준 — 온도 구간·방치 시간·긴급 정지 해제](./2026-11-09-state-rules.md)
+- [2026-10-29 비전은 사전학습 YOLOv8n의 사람 감지부터, 맞춤 학습은 화면 캡처가 생기면 (제안)](./2026-10-29-vision-pretrained-person.md)
 
 ## Template
 
