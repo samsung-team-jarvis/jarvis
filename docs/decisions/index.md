@@ -39,6 +39,7 @@ YYYY-MM-DD-short-decision-title.md
 - [2026-10-09 Safety Guard의 확인 흐름 (결제 요청 → 네·아니요)](./2026-10-09-guard-confirm-flow.md)
 - [2026-10-29 LLM은 llama.cpp(CPU)로, 3명 기준 작업 재분배](./2026-10-29-llamacpp-and-rebalance.md)
 - [2026-11-09 주방 상태(State) 판정 기준 — 온도 구간·방치 시간·긴급 정지 해제](./2026-11-09-state-rules.md)
+- [2026-11-11 과열·방치 자동 차단 — 과열은 바로 그 장치만, 방치는 경고 뒤 30초 유예](./2026-11-11-auto-stop.md)
 - [2026-10-29 비전은 사전학습 YOLOv8n의 사람 감지부터, 맞춤 학습은 화면 캡처가 생기면 (제안)](./2026-10-29-vision-pretrained-person.md)
 
 ## Template

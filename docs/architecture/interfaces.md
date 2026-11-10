@@ -55,6 +55,7 @@
   `seq`는 0 이상 2³¹−1 이하의 정수다(Unity의 C# `int`). `safety_guard`가 하나씩 올리고, **시작 번호는 시각에서 정해** 다시 시작해도 앞 번호와 겹치지 않게 한다 (`common.kitchen_link.first_seq`) — 가상 주방은 최근 `seq`를 기억해 같은 번호를 다시 실행하지 않기 때문이다 (§4.3). 타이머는 보드가 세고, 끝났을 때 `OFF`를 보낸다 (가상 주방은 타이머를 모른다).
 - `sensor/reading`의 `device_id`는 가열 장치 이름(`burner_1`, `burner_2`, `fryer`)이다. 전류(`current_a`)는 가상 주방에 없어 선택 필드로 바꿨다.
 - `device/state`는 가상 주방의 실제 장치 상태다 (FUS-08, #139). 보드 명령 없이 바뀐 경우(265°C 자체 차단, 생존 신호 끊김, 실패로 처리한 명령의 늦은 실행 — §4.3·§4.4)도 여기서 안다. `fusion_svc`는 이것을 가열 장치가 켜졌는지의 기준으로 쓴다. 봉투 시각은 `kitchen_gw`가 받은 순간이다.
+- `guard/decision`은 명령 판정 말고도 **자동 차단**(FUS-09)에서 나온다: `fusion/state`가 과열·방치를 알리면 Guard가 `{call: {action: TURN_OFF, target: <가열 장치>}, decision: ALLOW, reason: "자동 차단: …"}`을 내고 `control/command`로 끈다. `session_id`는 받은 `fusion/state`의 것이다 ([decision](../decisions/2026-11-11-auto-stop.md)).
 - `llm/function_call`의 필드 의미 (LLM-09, 코드: [`services/llm_svc/interpret.py`](../../services/llm_svc/interpret.py) `resolve`). `session_id`는 원래 `stt/text`의 것을 이어 쓴다.
 
   | 경우 | `valid` | `fallback` | `raw_text` | `gen_ms` | `tokens` |
@@ -313,3 +314,4 @@
 | 2026-11-09 | v0.2 | §2.3 State 판정 기준과 `risk` 기준 확정 (주의 200°C · 위험 240°C, 방치 30초, `SAFE_STOP`은 100°C 아래로 식으면 해제), §4.5 구간 값 확정 — **필드 변경 없음** (#97, FUS-05) | 최지환 |
 | 2026-11-11 | v0.2 | §2 `device/state` 토픽 추가 — `kitchen_gw`가 `kitchen/state`를 그대로 옮긴다 (가상 주방이 스스로 바꾼 장치 상태를 보드가 알게). §4.1 그림 (#139, FUS-08) | 최지환 |
 | 2026-11-11 | v0.2 | §2.3 `fusion/state`의 발행 시점·`prev_state`·`evidence` 필드, 근거 만료 (#139, FUS-08) | 최지환 |
+| 2026-11-11 | v0.2 | §2 `guard/decision`이 자동 차단에서도 나온다 (과열·방치, `reason` "자동 차단: …") — **필드 변경 없음** (#143, FUS-09) | 최지환 |
