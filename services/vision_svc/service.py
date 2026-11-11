@@ -40,6 +40,7 @@ class VisionService:
         self.bus = bus
         self.session_id = session_id
         self.engine = engine
+        self._prepare = getattr(engine, "prepare", detect.to_tensor)
         self.classes = frozenset(classes)
         self.conf = conf
         self.on_objects = on_objects
@@ -50,7 +51,8 @@ class VisionService:
     def process(self, bgr: np.ndarray) -> dict[str, Any]:
         """화면 한 장을 인식해 발행하고 payload를 돌려준다."""
         t0 = time.perf_counter()
-        tensor, box = detect.preprocess(bgr)
+        rgb, box = detect.letterbox(bgr)
+        tensor = self._prepare(rgb)  # 엔진마다 입력 형식이 다르다 (engine.py)
         t1 = time.perf_counter()
         outputs = self.engine(tensor)
         t2 = time.perf_counter()
@@ -65,9 +67,8 @@ class VisionService:
             "objects": objects,
             "frame_id": self.frame_id,
             "pre_ms": round((t1 - t0) * 1000, 2),
-            "npu_ms": round(
-                (t2 - t1) * 1000, 2
-            ),  # 노트북에서는 CPU 추론 시간 (필드 이름은 규격 그대로)
+            # RKNN이면 NPU 추론 시간, onnxruntime이면 CPU 추론 시간 (필드 이름은 규격 그대로)
+            "npu_ms": round((t2 - t1) * 1000, 2),
             "post_ms": round((t3 - t2) * 1000, 2),
         }
         msg = Envelope.new("vision/objects", SOURCE, payload, self.session_id)

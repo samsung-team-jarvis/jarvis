@@ -5,11 +5,14 @@
 ```text
 kitchen/frame (가상 주방, JPEG) ─┐
 노트북 카메라 · 이미지 폴더 ─────┴▶ 전처리(640×640, 비율 유지) ─▶ 추론 ─▶ 후처리(DFL·NMS) ─▶ vision/objects
-                                                          노트북: onnxruntime CPU
-                                                          보드: RKNN NPU (보드를 받으면)
+                                                          .onnx: onnxruntime CPU (노트북)
+                                                          .rknn: RKNN NPU core0 (보드)
 ```
 
 ## 모델 받기 (한 번만)
+
+보드용 `.rknn`은 아래 ONNX를 INT8로 바꾼 것이다: Mac에서 `bash training/convert/docker_rknn_yolo.sh` → `training/convert/out/yolov8n_coco_i8.rknn`을 보드의 `models/`로 복사 ([yolo-to-rknn](../../recipes/yolo-to-rknn.md)).
+
 
 `models/`는 git 제외. rknn_model_zoo의 YOLOv8n ONNX(12.7 MB, Ultralytics YOLOv8 · AGPL-3.0)를 받는다 — 보드 RKNN 변환([recipe](../../recipes/yolo-to-rknn.md))과 같은 출력 형식이라 후처리 코드 하나로 노트북·보드에서 쓴다.
 
@@ -27,7 +30,10 @@ python -m services.vision_svc --input camera           # 노트북 카메라 (ma
 python -m services.vision_svc --input data/frames/     # 이미지 폴더(또는 파일)를 한 번 흘림
 python -m services.vision_svc detect photo.jpg         # 버스 없이 결과만 (모든 COCO 클래스)
 python -m services.vision_svc --classes person,bowl,oven   # 발행할 클래스 바꾸기
+python -m services.vision_svc --model models/yolov8n_coco_i8.rknn --input camera   # 보드 NPU
 ```
+
+- 엔진은 모델 확장자로 고른다: `.onnx` → onnxruntime CPU, `.rknn` → NPU (rknn-toolkit-lite2, 보드에만 있음 — [board-setup](../../recipes/board-setup.md) §4). NPU 코어는 `--npu-core` (기본 `0`, `1`·`2`·`all`·`auto`).
 
 - 1초에 4장(`--fps`), 추론 CPU 2스레드(`--threads`, 노트북에서 STT·LLM과 나눠 쓴다).
 - 가상 주방 화면은 가장 최근 것만 인식한다 (밀리면 건너뛴다).
@@ -47,8 +53,8 @@ python -m services.vision_svc --classes person,bowl,oven   # 발행할 클래스
 
 | 파일 | 하는 일 |
 |---|---|
-| `detect.py` | 전처리(letterbox)·후처리(DFL·클래스별 NMS) — numpy만, rknn_model_zoo `yolov8.py`와 같은 계산 |
-| `engine.py` | `OnnxEngine` (노트북). 보드용 RKNN 엔진은 같은 자리에 붙인다 |
+| `detect.py` | 전처리(`letterbox` → RGB 640×640 uint8, `to_tensor`)·후처리(DFL·클래스별 NMS) — numpy만, rknn_model_zoo `yolov8.py`와 같은 계산 |
+| `engine.py` | `OnnxEngine`(CPU)·`RknnEngine`(NPU), 확장자로 고르는 `load()`. 엔진마다 입력 형식이 달라 `prepare()`로 맞춘다 (ONNX: 1×3×640×640 float 0~1, RKNN: 1×640×640×3 uint8) |
 | `service.py` | `VisionService` — 클래스 걸러 발행 |
 
 ## 확인 기록 (Mac, 2026-10-29, #122)
