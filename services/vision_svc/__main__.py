@@ -25,6 +25,7 @@ from common.bus import connect
 from common.messages import Envelope
 from services.vision_svc import detect
 from services.vision_svc import engine as engines
+from services.vision_svc.camera import Camera, GapWatch
 from services.vision_svc.service import DEFAULT_CLASSES, VisionService
 
 DEFAULT_MODEL = "models/yolov8n_rknn_zoo.onnx"
@@ -115,10 +116,11 @@ def main() -> int:
                 latest[:] = [data]
 
         bus.subscribe_raw(link.TOPIC_FRAME, on_frame)
+        kitchen_watch = GapWatch("가상 주방 화면(kitchen/frame)")
     elif args.input.startswith("camera"):
         index = int(args.input.partition(":")[2] or 0)
-        camera = cv2.VideoCapture(index)
-        if not camera.isOpened():
+        camera = Camera(index)
+        if not camera.is_opened():
             print(f"카메라 {index}를 열지 못했습니다 (권한·번호 확인)")
             return 1
     else:
@@ -137,9 +139,11 @@ def main() -> int:
                     data = latest.pop() if latest else None
                 if data is not None:
                     bgr = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+                    kitchen_watch.frame()
+                else:
+                    kitchen_watch.check()  # 끊기면 한 번 경고 (가상 주방이 멈춤 등)
             elif camera is not None:
-                ok, frame = camera.read()
-                bgr = frame if ok else None
+                bgr = camera.read()  # 끊기면 경고하고 다시 연다 (camera.py)
             else:
                 if not files:
                     break
