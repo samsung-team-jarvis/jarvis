@@ -31,7 +31,7 @@
 |---|---|---|---|
 | `services/audio_svc` | 마이크 → VAD → STT → 호출어, 음성 응답(TTS) | 이현종 ② | [README](services/audio_svc/README.md) |
 | `services/llm_svc` | 받아쓴 문장 → 명령 (규칙 파서, LLM 연결 예정) | 이현종 ② | [README](services/llm_svc/README.md) |
-| `services/safety_guard` · `fusion_svc` | 명령 판정·긴급 정지 (Guard v0) / 상황 인식(State Machine, 예정) | 최지환 ③ | [safety_guard](services/safety_guard/README.md) |
+| `services/safety_guard` · `fusion_svc` | 명령 판정·긴급 정지 (Guard v0) / 상황 인식(State Machine v1) | 최지환 ③ | [safety_guard](services/safety_guard/README.md) · [fusion_svc](services/fusion_svc/README.md) |
 | `services/kitchen_gw` | 보드 ↔ 가상 주방 연결(제어·결과 확인·온도·생존 신호), 가짜 가상 주방 | 이현종 ② | [README](services/kitchen_gw/README.md) |
 | 가상 주방 (Unity) | 장면·장치·가상 온도·캡처 화면 | 최석진 ④ | (예정 — [결정](docs/decisions/2026-10-05-unity-virtual-kitchen.md), [연결 안내](recipes/unity-kitchen-link.md)) |
 | `services/vision_svc` · `training/yolo` | 화면 사람 감지(사전학습 YOLOv8n) → `vision/objects`, 맞춤 학습은 캡처가 생기면 | 이현종 (서비스·학습·변환) · 최지환(클래스) · 최석진(캡처·라벨) | [vision_svc](services/vision_svc/README.md) · [training](training/README.md) |

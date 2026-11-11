@@ -120,9 +120,10 @@ simulator 시나리오의 메시지를 판정기에 시간 순으로 넣고, 1�
 ```bash
 python -m bench.fusion_eval --judge temp --judge person --split val --per-scenario   # 분석은 val로
 python -m bench.fusion_eval --judge temp --judge person --split test                 # test는 비교에만
+python -m bench.fusion_eval --judge fusion --split test                              # State Machine v1 (FUS-08)
 ```
 
-- 판정기: `temp`(온도만), `person`(사람만) — 단일 조건 Baseline. FUS-08 State Machine은 `update(t, topic, payload)`·`state(t)`를 갖춰 `JUDGES`에 넣는다.
+- 판정기: `temp`(온도만), `person`(사람만) — 단일 조건 Baseline. `fusion` — State Machine v1 ([`fusion_svc`](../services/fusion_svc/README.md)). 모두 `update(t, topic, payload)`로만 상태를 바꾸고 `state(t)`는 읽기만 한다.
 - 지표: State F1(macro)·State별 F1, 위험 미탐율(위험 구간 단위)·감지 지연, 위험 오탐. 정의는 [METRICS](../docs/METRICS.md) §1.
 - 분할: `data/fusion/split_v1.json` (시나리오 단위 val 17 · test 9, 종류별 비율, 고정 시드).
 

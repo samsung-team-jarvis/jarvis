@@ -77,7 +77,7 @@ def test_stop_kills_service_ignoring_sigterm() -> None:
 def test_config_loads_modules_in_order() -> None:
     specs, delay = launch.load_config(LAUNCH.with_name("launch.yaml"))
     names = [s.name for s in specs]
-    assert names == ["recorder", "kitchen_gw", "safety_guard", "llm_svc", "audio_svc"]
+    assert names == ["recorder", "kitchen_gw", "fusion_svc", "safety_guard", "llm_svc", "audio_svc"]
     assert specs[0].argv[-2:] == ["-m", "services.recorder"]
     assert delay > 0
 

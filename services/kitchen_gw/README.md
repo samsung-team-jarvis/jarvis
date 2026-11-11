@@ -6,6 +6,7 @@
 control/command ─▶ kitchen/cmd          확인이 0.5초 안에 없으면 같은 seq로 한 번 다시
 kitchen/ack     ─▶ control/result       {seq, ok, retries, rtt_ms, reason?}
 kitchen/temp    ─▶ sensor/reading       {device_id, temperature_c}
+kitchen/state   ─▶ device/state         {devices, safe_stop} 그대로 (가상 주방이 스스로 끈 것도 포함)
 1초마다         ─▶ kitchen/heartbeat    끊기면 가상 주방이 가열 장치를 끈다 (안전 계층 L0)
 ```
 
@@ -31,9 +32,10 @@ Unity 없이 보드 쪽을 개발할 때는 브로커 → 가짜 가상 주방 �
 | 가상 주방이 거절 | `ok: false`, `reason`은 가상 주방이 준 것 (`no_heartbeat`, `invalid_command` 등) |
 | 규격에 안 맞는 `control/command` | 가상 주방에 보내지 않고 `ok: false, reason: "invalid_command"` |
 
-- `control/result`의 `session_id`는 받은 `control/command`의 것을 이어 쓴다 (발화 → 제어 지연을 한 세션에서 추적). `sensor/reading`·`system/heartbeat`는 자기 세션(`--session`)으로 낸다.
+- `control/result`의 `session_id`는 받은 `control/command`의 것을 이어 쓴다 (발화 → 제어 지연을 한 세션에서 추적). `sensor/reading`·`device/state`·`system/heartbeat`는 자기 세션(`--session`)으로 낸다.
 - 이미 끝난 명령의 늦은 확인은 무시한다.
-- **알려진 한계**: 확인을 못 받아 실패로 끝낸 명령을, 가상 주방이 나중에 실행할 수 있다 (가상 주방이 잠깐 멈췄다 돌아온 경우). 보드는 실패한 뒤의 실제 상태를 `kitchen/state`로 확인해야 한다 — 상태를 버스로 올리는 것은 상황 인식(FUS-08)에서 필요해질 때 붙인다 (HW-22에서 재시도 정책과 함께 검토).
+- 연결 토픽(`kitchen/ack`·`kitchen/temp`·`kitchen/state`)이 규격에 맞지 않으면 경고 기록만 남기고 버린다.
+- **알려진 한계**: 확인을 못 받아 실패로 끝낸 명령을, 가상 주방이 나중에 실행할 수 있다 (가상 주방이 잠깐 멈췄다 돌아온 경우). 실제 상태는 `kitchen/state`를 옮긴 `device/state`로 확인한다 (FUS-08, #139). 재시도 정책은 HW-22에서 검토.
 
 ## 가짜 가상 주방 (`fake_kitchen.py`)
 
@@ -48,8 +50,8 @@ Unity 쪽이 맞춰야 할 동작([Unity 안내](../../recipes/unity-kitchen-lin
 
 | 항목 | 내용 |
 |---|---|
-| 입력 | 버스 `control/command` · 연결 토픽 `kitchen/ack`, `kitchen/temp` |
-| 출력 | 버스 `control/result`, `sensor/reading`, `system/heartbeat` · 연결 토픽 `kitchen/cmd`, `kitchen/heartbeat` |
+| 입력 | 버스 `control/command` · 연결 토픽 `kitchen/ack`, `kitchen/temp`, `kitchen/state` |
+| 출력 | 버스 `control/result`, `sensor/reading`, `device/state`, `system/heartbeat` · 연결 토픽 `kitchen/cmd`, `kitchen/heartbeat` |
 | 설정값 | 확인 대기 0.5초, 재전송 1회, 생존 신호 1초 — `common/kitchen_link.py`의 상수 (규격이라 실행 옵션으로 두지 않았다) |
 | 자원 | CPU, 모델 없음 |
 | 가상 주방이 없으면 | 명령마다 약 1초 뒤 `ok: false, reason: "no_ack"`. 서비스는 계속 돈다 |

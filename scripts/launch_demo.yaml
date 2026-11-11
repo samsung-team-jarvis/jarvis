@@ -18,11 +18,13 @@ services:
   - name: kitchen_gw
     module: services.kitchen_gw
     python: .venv/bin/python
+  - name: fusion_svc          # 상황 인식 (State Machine). safety_guard·llm_svc가 fusion/state를 받는다
+    module: services.fusion_svc
+    python: .venv/bin/python
+    args: [--quiet]
   - name: safety_guard
     module: services.safety_guard
     python: .venv/bin/python
-    # 상황 인식(fusion_svc, FUS-08) 전까지는 상태를 가정한다. 가정이 없으면 "상태 모름 = 위험"이라 화구가 켜지지 않는다
-    args: [--assume-state, COOKING]
   - name: vision_svc          # 사람 감지 (COCO 사전학습 YOLOv8n). Unity 화면을 쓰면 args를 빼서 kitchen/frame을 받는다
     module: services.vision_svc
     python: .venv/bin/python

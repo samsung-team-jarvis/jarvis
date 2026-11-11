@@ -6,6 +6,7 @@
     control/command ─▶ kitchen/cmd          (확인이 없으면 같은 seq로 한 번 다시)
     kitchen/ack     ─▶ control/result       (retries, rtt_ms)
     kitchen/temp    ─▶ sensor/reading
+    kitchen/state   ─▶ device/state         (가상 주방이 스스로 바꾼 장치 상태도 보드가 알게)
     1초마다         ─▶ kitchen/heartbeat    (끊기면 가상 주방이 가열 장치를 끈다)
 """
 
@@ -49,6 +50,7 @@ class KitchenGateway:
         self.results = 0
         self.failed = 0  # 확인을 못 받았거나 가상 주방이 거절한 명령
         self.readings = 0
+        self.states = 0
         self._pending: dict[int, _Pending] = {}
         self._lock = threading.Lock()
         self._last_heartbeat: float | None = None
@@ -57,6 +59,7 @@ class KitchenGateway:
         self.bus.subscribe("control/command", self.on_command)
         self.bus.subscribe_raw(link.TOPIC_ACK, self.on_ack)
         self.bus.subscribe_raw(link.TOPIC_TEMP, self.on_temp)
+        self.bus.subscribe_raw(link.TOPIC_STATE, self.on_state)
 
     def on_command(self, msg: Envelope) -> None:
         try:
@@ -92,6 +95,16 @@ class KitchenGateway:
         payload = {"device_id": temp["device_id"], "temperature_c": temp["temperature_c"]}
         self.bus.publish(Envelope.new("sensor/reading", SOURCE, payload, self.session_id))
         self.readings += 1
+
+    def on_state(self, topic: str, data: bytes) -> None:
+        try:
+            state = link.decode_state(data)
+        except LinkError as exc:
+            log.warning("%s", exc)
+            return
+        payload = {"devices": state["devices"], "safe_stop": state["safe_stop"]}
+        self.bus.publish(Envelope.new("device/state", SOURCE, payload, self.session_id))
+        self.states += 1
 
     def poll(self) -> None:
         """확인을 기다리는 명령을 살핀다: 0.5초가 지났으면 한 번 다시 보내고, 그래도 없으면 실패."""

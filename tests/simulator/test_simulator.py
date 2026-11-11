@@ -4,7 +4,14 @@ import pytest
 
 from common import kitchen_link as link
 from common.bus import MemoryBus
-from services.simulator.runner import build_events, heater_readings, play
+from common.messages import Envelope
+from services.simulator.runner import (
+    STATE_PERIOD_S,
+    build_events,
+    device_states,
+    heater_readings,
+    play,
+)
 from services.simulator.scenario import ScenarioError, expected_at, interpolate, load, parse
 
 SCENARIO_DIR = pathlib.Path(__file__).parents[2] / "services/simulator/scenarios"
@@ -122,3 +129,33 @@ def test_expected_at_returns_current_label() -> None:
     sc = parse(minimal(expected=[[0, "IDLE"], [3, "PREHEAT"]]))
     assert [expected_at(sc, t) for t in (0, 2.9, 3, 9)] == ["IDLE", "IDLE", "PREHEAT", "PREHEAT"]
     assert expected_at(parse(minimal()), 0) is None
+
+
+def test_device_state_follows_heater_schedule_and_self_shutoff() -> None:
+    sc = parse(minimal(duration_s=120, heaters={"burner_1": [[0, 0], [3, 3]], "fryer": [[0, 2]]}))
+    states = device_states(sc.heaters, sc.duration_s)
+    assert states[0] == (
+        0.0,
+        {
+            "devices": {
+                "burner_1": {"on": False, "level": 0},
+                "burner_2": {"on": False, "level": 0},
+                "fryer": {"on": True, "level": 2},
+            },
+            "safe_stop": False,
+        },
+    )
+    assert states[1][0] == 3.0 and states[1][1]["devices"]["burner_1"] == {"on": True, "level": 3}
+    assert all(
+        b - a <= STATE_PERIOD_S for (a, _), (b, _) in zip(states, states[1:], strict=False)
+    )  # 5초마다
+    # 265°C 자체 차단: 그 다음 시각에 꺼짐 + safe_stop (온도가 265°C를 넘은 첫 값과 같은 시각)
+    tripped = next((t, p) for t, p in states if p["safe_stop"])
+    temps = dict(heater_readings(sc.heaters, sc.duration_s))
+    assert temps[tripped[0]]["burner_1"] >= link.HARD_LIMIT_C
+    assert temps[tripped[0] - 1]["burner_1"] < link.HARD_LIMIT_C
+    assert tripped[1]["devices"]["burner_1"] == {"on": False, "level": 0}
+    assert tripped[1]["devices"]["fryer"] == {"on": True, "level": 2}  # 다른 장치는 그대로
+    for _, payload in states:
+        Envelope.new("device/state", "simulator", payload, "s")  # 버스 규격에 맞는다
+    assert sum(e.type == "device/state" for e in build_events(sc)) == len(states)

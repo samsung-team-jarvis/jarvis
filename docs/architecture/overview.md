@@ -8,6 +8,7 @@
 [핀마이크(USB), 실제 음성] → audio_svc : Silero VAD → STT(SenseVoice, CPU) ──┐ stt/text
 [가상 주방] ─캡처 화면→ vision_svc: YOLOv8n .rknn (NPU core0, 3~5fps) ────────┤ vision/objects
 [가상 주방] ─가상 온도→ kitchen_gw : 온도 (1Hz) ──────────────────────────────┤ sensor/reading
+[가상 주방] ─장치 상태→ kitchen_gw : 켜짐·세기·자체 차단 ─────────────────────┤ device/state
                                                                               ▼
              ┌──────────── fusion_svc (State Machine + 현재 Context) ────────────┐
              │     stt/text + context ↓              ↑ llm/function_call         │
