@@ -36,8 +36,11 @@ class Letterbox:
     pad_y: float
 
 
-def preprocess(bgr: np.ndarray, size: int = SIZE) -> tuple[np.ndarray, Letterbox]:
-    """BGR 이미지(H×W×3, uint8) → 입력 텐서(1×3×size×size, float32 0~1, RGB)."""
+def letterbox(bgr: np.ndarray, size: int = SIZE) -> tuple[np.ndarray, Letterbox]:
+    """BGR 이미지(H×W×3, uint8) → RGB size×size×3 uint8 (비율 유지, 남는 곳은 회색 114).
+
+    RKNN 모델은 이것을 그대로 받는다 (변환 때 mean 0 · std 255를 모델 안에 넣었다).
+    """
     import cv2
 
     h, w = bgr.shape[:2]
@@ -47,8 +50,18 @@ def preprocess(bgr: np.ndarray, size: int = SIZE) -> tuple[np.ndarray, Letterbox
     canvas = np.full((size, size, 3), 114, dtype=np.uint8)
     top, left = int(round(pad_y - 0.1)), int(round(pad_x - 0.1))
     canvas[top : top + nh, left : left + nw] = cv2.resize(bgr, (nw, nh))
-    rgb = canvas[:, :, ::-1].transpose(2, 0, 1)[None].astype(np.float32) / 255.0
-    return np.ascontiguousarray(rgb), Letterbox(scale, left, top)
+    return np.ascontiguousarray(canvas[:, :, ::-1]), Letterbox(scale, left, top)
+
+
+def to_tensor(rgb: np.ndarray) -> np.ndarray:
+    """RGB size×size×3 uint8 → ONNX 입력 텐서(1×3×size×size, float32 0~1)."""
+    return np.ascontiguousarray(rgb.transpose(2, 0, 1)[None].astype(np.float32) / 255.0)
+
+
+def preprocess(bgr: np.ndarray, size: int = SIZE) -> tuple[np.ndarray, Letterbox]:
+    """BGR 이미지 → ONNX 입력 텐서(1×3×size×size, float32 0~1, RGB)."""
+    rgb, box = letterbox(bgr, size)
+    return to_tensor(rgb), box
 
 
 def _dfl(position: np.ndarray) -> np.ndarray:

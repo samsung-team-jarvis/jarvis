@@ -4,6 +4,7 @@ python -m services.vision_svc                              # 가상 주방 화�
 python -m services.vision_svc --input camera               # 노트북 카메라 (가상 주방이 없을 때)
 python -m services.vision_svc --input data/frames/         # 이미지 폴더(또는 파일)를 한 번 흘림
 python -m services.vision_svc detect photo.jpg             # 버스 없이 결과만
+python -m services.vision_svc --model models/yolov8n_coco_i8.rknn --input camera   # 보드 NPU
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ from common import kitchen_link as link
 from common.bus import connect
 from common.messages import Envelope
 from services.vision_svc import detect
-from services.vision_svc.engine import THREADS, OnnxEngine
+from services.vision_svc import engine as engines
 from services.vision_svc.service import DEFAULT_CLASSES, VisionService
 
 DEFAULT_MODEL = "models/yolov8n_rknn_zoo.onnx"
@@ -55,12 +56,24 @@ def main() -> int:
         default="kitchen",
         help="kitchen(가상 주방 화면) | camera[:번호] | 이미지 폴더·파일",
     )
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="YOLOv8 ONNX (rknn_model_zoo 형식)")
+    parser.add_argument(
+        "--model",
+        default=DEFAULT_MODEL,
+        help="YOLOv8 모델 (rknn_model_zoo 형식): .onnx → CPU, .rknn → NPU (보드)",
+    )
     parser.add_argument("--classes", default=",".join(DEFAULT_CLASSES), help="발행할 COCO 클래스")
     parser.add_argument(
         "--fps", type=float, default=4.0, help="1초에 인식할 장수 (0이면 쉬지 않음)"
     )
-    parser.add_argument("--threads", type=int, default=THREADS, help="추론 CPU 스레드")
+    parser.add_argument(
+        "--threads", type=int, default=engines.THREADS, help="추론 CPU 스레드 (.onnx)"
+    )
+    parser.add_argument(
+        "--npu-core",
+        default=engines.NPU_CORE,
+        choices=sorted(engines.NPU_CORES),
+        help="NPU 코어 (.rknn)",
+    )
     parser.add_argument("--bus", default=None, help="생략 시 JARVIS_BUS 환경변수 (기본 MQTT)")
     parser.add_argument("--session", default=None, help="session_id (생략 시 s_<시각>)")
     parser.add_argument("--quiet", action="store_true", help="화면마다 출력하지 않음")
@@ -68,7 +81,7 @@ def main() -> int:
 
     import cv2
 
-    engine = OnnxEngine(args.model, threads=args.threads)
+    engine = engines.load(args.model, threads=args.threads, core=args.npu_core)
     classes = [c.strip() for c in args.classes.split(",") if c.strip()]
 
     if args.cmd == "detect":
@@ -76,8 +89,8 @@ def main() -> int:
         if bgr is None:
             print(f"이미지를 읽지 못했습니다: {args.image}")
             return 1
-        tensor, box = detect.preprocess(bgr)
-        found = detect.postprocess(engine(tensor), box, bgr.shape[1], bgr.shape[0])
+        rgb, box = detect.letterbox(bgr)
+        found = detect.postprocess(engine(engine.prepare(rgb)), box, bgr.shape[1], bgr.shape[0])
         for o in found:
             print(json.dumps({**o, "bbox": [round(v) for v in o["bbox"]]}, ensure_ascii=False))
         return 0
@@ -139,6 +152,8 @@ def main() -> int:
         pass
     if camera is not None:
         camera.release()
+    if hasattr(engine, "release"):
+        engine.release()  # NPU 런타임 정리 (RKNN)
     bus.close()
     print(f"OK: vision/objects {service.frame_id}건 발행")
     return 0

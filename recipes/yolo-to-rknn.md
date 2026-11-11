@@ -66,6 +66,11 @@ pip install -r <공식 requirements URL> -c training/convert/rknn-constraints.tx
 pip install <공식 휠 URL>
 ```
 
+**Mac에서 (사전학습 YOLOv8n, VIS-11)**: `bash training/convert/docker_rknn_yolo.sh` → `training/convert/out/yolov8n_coco_i8.rknn`. linux/amd64 컨테이너(에뮬레이션)에서 rknn-toolkit2 2.3.2를 설치하고, rknn_model_zoo의 YOLOv8n ONNX를 COCO 사진 15장으로 캘리브레이션해 INT8로 바꾼다. 2026-11-11 실행: 4.3 MB.
+
+- 변환할 때 "출력 9개의 형식이 float32에서 int8로 바뀐다"는 경고가 나온다. `vision_svc`는 rknn-toolkit-lite2 Python API가 float로 돌려준다고 보고(rknn_model_zoo 예제와 같은 쓰임) 후처리하고, float가 아니면 멈춘다 (보드에서 확인 필요).
+- 시뮬레이터로 ONNX와 결과를 비교하는 `CHECK=1`은 진짜 x86 Linux(Colab 등)에서만 된다. M1 Mac의 에뮬레이션에서는 시뮬레이터가 `Illegal instruction`으로 죽는다 (export는 그 전에 끝난다). 그래서 Mac에서 만든 모델은 **보드에서 같은 사진으로 ONNX(CPU)와 비교**한다: `python -m bench.board_day vision --compare --images <사람이 있는 사진 폴더>` (INFRA-08).
+
 model_zoo 예제 스크립트를 그대로 쓰는 것이 가장 안전하다.
 
 ```bash
@@ -90,14 +95,25 @@ rknn.release()
 
 ## 4. 보드 추론
 
+`vision_svc`가 `.rknn` 모델을 받으면 NPU로 돈다 (`services/vision_svc/engine.py`의 `RknnEngine`, VIS-11):
+
+```bash
+python -m services.vision_svc --model models/yolov8n_coco_i8.rknn detect photo.jpg   # 사진 한 장
+python -m services.vision_svc --model models/yolov8n_coco_i8.rknn --input camera     # 서비스
+```
+
+하는 일 (rknn-toolkit-lite2 예제와 같은 API):
+
 ```python
 from rknnlite.api import RKNNLite
 
 rknn = RKNNLite()
-rknn.load_rknn("best_int8.rknn")
-rknn.init_runtime(core_mask=RKNNLite.NPU_CORE_0)  # YOLO는 core0 (architecture 문서)
-outputs = rknn.inference(inputs=[img])  # 전처리·후처리는 model_zoo yolov8 예제 코드 사용
+rknn.load_rknn("yolov8n_coco_i8.rknn")
+rknn.init_runtime(core_mask=RKNNLite.NPU_CORE_0)  # YOLO는 core0 (architecture overview), --npu-core로 바꿈
+outputs = rknn.inference(inputs=[rgb[None]])     # 1×640×640×3 uint8 RGB — 정규화(÷255)는 변환 때 모델에 넣었다
 ```
+
+전처리(letterbox)·후처리(DFL·NMS)는 노트북 ONNX와 같은 코드다 (`detect.py`).
 
 ## 5. 측정 (experiment-workflow)
 
