@@ -50,7 +50,7 @@ cd ..
 |---|---|---|
 | `--input` | `mic` | `mic` 또는 wav 경로 (16kHz·16-bit — 변환: `ffmpeg -i in.m4a -ar 16000 -ac 1 -sample_fmt s16 out.wav`) |
 | `--realtime` | 꺼짐 | wav를 마이크처럼 실제 속도로 (지연 측정용) |
-| `--device` | 기본 장치 | 마이크 번호·이름 (`python -c "import sounddevice; print(sounddevice.query_devices())"`) |
+| `--device` | 기본 장치 | 마이크 번호·이름 (`python -c "import sounddevice; print(sounddevice.query_devices())"`). 16 kHz를 못 받는 마이크(USB 마이크는 44.1·48 kHz만 받는 것이 많다)는 장치 기본 샘플레이트로 열고 16 kHz로 줄인다 — 시작할 때 "… Hz로 열고 16000 Hz로 줄입니다"가 나온다 (STT-14) |
 | `--bus` / `--session` | `JARVIS_BUS` / `s_<시각>` | 버스 주소 / 세션 ID |
 | `--language` / `--threads` | `ko` / 4 | `auto`는 짧은 명령을 다른 언어로 잘못 감지한 사례가 있어 `ko` 고정 |
 | `--no-tts` / `--no-play` / `--tts-out` | | 음성 응답 끄기 / 재생하지 않기 / 응답을 wav로 저장 |
@@ -104,7 +104,7 @@ TTS 모델이 없으면 경고만 내고 STT는 계속 동작한다.
 
 | 항목 | 내용 |
 |---|---|
-| 입력 | 마이크(`sounddevice`, 16kHz mono) / wav · `guard/decision` · `fusion/state` · `device/state` |
+| 입력 | 마이크(`sounddevice`, 16kHz mono — 못 받으면 기본 샘플레이트로 열어 16kHz로 줄임) / wav · `guard/decision` · `fusion/state` · `device/state` |
 | 출력 | `stt/text` `{text, wake, audio_ms, stt_ms, speech_end_mono}` ([interfaces](../../docs/architecture/interfaces.md) §2), `system/heartbeat` 1초마다, 스피커 |
 | `speech_end_mono` | 발화 마지막 샘플이 들어온 시각(`time.monotonic`) — 지연 측정의 출발점. 마이크는 콜백 시각 기준이라 실제보다 수십 ms 늦다 |
 | VAD | threshold 0.5, min_silence 0.5 s, min_speech 0.25 s, max_speech 20 s (특강 p.36), 앞여유 0.3 s (#128) |
