@@ -170,6 +170,7 @@ python -m bench.board_day vision --compare       # YOLO 전처리/추론/후처�
 python -m bench.board_day vision --images <폴더>   # 사람이 있는 사진으로 (생략 시 무작위 화면 — 속도만)
 python -m bench.board_day measure --dry-run      # 실행할 명령 목록
 python -m bench.board_day measure                # check → vision → llm(GGUF test) → stt(val) → runs/board/<시각>/summary.md
+python -m bench.board_day measure --llm-cpus 4-7  # + LLM을 큰 코어에 고정해 한 번 더 (llm_cpus, LLM-19)
 ```
 
 - 점검표는 실패한 항목에 고칠 방법을 붙인다. 하나라도 실패하면 종료 코드 1.

@@ -72,7 +72,10 @@ def test_frames_from_folder_cycle(tmp_path: pathlib.Path) -> None:
 def test_measure_plan_and_dry_run(tmp_path: pathlib.Path, capsys) -> None:
     names = [name for name, _ in board_day.steps(tmp_path)]
     assert names == ["check", "vision", "llm", "stt"]
-    args = type("A", (), {"out": tmp_path, "only": ["llm"], "dry_run": True})()
+    pinned = [name for name, _ in board_day.steps(tmp_path, "4-7")]
+    assert pinned == ["check", "vision", "llm", "llm_cpus", "stt"]
+    assert "--cpus" in dict(board_day.steps(tmp_path, "4-7"))["llm_cpus"]
+    args = type("A", (), {"out": tmp_path, "only": ["llm"], "dry_run": True, "llm_cpus": None})()
     assert board_day.measure(args) == 0
     out = capsys.readouterr().out
     assert "[llm]" in out and "--engine gguf" in out and "[stt]" not in out

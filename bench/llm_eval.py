@@ -26,6 +26,7 @@ import sys
 import time
 from collections import defaultdict
 
+from common.cpus import pin
 from common.function_call import FunctionCallError, parse_tokens, to_tokens
 from services.llm_svc import prompt
 
@@ -269,6 +270,9 @@ def main() -> int:
     parser.add_argument("--model", default=None, help="hf: 모델 id 또는 폴더, gguf: .gguf 파일")
     parser.add_argument("--threads", type=int, default=4, help="gguf 엔진의 CPU 스레드 수")
     parser.add_argument(
+        "--cpus", default=None, help="이 코어에서만 실행 (예: 4-7, 리눅스 전용 — LLM-19 비교)"
+    )
+    parser.add_argument(
         "--finetuned",
         action="store_true",
         help="학습한 모델: 짧은 지시문만, 예시 없음 (services/llm_svc/prompt.py)",
@@ -288,6 +292,8 @@ def main() -> int:
     elif args.engine == "gguf":
         if not args.model:
             parser.error("--engine gguf에는 --model(.gguf)이 필요합니다")
+        if pinned := pin(args.cpus):  # 모델을 읽기 전에
+            print(f"코어 고정: {sorted(pinned)}")
         engine = GGUFEngine(args.model, args.threads)
     else:
         if not args.model:
