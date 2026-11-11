@@ -101,3 +101,11 @@ def test_onnx_input_is_float_nchw_and_same_as_preprocess() -> None:
     assert rgb.shape == (640, 640, 3) and rgb.dtype == np.uint8
     # RGB: 원본 BGR의 채널 순서가 뒤집힌다
     np.testing.assert_array_equal(rgb[140 + 5, 7], img[5, 7, ::-1])
+
+
+def test_non_float_npu_output_stops_instead_of_wrong_boxes(rknnlite, monkeypatch) -> None:
+    eng = engine.load("m.rknn")
+    raw = [o.astype(np.int8) for o in outputs_with(10, 20, (2, 3, 4, 5), 0, 0.9)]
+    monkeypatch.setattr(rknnlite.instances[0], "inference", lambda inputs: raw)
+    with pytest.raises(RuntimeError, match="float가 아닙니다"):
+        eng(np.zeros((1, 640, 640, 3), np.uint8))

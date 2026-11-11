@@ -76,6 +76,10 @@ class RknnEngine:
         outputs = self.rknn.inference(inputs=[image])
         if outputs is None:
             raise RuntimeError("NPU 추론 실패")
+        # 변환할 때 출력 형식이 int8로 바뀐다는 경고가 나온다. Python API는 float로 돌려준다고 보고
+        # (rknn_model_zoo 예제와 같은 쓰임), 아니면 후처리가 틀리므로 멈춘다 (보드에서 확인 필요)
+        if not np.issubdtype(outputs[0].dtype, np.floating):
+            raise RuntimeError(f"NPU 출력이 float가 아닙니다 ({outputs[0].dtype}) — 후처리 불가")
         return outputs
 
     def release(self) -> None:
