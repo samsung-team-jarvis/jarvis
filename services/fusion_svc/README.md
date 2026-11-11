@@ -63,4 +63,4 @@ Unity 없이 볼 때는 브로커 → `fusion_svc` → `python -m services.simul
 
 - `tests/fusion`: simulator 시나리오 26개 재생 결과가 정답 State(`expected`)와 1초마다 같다, 판정 표의 경계값, 근거 만료, `SAFE_STOP` 진입·해제, 버스 발행(바뀔 때·1초마다), Safety Guard가 `fusion/state`를 받아 화구 켜기를 허용, simulator → 버스 → `fusion_svc` 재생.
 - 평가 결과는 [METRICS](../../docs/METRICS.md) (FUS-08). 정답과 같은 규칙이라 "규칙을 맞게 구현했는가"를 본다 — 실제 상황 판단은 가상 주방 녹화(FUS-10)로 본다.
-- 2026-11-11 Windows 11 노트북, `memory://` 버스. **MQTT·보드·Unity 미검증** (이 PC에 브로커 없음).
+- 2026-11-11 Windows 11 노트북, `memory://` 버스. 같은 날 MQTT(Docker mosquitto)로 가짜 가상 주방·`kitchen_gw`·`safety_guard`와 프로세스를 나눠 띄워, 장치 상태(`device/state`)를 받아 `IDLE → PREHEAT → COOKING → UNATTENDED → DANGER` 흐름과 자동 차단(FUS-09)까지 확인했다. **보드·Unity 미검증**.

@@ -127,6 +127,18 @@ python -m bench.fusion_eval --judge fusion --split test                         
 - 지표: State F1(macro)·State별 F1, 위험 미탐율(위험 구간 단위)·감지 지연, 위험 오탐. 정의는 [METRICS](../docs/METRICS.md) §1.
 - 분할: `data/fusion/split_v1.json` (시나리오 단위 val 17 · test 9, 종류별 비율, 고정 시드).
 
+## danger_path.py — 위험 감지 → 차단 지연 (FUS-09)
+
+recorder 녹화에서 자동 차단(`guard/decision`의 `reason`이 "자동 차단"으로 시작) 한 건마다 구간별 지연(ms)을 낸다. 서비스마다 세션 파일이 다르므로 폴더(또는 여러 파일)를 주면 `mono` 순으로 합친다.
+
+```bash
+python -m bench.danger_path data/sessions/
+```
+
+- 과열: 240°C 이상이 된 첫 `sensor/reading` → `fusion/state` → `guard/decision` → `control/command` → `control/result`
+- 방치: 사람 없음 60초가 된 `fusion/state`부터 (방치 판정 뒤 유예 30초는 정책이라 지연에서 빼고 따로 보인다)
+- Windows는 `time.monotonic()` 해상도가 15.6 ms라 ms 단위 지연을 잴 수 없다 — 보드(Linux)에서 잰다.
+
 ## kitchen_check.py — 가상 주방 규격 자동 검사 (HW-24)
 
 보드 역할(생존 신호 1초, 명령 발행)로 `kitchen/*`를 주고받아 가상 주방(Unity 또는 가짜 가상 주방)이 [연결 규격](../recipes/unity-kitchen-link.md) §5.2를 지키는지 항목별로 판정한다.

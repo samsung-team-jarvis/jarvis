@@ -7,6 +7,8 @@
   "네"(CONFIRM)면 결제 요청을 허용하고, "아니요"(DENY)·다른 명령·시간 초과면 버린다.
   기다리는 동안에는 호출어 없이 말한 "네"·"아니요"도 받는다
   (`stt/text`의 wake=false 문장을 규칙 파서로 읽어 CONFIRM·DENY일 때만).
+- 자동 차단(FUS-09): `fusion/state`가 과열(켜진 가열 장치 240°C 이상)이나 방치(켜진 채 사람 없음
+  60초)를 알려 오면 그 가열 장치를 끈다 (`auto_stop.py`). LLM·사람을 기다리지 않는다.
 - `control/command`는 이 서비스만 발행한다 (LLM 출력이 Guard를 건너뛰는 경로가 없게).
 """
 
@@ -22,6 +24,7 @@ from common.bus import Bus
 from common.kitchen_link import command_for, first_seq
 from common.messages import Envelope
 from services.llm_svc.rule_parser import parse
+from services.safety_guard.auto_stop import AutoStop
 from services.safety_guard.emergency import is_emergency
 from services.safety_guard.rules import ALLOW, ASK, REPLY_ACTIONS, STATES, Decision, judge
 
@@ -63,7 +66,15 @@ class SafetyGuard:
         self.clock = clock
         # 첫 control/command의 seq는 seq_start + 1. 기본은 시각에서 정한다 (재시작해도 안 겹치게)
         self.seq = first_seq(time.time()) if seq_start is None else seq_start
-        self.counts = {"ALLOW": 0, "REJECT": 0, "ASK": 0, "fast_path": 0, "duplicate": 0}
+        self.counts = {
+            "ALLOW": 0,
+            "REJECT": 0,
+            "ASK": 0,
+            "fast_path": 0,
+            "duplicate": 0,
+            "auto_stop": 0,
+        }
+        self.auto_stop = AutoStop()
         self.pending: Pending | None = None
         self._last_emergency: float | None = None
         self._last_heartbeat: float | None = None
@@ -79,6 +90,10 @@ class SafetyGuard:
             log.warning("모르는 State 무시: %r", state)
             return
         self.state = state
+        for target, reason in self.auto_stop.check(msg.payload, self.clock()):
+            self.counts["auto_stop"] += 1
+            call = {"action": "TURN_OFF", "target": target}
+            self._publish(call, Decision(ALLOW, reason), msg.session_id)
 
     def on_speech(self, msg: Envelope) -> None:
         text, wake = msg.payload["text"], msg.payload["wake"]
