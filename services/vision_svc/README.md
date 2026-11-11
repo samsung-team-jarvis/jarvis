@@ -37,6 +37,7 @@ python -m services.vision_svc --model models/yolov8n_coco_i8.rknn --input camera
 
 - 1초에 4장(`--fps`), 추론 CPU 2스레드(`--threads`, 노트북에서 STT·LLM과 나눠 쓴다).
 - 가상 주방 화면은 가장 최근 것만 인식한다 (밀리면 건너뛴다).
+- **화면이 끊기면** (VIS-12): 1초 넘게 화면이 없으면 경고를 한 번 남기고(`… 1.2초째 없음 — 상황 인식은 사람이 없는 것으로 본다`), 다시 들어오면 몇 초 끊겼는지 남긴다. 카메라는 2초마다 다시 연다 (USB 웹캠이 빠졌다 꽂힘). 화면이 끊긴 동안 `fusion_svc`는 사람이 없는 것으로 보므로 60초 뒤 자동 차단된다 — 불이 꺼진 이유를 이 로그로 확인한다.
 - 노트북 시연 설정([`launch_demo.yaml`](../../scripts/launch_demo.yaml))은 카메라 입력으로 띄운다.
 
 ## 발행 내용
@@ -56,6 +57,7 @@ python -m services.vision_svc --model models/yolov8n_coco_i8.rknn --input camera
 | `detect.py` | 전처리(`letterbox` → RGB 640×640 uint8, `to_tensor`)·후처리(DFL·클래스별 NMS) — numpy만, rknn_model_zoo `yolov8.py`와 같은 계산 |
 | `engine.py` | `OnnxEngine`(CPU)·`RknnEngine`(NPU), 확장자로 고르는 `load()`. 엔진마다 입력 형식이 달라 `prepare()`로 맞춘다 (ONNX: 1×3×640×640 float 0~1, RKNN: 1×640×640×3 uint8) |
 | `service.py` | `VisionService` — 클래스 걸러 발행 |
+| `camera.py` | `Camera`(읽기 실패 시 다시 열기)·`GapWatch`(화면 끊김 경고) |
 
 ## 확인 기록 (Mac, 2026-10-29, #122)
 
