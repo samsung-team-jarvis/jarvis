@@ -4,7 +4,7 @@
 
 ```text
 마이크 / wav ─▶ Silero VAD ─(발화 구간)─▶ SenseVoice STT ─▶ 호출어 판정 ─▶ stt/text
-guard/decision · fusion/state ─▶ 응답 문장 ─▶ 한국어 VITS ─▶ 스피커   (재생 중 마이크 입력은 무음)
+guard/decision · fusion/state · device/state ─▶ 응답 문장 ─▶ 한국어 VITS ─▶ 스피커   (재생 중 마이크 입력은 무음)
 ```
 
 ## 빠른 실행
@@ -89,15 +89,22 @@ VAD는 말이 시작됐다고 판단한 곳부터 자르므로 "자"처럼 약�
 | ALLOW `ASK_CLARIFY TURN_ON / target` | 어느 장치를 켤까요? |
 | REJECT `TURN_ON burner_1` + reason | 지금은 1번 화구를 제어할 수 없어요. {reason} |
 | ASK (Guard가 확인 요청) | 정말 1번 화구를 제어할까요? |
-| `fusion/state` risk가 warn·danger로 **올라갈 때만** | 주의하세요… / 위험 상황이에요. 불을 확인해 주세요. |
+| ALLOW 자동 차단 (`reason` "자동 차단: 과열 …" / "… 방치 …", FUS-09) | 온도가 너무 높아 1번 화구를 껐습니다. / 자리를 오래 비우셔서 1번 화구를 껐습니다. |
+| ALLOW `CHECK_STATUS` | 지금은 조리 중이에요. 켜진 장치는 1번 화구 강 182도, 후드 중이에요. |
+| ALLOW `CHECK_STATUS burner_1` | 1번 화구는 켜져 있어요. 세기 강, 182도예요. / 1번 화구는 꺼져 있어요. 아직 150도라 뜨거워요. |
+| ALLOW `CHECK_RISK` | 지금은 위험하지 않아요. / 주의가 필요해요. 2번 화구가 205도예요. 사람 없이 14초째 켜져 있어요. |
+| `fusion/state` warn으로 **올라갈 때** | 주의하세요. 1번 화구가 210도예요. |
+| `fusion/state` danger로 올라가거나 **위험 종류가 바뀔 때** | `DANGER`: 위험해요. 1번 화구가 241도로 너무 뜨거워요. / `UNATTENDED`: 가열 장치가 켜진 채 자리를 비우셨어요. 30초 안에 돌아오지 않으면 불을 끕니다. |
 
-TTS 모델이 없으면 경고만 내고 STT는 계속 동작한다. `CHECK_STATUS`·`CHECK_RISK`는 읽을 상태가 아직 없어 "준비 중" 문장 (FUS-08 이후).
+TTS 모델이 없으면 경고만 내고 STT는 계속 동작한다.
+
+상태·위험 확인(STT-13)은 마지막 `fusion/state`의 `evidence`(interfaces §2.3)와 `device/state`(후드·조명 등 가열 장치가 아닌 장치)로 답한다. 상태를 받은 적이 없거나 5초 넘게 끊겼으면 "상태 정보를 아직 받지 못했어요" / "상태 정보가 끊겨서 지금 상태를 알 수 없어요" — 오래된 상태로 "위험하지 않아요"라고 하지 않는다. 온도를 모르는 장치는 "온도는 알 수 없어요"라고 말한다.
 
 ## Spec
 
 | 항목 | 내용 |
 |---|---|
-| 입력 | 마이크(`sounddevice`, 16kHz mono) / wav · `guard/decision` · `fusion/state` |
+| 입력 | 마이크(`sounddevice`, 16kHz mono) / wav · `guard/decision` · `fusion/state` · `device/state` |
 | 출력 | `stt/text` `{text, wake, audio_ms, stt_ms, speech_end_mono}` ([interfaces](../../docs/architecture/interfaces.md) §2), `system/heartbeat` 1초마다, 스피커 |
 | `speech_end_mono` | 발화 마지막 샘플이 들어온 시각(`time.monotonic`) — 지연 측정의 출발점. 마이크는 콜백 시각 기준이라 실제보다 수십 ms 늦다 |
 | VAD | threshold 0.5, min_silence 0.5 s, min_speech 0.25 s, max_speech 20 s (특강 p.36), 앞여유 0.3 s (#128) |

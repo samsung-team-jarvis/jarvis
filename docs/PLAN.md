@@ -106,6 +106,7 @@
 - [x] STT-03 `audio_svc` v0: 마이크 → Silero VAD → SenseVoice → `stt/text` 발행 | 선행: STT-02, INFRA-03 (보드 미수령으로 Mac 기준 선진행) | 담당: 이현종 (#35 — wav·MQTT 확인, 2026-10-02 MacBook 마이크로 사람 음성 확인 #57)
 - [x] STT-04 텍스트 기반 호출어 v0: "자비스"로 시작하는 발화만 명령 처리 — 비호출 발화는 무시 로그 | 선행: STT-03 | 담당: 이현종 (#37, `services/audio_svc/wake.py`)
 - [ ] STT-12 TTS 음성 응답 v0: `guard/decision`·위험 경고를 한국어 VITS(sherpa-onnx, 배포 이미지 제공 모델)로 읽어 줌, 재생 중 마이크 입력 무시 — "자비스 후드 켜줘" → "후드를 켰습니다" | 선행: STT-03 | 담당: 이현종 (#51 — 응답·무음 처리 구현, wav 저장으로 확인. 스피커 재생·실제 에코 차단 확인 대기) (#136 — 되받아쓰기 CER 17.0~17.9%, macOS 음성 9.6%: 장치 이름을 흐리게 발음, `bench/speech_check.py tts`)
+- [x] STT-13 상태·위험 확인 음성 응답과 자동 차단 이유: `CHECK_STATUS`·`CHECK_RISK`를 `fusion/state` 근거·`device/state`로 답함(상태가 없거나 5초 넘게 끊기면 모른다고 답함), 자동 차단에 이유(과열·자리 비움), 위험 경고를 State별로(`DANGER` 장치·온도, `UNATTENDED` 30초 뒤 끔) | 선행: STT-12, FUS-08, FUS-09 | 담당: 이현종 (#146 — 단위 테스트로 문장 확인. 실제 TTS 재생은 STT-12와 같이 미확인)
 - [x] FUS-02 규칙 기반 파서 v0 (키워드 → Function Call) — Action 10개 중 최소 TURN_ON/TURN_OFF/EMERGENCY_STOP | 선행: LLM-01 | 담당: 이현종 (#41, `services/llm_svc` — 10개 모두)
 - [x] FUS-03 `safety_guard` v0: 화이트리스트·스키마 검증, 위험 상태에서 REJECT, 결제 요청은 항상 확인(`ASK`) 뒤 실행 (`CONFIRM`·`DENY`) — 단위 테스트 통과 | 선행: LLM-01 | 담당: 최지환 (#96, `services/safety_guard` — 장치 8종·결제 확인 10초 대기([decision](./decisions/2026-10-09-guard-confirm-flow.md)). MQTT·보드·가상 주방 미검증, 결제 실행은 HW-23)
 - [x] FUS-04 긴급 빠른 경로: "정지/멈춰/그만" 등은 LLM 없이 즉시 EMERGENCY_STOP | 선행: FUS-03 | 담당: 최지환 (#96, `services/safety_guard/emergency.py`)
