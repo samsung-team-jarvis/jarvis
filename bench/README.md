@@ -159,3 +159,20 @@ python -m bench.kitchen_check --long --require-frames     # + 265°C 자체 끄�
 
 - 보드의 `kitchen_gw`와 함께 띄우지 않는다 — 생존 신호와 명령이 섞인다.
 - 시작할 때와 끝날 때 모든 장치를 끈다. 화면 크기는 JPEG 머리(SOF)만 읽어 확인한다.
+
+## board_day.py — 보드 받은 날 점검·측정 (INFRA-08)
+
+보드에서 설치가 맞는지 보고, 최종 측정을 순서대로 돌린다. 순서: [board-setup](../recipes/board-setup.md) "받은 날 순서".
+
+```bash
+python -m bench.board_day check                  # 점검표 (보드·NPU 드라이버·rknnlite·llama-cpp·모델·브로커·카메라·온도·RAM)
+python -m bench.board_day vision --compare       # YOLO 전처리/추론/후처리 ms: .rknn(NPU) vs .onnx(CPU), 같은 화면
+python -m bench.board_day vision --images <폴더>   # 사람이 있는 사진으로 (생략 시 무작위 화면 — 속도만)
+python -m bench.board_day measure --dry-run      # 실행할 명령 목록
+python -m bench.board_day measure                # check → vision → llm(GGUF test) → stt(val) → runs/board/<시각>/summary.md
+```
+
+- 점검표는 실패한 항목에 고칠 방법을 붙인다. 하나라도 실패하면 종료 코드 1.
+- `vision --compare --images`는 같은 사진에서 ONNX(CPU)와 RKNN(NPU)이 찾은 사람을 상자 겹침 0.5 이상으로 짝지어 개수·짝·점수 차를 낸다 — INT8 변환으로 사람을 놓치는지 보는 것이다.
+- `vision`은 처음 5장을 빼고(런타임 준비) 평균·p95를 낸다. 전처리에는 엔진별 입력 변환까지 들어간다 (`vision_svc`의 `pre_ms`와 같다).
+- 시연 구성 동시 구동·장시간 구동은 마이크·카메라·사람이 필요해 이 도구로 돌리지 않는다 (recipe 7·8번).
