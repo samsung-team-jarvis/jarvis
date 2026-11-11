@@ -14,7 +14,7 @@
 | HF → `.rkllm` 변환 | ❌ | ✅ | ❌ (rkllm-toolkit은 Linux x86_64 · Python 3.10~3.12 전용) |
 | 최종 성능 측정 | | | ✅ **모든 공식 수치는 보드 기준** |
 
-근거와 절차: [yolo-to-rknn](../../recipes/yolo-to-rknn.md), [llm-to-rkllm](../../recipes/llm-to-rkllm.md) (2026-10-02 공식 저장소 확인). 변환은 **Colab 노트북이 기본 경로**다 ([training](../../training/README.md)). Mac에서 RKNN 변환을 확인하려면 `bash training/convert/docker_rknn_smoke.sh` (Docker, x86 에뮬레이션이라 느림).
+근거와 절차: [yolo-to-rknn](../../recipes/yolo-to-rknn.md), [llm-to-rkllm](../../recipes/llm-to-rkllm.md) (2026-10-02 공식 저장소 확인). 변환은 **Colab 노트북이 기본 경로**다 ([training](../../training/README.md)). Mac에서 RKNN 변환을 확인하려면 `bash training/convert/docker_rknn_yolo.sh` (Docker, x86 에뮬레이션이라 느림).
 
 ## 처음 clone 후
 
