@@ -330,15 +330,18 @@ def vision(args: argparse.Namespace) -> int:
 # ── 측정 일괄 ─────────────────────────────────────────────────────────
 
 
-def steps(out: pathlib.Path) -> list[tuple[str, list[str]]]:
-    """(이름, 명령). 저장소 루트에서 실행한다."""
+def steps(out: pathlib.Path, llm_cpus: str | None = None) -> list[tuple[str, list[str]]]:
+    """(이름, 명령). 저장소 루트에서 실행한다. llm_cpus가 있으면 큰 코어 고정 LLM도 (LLM-19)."""
     py = sys.executable
+    llm = [LLM_PYTHON, "-m", "bench.llm_eval", "--engine", "gguf", "--model", GGUF_MODEL,
+           "--split", "test"]  # fmt: skip
+    pinned = [("llm_cpus", [*llm, "--cpus", llm_cpus, "--csv", str(out / "llm_test_cpus.csv")])]
     return [
         ("check", [py, "-m", "bench.board_day", "check"]),
         ("vision", [py, "-m", "bench.board_day", "vision", "--compare",
                     "--json", str(out / "vision.json")]),
-        ("llm", [LLM_PYTHON, "-m", "bench.llm_eval", "--engine", "gguf", "--model", GGUF_MODEL,
-                 "--split", "test", "--csv", str(out / "llm_test.csv")]),
+        ("llm", [*llm, "--csv", str(out / "llm_test.csv")]),
+        *(pinned if llm_cpus else []),
         ("stt", [py, "-m", "bench.stt_eval", STT_MANIFEST, "--split", "val",
                  "--csv", str(out / "stt_val.csv")]),
     ]  # fmt: skip
@@ -353,7 +356,7 @@ def soc_temp() -> str:
 def measure(args: argparse.Namespace) -> int:
     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     out = args.out or ROOT / "runs" / "board" / stamp
-    plan = [s for s in steps(out) if not args.only or s[0] in args.only]
+    plan = [s for s in steps(out, args.llm_cpus) if not args.only or s[0] in args.only]
     if args.dry_run:
         for name, argv in plan:
             print(f"[{name}] {shlex.join(argv)}")
@@ -400,7 +403,8 @@ def main() -> int:
     v.add_argument("--json", type=pathlib.Path, default=None)
     m = sub.add_parser("measure", help="측정 일괄")
     m.add_argument("--dry-run", action="store_true", help="명령만 출력")
-    m.add_argument("--only", nargs="*", help="이 단계만 (check vision llm stt)")
+    m.add_argument("--only", nargs="*", help="이 단계만 (check vision llm llm_cpus stt)")
+    m.add_argument("--llm-cpus", default=None, help="LLM을 이 코어에 고정해 한 번 더 (예: 4-7)")
     m.add_argument("--out", type=pathlib.Path, default=None)
     args = parser.parse_args()
 

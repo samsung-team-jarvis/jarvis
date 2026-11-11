@@ -21,7 +21,10 @@ python -m services.llm_svc parse "3분 뒤에 2번 불 꺼"  # 버스 없이 결
 .venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf
 .venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4
 .venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4 parse "일번 화구 약하게"
+.venv-llm/bin/python -m services.llm_svc --model runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf --cpus 4-7   # 보드: 큰 코어에 고정
 ```
+
+`--cpus` (LLM-19): RK3588은 빠른 코어(A76) 4개 + 느린 코어(A55) 4개다. llama.cpp 4스레드가 느린 코어에 잡히지 않게 이 프로세스를 정한 코어에서만 돌린다 (`common/cpus.py`, 리눅스 `sched_setaffinity` — 맥에서는 경고하고 무시). 큰 코어 번호는 보드에서 확인한다 (확인 필요, [board-setup](../../recipes/board-setup.md) 받은 날 순서). 효과는 보드에서 `python -m bench.board_day measure --llm-cpus 4-7`로 고정 전후를 비교한다.
 
 MQTT 확인 (Mac, 2026-10-16, #114): 브로커(`eclipse-mosquitto:2`) 위에서 `--model runs/llm/llm_qwen3-0.6b_jarvis_v4`로 띄우고 `fusion/state`(COOKING) 뒤 `stt/text` 5건을 보냈다. 일번 화구 켜기·후드 세게·타이머 3분은 LLM 출력이 그대로 통과해 맞게 발행됐고(`gen_ms` 첫 문장 872 ms, 그 뒤 407·335 ms), "자비스."만 말한 경우는 LLM 없이 되묻기, 호출어 없는 발화는 무시됐다. SIGTERM으로 3초 안에 종료.
 

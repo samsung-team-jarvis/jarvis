@@ -18,6 +18,7 @@ import sys
 import threading
 
 from common.bus import connect
+from common.cpus import pin
 from common.function_call import to_tokens
 from common.messages import Envelope
 from services.llm_svc.interpret import resolve
@@ -46,7 +47,12 @@ def main() -> int:
         default=None,
         help="학습한 LLM: .gguf 파일(llama.cpp CPU) 또는 HF 폴더 (.venv-llm). 생략 시 규칙 파서만",
     )
+    parser.add_argument(
+        "--cpus", default=None, help="이 코어에서만 실행 (예: 4-7 — RK3588 큰 코어, 리눅스 전용)"
+    )
     args = parser.parse_args()
+    if pinned := pin(args.cpus):  # 모델을 읽기 전에 (llama.cpp 스레드가 물려받게)
+        print(f"llm_svc 코어 고정: {sorted(pinned)}")
 
     generate = None
     if args.model and args.model.endswith(".gguf"):
