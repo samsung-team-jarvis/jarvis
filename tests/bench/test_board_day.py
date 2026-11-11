@@ -77,3 +77,14 @@ def test_measure_plan_and_dry_run(tmp_path: pathlib.Path, capsys) -> None:
     out = capsys.readouterr().out
     assert "[llm]" in out and "--engine gguf" in out and "[stt]" not in out
     assert not (tmp_path / "summary.md").exists()
+
+
+def test_agreement_pairs_people_by_box_overlap() -> None:
+    def person(x: float, conf: float) -> dict:
+        return {"cls": "person", "conf": conf, "bbox": [x, 0, x + 10, 10]}
+
+    onnx = [[person(0, 0.9), person(50, 0.8)], [person(0, 0.7)]]
+    rknn = [[person(1, 0.85), {"cls": "bus", "conf": 0.9, "bbox": [0, 0, 9, 9]}], []]
+    a = board_day.agreement(onnx, rknn)
+    assert (a["ref"], a["got"], a["matched"]) == (3, 1, 1)
+    assert a["conf_diff_max"] == 0.05

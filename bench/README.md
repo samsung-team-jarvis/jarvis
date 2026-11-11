@@ -173,5 +173,6 @@ python -m bench.board_day measure                # check → vision → llm(GGUF
 ```
 
 - 점검표는 실패한 항목에 고칠 방법을 붙인다. 하나라도 실패하면 종료 코드 1.
+- `vision --compare --images`는 같은 사진에서 ONNX(CPU)와 RKNN(NPU)이 찾은 사람을 상자 겹침 0.5 이상으로 짝지어 개수·짝·점수 차를 낸다 — INT8 변환으로 사람을 놓치는지 보는 것이다.
 - `vision`은 처음 5장을 빼고(런타임 준비) 평균·p95를 낸다. 전처리에는 엔진별 입력 변환까지 들어간다 (`vision_svc`의 `pre_ms`와 같다).
 - 시연 구성 동시 구동·장시간 구동은 마이크·카메라·사람이 필요해 이 도구로 돌리지 않는다 (recipe 7·8번).

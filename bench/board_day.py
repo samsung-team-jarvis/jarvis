@@ -224,11 +224,48 @@ def _stats(values: list[float]) -> dict[str, float]:
     return {"mean": round(statistics.fmean(values), 2), "p95": round(p95, 2)}
 
 
+MATCH_IOU = 0.5  # 이만큼 겹치면 두 엔진이 같은 물체를 찾은 것으로 본다
+
+
+def _iou(a: list[float], b: list[float]) -> float:
+    w = max(0.0, min(a[2], b[2]) - max(a[0], b[0]))
+    h = max(0.0, min(a[3], b[3]) - max(a[1], b[1]))
+    inter = w * h
+    union = (a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - inter
+    return inter / union if union > 0 else 0.0
+
+
+def agreement(ref: list[list[dict]], got: list[list[dict]], cls: str = "person") -> dict:
+    """화면마다 같은 클래스의 물체를 상자 겹침으로 짝짓는다 (ref = ONNX CPU, got = RKNN NPU)."""
+    n_ref = n_got = matched = 0
+    conf_diff: list[float] = []
+    for r_frame, g_frame in zip(ref, got, strict=True):
+        rs = [d for d in r_frame if d["cls"] == cls]
+        gs = [d for d in g_frame if d["cls"] == cls]
+        n_ref, n_got, used = n_ref + len(rs), n_got + len(gs), set()
+        for r in rs:
+            best, best_iou = None, MATCH_IOU
+            for i, g in enumerate(gs):
+                if i not in used and (iou := _iou(r["bbox"], g["bbox"])) >= best_iou:
+                    best, best_iou = i, iou
+            if best is not None:
+                used.add(best)
+                matched += 1
+                conf_diff.append(abs(r["conf"] - gs[best]["conf"]))
+    return {
+        "class": cls,
+        "ref": n_ref,
+        "got": n_got,
+        "matched": matched,
+        "conf_diff_max": round(max(conf_diff, default=0.0), 3),
+    }
+
+
 def time_engine(engine, images: list[np.ndarray], warmup: int = 5) -> dict:
-    """화면마다 전처리(letterbox + 엔진 입력 변환) / 추론 / 후처리 ms."""
+    """화면마다 전처리(letterbox + 엔진 입력 변환) / 추론 / 후처리 ms, 찾은 물체(`found`)."""
     from services.vision_svc import detect
 
-    pre, infer, post = [], [], []
+    pre, infer, post, found = [], [], [], []
     for i, bgr in enumerate([*images[:warmup], *images]):
         t0 = time.perf_counter()
         rgb, box = detect.letterbox(bgr)
@@ -236,12 +273,13 @@ def time_engine(engine, images: list[np.ndarray], warmup: int = 5) -> dict:
         t1 = time.perf_counter()
         outputs = engine(x)
         t2 = time.perf_counter()
-        detect.postprocess(outputs, box, bgr.shape[1], bgr.shape[0])
+        objects = detect.postprocess(outputs, box, bgr.shape[1], bgr.shape[0])
         t3 = time.perf_counter()
         if i >= warmup:  # 첫 몇 장은 런타임 준비가 섞여 뺀다
             pre.append((t1 - t0) * 1000)
             infer.append((t2 - t1) * 1000)
             post.append((t3 - t2) * 1000)
+            found.append(objects)
     total = [a + b + c for a, b, c in zip(pre, infer, post, strict=True)]
     return {
         "engine": engine.name,
@@ -251,6 +289,7 @@ def time_engine(engine, images: list[np.ndarray], warmup: int = 5) -> dict:
         "post_ms": _stats(post),
         "total_ms": _stats(total),
         "fps": round(1000 / statistics.fmean(total), 1),
+        "found": found,
     }
 
 
@@ -273,7 +312,15 @@ def vision(args: argparse.Namespace) -> int:
             f"후처리 {r['post_ms']['mean']} ms → 합계 {r['total_ms']['mean']} ms, {r['fps']} fps"
         )
     source = str(args.images) if args.images else "무작위 화면 (속도만)"
-    report = {"images": source, "results": results, "machine": platform.platform()}
+    report = {"images": source, "machine": platform.platform()}
+    if len(results) == 2 and args.images:  # 같은 사진에서 NPU 모델이 ONNX와 같은 사람을 찾는가
+        a = agreement(results[1]["found"], results[0]["found"])
+        report["agreement"] = a
+        print(
+            f"사람: ONNX {a['ref']} · {results[0]['engine']} {a['got']} · 짝 {a['matched']} "
+            f"(상자 겹침 {MATCH_IOU} 이상), 점수 차 최대 {a['conf_diff_max']}"
+        )
+    report["results"] = [{k: v for k, v in r.items() if k != "found"} for r in results]
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(report, ensure_ascii=False, indent=1))
