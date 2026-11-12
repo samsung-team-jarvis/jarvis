@@ -8,8 +8,10 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      # Unity 에셋(텍스처·폰트 등)은 1MB를 넘는 것이 흔해 검사하지 않는다 (docs/decisions/2026-10-08-unity-project-in-repo.md).
       - id: check-added-large-files
         args: ['--maxkb=1024']
+        exclude: '^kitchen/Assets/'
       - id: check-merge-conflict
       - id: check-yaml
       - id: detect-private-key

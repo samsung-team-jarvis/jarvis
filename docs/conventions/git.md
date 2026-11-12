@@ -128,7 +128,7 @@ fix(ble): #40 ACK 타임아웃 시 재시도 누락 수정
 
 ## 금지
 
-- 모델 가중치(`*.pt`, `*.onnx`, `*.rknn`, `*.rkllm` 등)와 원본 데이터(wav, jpg, mp4) 커밋
+- 모델 가중치(`*.pt`, `*.onnx`, `*.rknn`, `*.rkllm` 등)와 원본 데이터(wav, jpg, mp4) 커밋. 가상 주방의 Unity 에셋(`kitchen/Assets/`의 텍스처 등)은 원본 데이터가 아니므로 커밋한다 ([decision](../decisions/2026-10-08-unity-project-in-repo.md))
 - `.env`, 토큰, 개인 설정 커밋
 - 커밋 메시지에 Co-Authored-By 등 AI 도구 서명 푸터 추가
 - PR 본문에 "Generated with Claude Code" 같은 AI 도구 서명 줄 추가

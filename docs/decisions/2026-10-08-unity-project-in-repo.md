@@ -29,6 +29,7 @@
 | 줄바꿈 | 텍스트 에셋(장면·프리팹·`.meta`)은 저장소 규칙대로 LF. 이미지·3D 모델·소리는 `.gitattributes`에서 `binary` |
 | Unity Cloud | 연결하지 않는다 (`ProjectSettings.asset`의 `cloudProjectId`·`organizationId` 비움). `com.unity.collab-proxy` 패키지 제거 |
 | Git LFS | 쓰지 않는다 (아래 Revisit) |
+| 파일 크기 | `kitchen/Assets/`는 pre-commit의 1MB 검사(`check-added-large-files`)에서 뺀다. 2K 텍스처·한글 폰트·TextMesh Pro 기본 리소스가 1~9MB라 줄일 수 없다 (2026-11-12 추가, #95). 재배포가 허용된 에셋만 커밋한다 |
 
 - 선택 이유:
   - 이슈 → 브랜치 → PR → PLAN 체크 흐름과 훅·CI·라벨을 그대로 쓴다. B는 이것을 다시 세팅해야 한다.
@@ -38,9 +39,9 @@
 ## Consequences
 - 장점: 작업 흐름이 하나다. 규격과 구현이 한곳에 있다.
 - 단점:
-  - Python 개발자가 저장소를 받을 때 Unity 에셋도 함께 받는다. 지금은 수백 KB라 문제없다.
+  - Python 개발자가 저장소를 받을 때 Unity 에셋도 함께 받는다. 장면 1차(#95)의 텍스처·폰트로 약 35MB가 늘었다.
   - 장면 파일(`.unity`)은 텍스트여도 충돌을 손으로 풀기 어렵다 → 한 장면은 한 번에 한 사람만 편집하고, 장치는 프리팹으로 나눈다.
-  - 저장소가 PUBLIC이라 Asset Store 에셋은 재배포가 허용된 것만 커밋할 수 있다 (에셋마다 라이선스 확인 필요). 1차 장면은 Unity 기본 도형으로 만든다.
+  - 저장소가 PUBLIC이라 Asset Store 에셋은 재배포가 허용된 것만 커밋할 수 있다 (에셋마다 라이선스 확인 필요). Asset Store 에셋 팩은 커밋하지 않고 `kitchen/.gitignore`에 넣어 각자 받는다 ([README](../../kitchen/README.md#에셋-팩)).
 - 영향: `kitchen/`, `.gitattributes`, [versions](../conventions/versions.md)(Unity 패치 버전), README 폴더 구조, PLAN HW-15~23
 
 ## Verification
