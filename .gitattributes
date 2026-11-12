@@ -1,3 +1,22 @@
 # 텍스트 파일은 OS와 git 설정(Windows 기본 core.autocrlf=true)에 상관없이 LF로 꺼낸다.
 # 대본 CSV처럼 LF를 검사하는 파일이 있다 (#53, #77).
 * text=auto eol=lf
+
+# Unity 가상 주방(kitchen/)의 바이너리 에셋. 텍스트로 오인해 줄바꿈을 바꾸거나 diff를 내지 않게 한다.
+# 장면·프리팹·.meta 같은 Unity 텍스트 에셋(Force Text 직렬화)은 위 규칙대로 LF 텍스트로 둔다.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.tga binary
+*.psd binary
+*.exr binary
+*.hdr binary
+*.fbx binary
+*.obj binary
+*.blend binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.ttf binary
+*.otf binary
+*.dll binary
