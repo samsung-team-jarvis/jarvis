@@ -15,7 +15,7 @@
 - 장면 배치 완료 (HW-15, #95): `Assets/Scenes/Kitchen.unity`에 [에셋 팩](#에셋-팩)과 외부 3D 모델로 식당 홀·주방(화구·튀김기·후드·그릴·냉장고·계산대 등)을 배치했다. 물체 이름은 아직 팩 이름 그대로(`Stoves`·`Fryer`·`hoods` 등)다.
 - 장치 위에 한글 이름표(오븐·튀김기·전자레인지·화구)를 TextMesh Pro + Pretendard Bold로 띄웠다. `Scripts/FaceCamera.cs`로 이름표가 카메라를 바라본다.
 - 홀 벽·주방 벽·주방 바닥은 `Assets/Textures`의 2K 텍스처(`Materials/Hall_wall_mtrl`·`Kitchen_wall_mtrl`·`Kitchen_floor_mtrl`)를 쓴다. 텍스처·폰트는 1MB가 넘어도 커밋한다 ([decision](../docs/decisions/2026-10-08-unity-project-in-repo.md)).
-- 아직 없는 것 (HW-24): 장치 이름(`burner_1` 등)·`Devices`·`CookingZone`·`Avatar`·인식용 카메라(`VisionCamera`·`VisionRT`). Build Profiles 장면 목록도 아직 `SampleScene`이다.
+- 아직 없는 것 (HW-25): 장치 이름(`burner_1` 등)·`Devices`·`CookingZone`·`Avatar`·인식용 카메라(`VisionCamera`·`VisionRT`). Build Profiles 장면 목록도 아직 `SampleScene`이다.
 - 작업 중 (곧 올림): 불 효과 같은 파티클, 원격 명령으로 장치를 제어하는 기능(HW-16).
 - 보드와 주고받는 코드는 아직 저장소에 없다.
 
@@ -26,7 +26,7 @@
 | 순서 | PLAN | 할 일 | 상태 |
 |---|---|---|---|
 | 1 | HW-15 | 장면 1차: 화구 2개·후드·튀김기 배치 ([아래](#장면-1차-hw-15) 1·2) | 완료 (#95) |
-| 2 | HW-24 | 장면 2차: 장치 이름·`Devices`, 조리 구역, 인식용 카메라 ([아래](#장면-1차-hw-15) 2의 이름 규칙·3·4) | |
+| 2 | HW-25 | 장면 2차: 장치 이름·`Devices`, 조리 구역, 인식용 카메라 ([아래](#장면-1차-hw-15) 2의 이름 규칙·3·4) | |
 | 3 | HW-16 | `kitchen/cmd`로 후드 켜고 끄기, `kitchen/ack`로 답하기 (MQTTnet 4.3.7) | 작업 중 |
 | 4 | HW-18 | 생존 신호가 3초 끊기면 가열 장치 OFF, `kitchen/state` 보고 | |
 | 5 | HW-19 | 가열 장치의 가상 온도 계산, `kitchen/temp` 1초에 한 번, 265°C에서 스스로 OFF | |
@@ -34,7 +34,7 @@
 | 7 | HW-21·22 | 제어 성공률·왕복 지연 측정과 개선 | |
 | 8 | HW-23 | 장치 8종(조명·에어컨·선풍기·음악·결제)과 장치 상태 표시 — 발표 시연용 완성 | |
 
-함께 쓰는 사람: 신지호(VIS-03)가 이 장면의 화면을 캡처해 YOLO 데이터를 만들고, 최지환(UI-01·02)이 화면에 겹쳐 띄우는 정보(장치 이름표·경고·판단 근거)를 붙인다.
+함께 쓰는 사람: 최석진(VIS-03·04, 2026-10-29 신지호에서 이관)이 이 장면의 화면을 캡처·라벨링해 YOLO 데이터를 만들고, 최지환(UI-01·02)이 화면에 겹쳐 띄우는 정보(장치 이름표·경고·판단 근거)를 붙인다.
 
 ## 장면 1차 (HW-15)
 

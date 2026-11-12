@@ -94,9 +94,9 @@
 - [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 가상 주방 캡처 화면(장면이 없으면 비슷한 주방 영상) 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 최지환 (2026-10-29 신지호에서 이관)
 - [x] ~~HW-03 ESP32 BLE 서버~~ — 취소 (2026-10-05 → HW-16)
 - [x] ~~HW-04 열전대·INA219 값 시리얼 출력~~ — 취소 (2026-10-05 → HW-19)
-- [x] HW-15 가상 주방 장면 1차: 식당 홀·주방 배치 (화구·후드·튀김기 포함) | 선행: HW-13 | 담당: 최석진 (#95 — 에셋 팩·외부 모델로 배치. 장치 이름·조리 구역·인식용 카메라는 HW-24로 분리)
-- [ ] HW-24 가상 주방 장면 2차: 장치 이름(`burner_1`·`burner_2`·`fryer`·`hood`)·`Devices`, 조리 구역(`CookingZone`)·`Avatar`, 인식용 카메라(`VisionCamera` → `VisionRT` 640×360) 고정, Build Profiles 장면을 `Kitchen`으로 — 인식용 카메라 화면을 캡처할 수 있는 상태 ([kitchen README](../kitchen/README.md#장면-1차-hw-15)) | 선행: HW-15 | 담당: 최석진
-- [ ] HW-16 가상 장치 제어 hello: `kitchen/cmd` 메시지 하나로 가상 주방의 후드를 켜고 끄고 `kitchen/ack`로 답하기 ([안내](../recipes/unity-kitchen-link.md)) | 선행: HW-14, HW-24 | 담당: 최석진
+- [x] HW-15 가상 주방 장면 1차: 식당 홀·주방 배치 (화구·후드·튀김기 포함) | 선행: HW-13 | 담당: 최석진 (#95 — 에셋 팩·외부 모델로 배치. 장치 이름·조리 구역·인식용 카메라는 HW-25로 분리)
+- [ ] HW-25 가상 주방 장면 2차: 장치 이름(`burner_1`·`burner_2`·`fryer`·`hood`)·`Devices`, 조리 구역(`CookingZone`)·`Avatar`, 인식용 카메라(`VisionCamera` → `VisionRT` 640×360) 고정, Build Profiles 장면을 `Kitchen`으로 — 인식용 카메라 화면을 캡처할 수 있는 상태 ([kitchen README](../kitchen/README.md#장면-1차-hw-15)) | 선행: HW-15 | 담당: 최석진
+- [ ] HW-16 가상 장치 제어 hello: `kitchen/cmd` 메시지 하나로 가상 주방의 후드를 켜고 끄고 `kitchen/ack`로 답하기 ([안내](../recipes/unity-kitchen-link.md)) | 선행: HW-14, HW-25 | 담당: 최석진
 
 ---
 
@@ -132,7 +132,7 @@
 - [ ] STT-05 STT 테스트 세트: 명령 발화 대본 작성 + 화자 4~6명 × 소음 4종(quiet/hood/frying/mixed) 녹음, `speaker_id` 기록 | 선행: LLM-01 | 담당: 최지환 (#71 이관 — 녹음 운영: 화자 섭외·일정·취합, [녹음 안내](../recipes/stt-recording.md)) (#53 — 대본 40문장·녹음 도구·안내 완료. 녹음: spk01 val quiet 40/40 MacBook 마이크 — 나머지 화자·소음 진행)
 - [x] STT-06 CER·RTF·STT→Action 정확도 측정 스크립트 (`jiwer`) | 선행: STT-05 (녹음 전 선진행, 합성 음성으로 동작 확인) | 담당: 이현종 (#49, `bench/stt_eval.py`)
 - [ ] VIS-02 클래스 정의 확정 (COCO 기본 클래스로 해결되는 것 제외, 7개 내외) — interfaces §2 반영 | 선행: VIS-01 | 담당: 최지환 (2026-10-29 신지호에서 이관 — 클래스가 상황 인식의 근거) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
-- [ ] VIS-03 가상 주방 화면 캡처 1차 (세션별 조명·배치·아바타 위치·장치 상태 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-24 | 담당: 최석진 (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
+- [ ] VIS-03 가상 주방 화면 캡처 1차 (세션별 조명·배치·아바타 위치·장치 상태 변화, `session_id` 기록) ~200장 | 선행: VIS-02, HW-25 | 담당: 최석진 (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
 - [ ] VIS-04 라벨링 1차 (Roboflow 또는 CVAT, 또는 Unity가 물체 위치로 상자 라벨을 직접 내보내기), 세션 단위 split 파일 | 선행: VIS-03 | 담당: 최석진 (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
 - [x] VIS-10 Colab YOLO 학습·평가 노트북 템플릿 (데이터 경로·클래스만 바꾸면 학습 → mAP 평가 → ONNX export까지) — ①이 코드 수정 없이 VIS-06·07 실행 가능 | 선행: VIS-02 | 담당: 이현종 (#19)
 - [ ] LLM-02 Seed 명령 500~800건 작성 (Action별 분포 목표 포함, **간접 발화**·**숫자 표기 변형**("3번"/"삼 번") 포함 — SUDA 방식, [school-materials](./school-materials.md)) | 선행: LLM-01 | 담당: 이현종 (#55 — 기획 시트로 627건 생성, 사람 검수 대기)
@@ -173,7 +173,7 @@
 - [x] ~~HW-09 ESP32 자체 하드 리밋~~ — 취소 (2026-10-05 → HW-18·HW-19)
 - [x] ~~HW-10 센서값 BLE notify~~ — 취소 (2026-10-05 → HW-19)
 - [ ] HW-19 가상 온도: 가열 장치(화구·튀김기)의 온도를 규칙대로 계산해 `kitchen/temp`로 1초에 한 번 전송, 265°C에 닿으면 스스로 OFF ([interfaces](./architecture/interfaces.md) §4.5, 기준 구현 `common.kitchen_link.next_temperature`) | 선행: HW-16 | 담당: 최석진
-- [ ] HW-20 인식용 카메라 화면을 `kitchen/frame`으로 전송 (JPEG 640×360, 1초에 4장) — `vision_svc`가 받을 수 있는지 확인 | 선행: HW-24, HW-14 | 담당: 최석진
+- [ ] HW-20 인식용 카메라 화면을 `kitchen/frame`으로 전송 (JPEG 640×360, 1초에 4장) — `vision_svc`가 받을 수 있는지 확인 | 선행: HW-25, HW-14 | 담당: 최석진
 - [ ] BOARD-08 동시 구동 부하 측정 — LLM(CPU, llama.cpp) + STT(CPU) + YOLO(NPU)일 때 tok/s 변화, fps, RAM, SoC 온도, CPU 스레드 배분 | 선행: VIS-08, LLM-09 | 담당: 이현종 (#126 — 노트북 먼저: `bench/resources.py`, 시연 구성 전체 합계 CPU 평균 78% · 최대 220%(코어 하나 = 100%), 메모리 2.2 GB. 보드는 받으면 같은 도구로)
 - [ ] BOARD-09 장시간(30분+) 구동 발열·스로틀링 확인 | 선행: BOARD-08 | 담당: 이현종 (2026-10-29 신지호에서 이관) (#132 — 노트북 먼저: 32분 서비스 7개 유지, 제어 실패 0, LLM 시간 느려지지 않음, 메모리는 audio_svc만 +56 MB — 보드에서 더 길게 확인)
 
