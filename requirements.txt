@@ -6,3 +6,6 @@ numpy==2.2.6
 sherpa-onnx==1.13.8
 # 마이크 입력 (STT-03). 보드(Ubuntu)는 sudo apt install -y libportaudio2 필요
 sounddevice==0.5.6
+# 화면 인식 (VIS-08): 이미지 처리·카메라, 노트북 추론. 보드는 RKNN 런타임을 쓴다 (onnxruntime은 Python 3.11 이상)
+opencv-python-headless==5.0.0.93
+onnxruntime==1.31.1; python_version >= "3.11"

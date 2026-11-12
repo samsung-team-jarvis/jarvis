@@ -1,0 +1,26 @@
+# 방치 + 과열: 센 불을 켜 둔 채 자리를 비워 방치 → 과열 → 자체 차단.
+# 값은 개발용 가상 값이다 (측정값 아님). 온도는 세기 시간표로 계산한다 (interfaces §4.5).
+name: unattended_overheat
+description: 1번 화구 세기 3, 10초에 자리 비움 → 40초 방치 → 240°C 위험 → 265°C 자체 차단 → 식으면 IDLE
+duration_s: 130
+
+heaters:            # [시각, 세기 0~3] — 그 시각부터 다음 항목 전까지
+  burner_1: [[0, 0], [3, 3]]
+
+vision:
+  fps: 2
+  objects:          # [시각, 보이는 클래스] — person이 없으면 조리 구역에 사람 없음
+    - [0, [person]]
+    - [10, []]
+
+stt:
+  - [3, "자비스 1번 화구 세게 해줘"]
+
+expected:          # 정답 State (FUS-05 규칙으로 계산)
+  - [0, IDLE]
+  - [3, PREHEAT]
+  - [11, COOKING]
+  - [40, UNATTENDED]
+  - [44, DANGER]
+  - [79, SAFE_STOP]
+  - [102, IDLE]

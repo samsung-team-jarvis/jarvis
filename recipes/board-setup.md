@@ -2,6 +2,29 @@
 
 > 보드 미수령 상태(2026-10-02)에서 공식 자료와 학교 특강2([school-materials](../docs/school-materials.md))로 확인한 내용이다. **학교 보드는 Orange Pi 5 Plus · 16GB · Ubuntu 22.04 배포 이미지(RKNPU v0.9.8·음성 모델 사전 설치)** 로 안내되어 있어, 배포 이미지를 받았다면 1~2절의 OS 설치는 건너뛰고 "0. 받은 보드 3분 검증"부터 한다.
 
+## 받은 날 순서 (INFRA-08)
+
+보드를 받은 날 이 순서대로 한다. 점검·측정 도구: [`bench/board_day.py`](../bench/board_day.py).
+
+**전날 Mac에서**
+
+1. YOLO 보드 모델 만들기: `bash training/convert/docker_rknn_yolo.sh` → `training/convert/out/yolov8n_coco_i8.rknn` (시뮬레이터 비교 결과 `…_check.json`도 같이 나온다)
+2. 보드로 옮길 것 (git에 없는 것): `models/`(STT·VAD·TTS·YOLO ONNX + 위 `.rknn`), `runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf`, `data/stt/`(평가 음성)
+
+**보드에서**
+
+1. 아래 "0. 받은 보드 3분 검증" (NPU 드라이버 v0.9.8)
+2. 저장소 clone → `python3 scripts/setup.py` (`.venv`·의존성·git 훅)
+3. 런타임: §4의 rknn-toolkit-lite2 휠을 `.venv`에, `sudo apt install -y mosquitto libportaudio2`, LLM 가상환경 `python3 -m venv .venv-llm && .venv-llm/bin/pip install llama-cpp-python==0.3.36` (보드에서 빌드한다 — 시간이 걸린다. 버전: [versions](../docs/conventions/versions.md))
+4. Mac에서 옮기기: `rsync -av models runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf data/stt jarvis-board:~/jarvis/` (경로는 맞춰서)
+5. 클럭 고정 (`sudo bash fix_freq_rk3588.sh`, 측정 전 필수) → **점검**: `python -m bench.board_day check` — 실패 항목마다 고칠 방법이 나온다. NPU 드라이버는 `sudo`가 있어야 읽힌다
+6. **측정**: `python -m bench.board_day measure --llm-cpus <큰 코어>` → `runs/board/<시각>/summary.md` (YOLO NPU vs ONNX CPU · LLM GGUF test 정확도·시간 · STT CER·RTF, 단계마다 SoC 온도)
+   - **NPU 모델이 사람을 제대로 찾는지** (Mac에서는 시뮬레이터 비교가 안 돼서 여기서 처음 본다): 사람이 있는 사진 폴더로 `python -m bench.board_day vision --compare --images <폴더>` → ONNX(CPU)와 RKNN(NPU)이 찾은 사람 수·짝·점수 차. 사진은 rknn_model_zoo의 `examples/yolov8/model/bus.jpg`(사람 4명)나 노트북 카메라로 찍은 사진
+   - **큰 코어 번호 확인** (LLM-19): `lscpu -e` 또는 `cat /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq` — 최대 클럭이 높은(약 2.4 GHz) 4개가 A76이다 (RK3588은 보통 4~7, 확인 필요). `--llm-cpus`로 그 번호를 주면 LLM을 고정 안 함/고정 두 번 잰다. 빠른 쪽을 7번에 쓴다
+7. **시연 구성 + 부하** (BOARD-08, 마이크·카메라 연결): 터미널 1 `python3 scripts/launch.py --config scripts/launch_demo.yaml --arg vision_svc="--model models/yolov8n_coco_i8.rknn" --arg llm_svc="--cpus 4-7"`(6번에서 고정이 빨랐을 때), 터미널 2 `python -m bench.resources --duration 300 --csv runs/board/load.csv` — 그동안 리허설 대본대로 말한다 ([rehearsal](../bench/README.md))
+8. **장시간** (BOARD-09): 7번을 `--duration 1800`으로, 온도는 `cat /sys/class/thermal/thermal_zone*/temp`
+9. 결과를 [METRICS](../docs/METRICS.md)에 보드 값으로 기록 (Mac 값은 참고값으로 남긴다)
+
 ## 0. 받은 보드 3분 검증 (특강 p.28)
 
 | 명령 | 기대 출력 |

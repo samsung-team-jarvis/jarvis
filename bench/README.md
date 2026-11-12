@@ -75,3 +75,105 @@ python -m bench.llm_eval --engine rule --split val --csv rule_val.csv
 .venv-llm/bin/python -m bench.llm_eval --engine hf --finetuned --model runs/llm/<이름> --split val --csv lora_val.csv
 python -m bench.llm_errors rule_val.csv lora_val.csv     # 나란히 비교 (열 이름 = 파일 이름)
 ```
+
+## resources.py — 서비스별 CPU·메모리 (BOARD-08)
+
+`-m services.*`로 뜬 프로세스를 1초마다 보고 서비스별 CPU 평균·최대와 메모리(RSS) 최대를 표로 낸다. 서비스를 먼저 띄워 둔다 (런처 등).
+
+```bash
+python -m bench.resources --duration 60                  # 60초 (서비스가 모두 끝나면 일찍 멈춤)
+python -m bench.resources --duration 60 --csv out.csv    # 1초마다의 값
+```
+
+- CPU %는 그 1초 동안 쓴 CPU 시간 ÷ 1초 (100% = 코어 하나). `ps`의 `%cpu`는 Mac·Linux에서 뜻이 달라 쓰지 않고 누적 CPU 시간의 차이로 계산한다 — Mac·보드(Linux) 같은 방식.
+- 메모리는 RSS다. mmap한 모델 파일(GGUF 등)과 공유 라이브러리가 들어가 서비스끼리 겹칠 수 있다.
+
+## rehearsal.py — 시연 리허설 (DOC-09)
+
+시연 대본([`rehearsal/demo.yaml`](rehearsal/demo.yaml): 문장 + Safety Guard가 내야 할 판정)을 합성 음성으로 만들어 노트북 시연 구성으로 흘리고, 녹화의 `guard/decision`을 기대와 **차례대로** 맞춘다. 코드를 바꾼 뒤 시연이 깨지지 않았는지 같은 조건으로 확인한다.
+
+```bash
+python -m bench.rehearsal make        # → data/stt/rehearsal/demo.wav (macOS say, 문장 사이 8초)
+python3 scripts/launch.py --config scripts/launch_demo.yaml \
+    --arg audio_svc="--input data/stt/rehearsal/demo.wav --realtime --session rehearsal"   # 마지막 응답 뒤 Ctrl+C
+python -m bench.rehearsal check data/sessions/rehearsal.jsonl   # 단계별 통과 표, 모두 통과면 종료 코드 0
+```
+
+- 합성 음성(Yuna)은 사람 목소리와 받아쓰기 결과가 다르다 — 실패한 단계는 받아쓴 문장을 보고 시스템 문제인지 합성 음성 문제인지 가른다. 사람이 말하는 리허설(현장 조명·소음)은 따로 한다.
+- 문장 사이는 음성 응답보다 길어야 한다 (재생 중 입력 무시). 6초에서는 긴 응답 뒤 첫 음절이 잘렸다.
+
+## speech_check.py — 잡음 세기별 STT, TTS 되받아쓰기 (STT-11 · STT-12)
+
+```bash
+python -m bench.speech_check noise data/stt/manifest.csv          # val 발화 + 백색 잡음 → SNR별 CER · 호출어 · RTF
+python -m bench.speech_check noise data/stt/manifest.csv --snr clean 15 5
+python -m bench.speech_check tts                                   # 응답 문장 23개 VITS 합성 → 되받아쓰기 CER · 합성 시간
+python -m bench.speech_check tts --engine say --out data/tts/say   # 비교: macOS 음성 (보드 불가), wav 저장
+```
+
+- **noise**: SNR(신호 대 잡음비)은 말의 평균 전력 ÷ 잡음의 평균 전력(dB). 0 dB면 같은 세기다. 잡음은 시드 0으로 고정한 백색 잡음이라 실제 주방 소음(후드 · 튀김)과 소리 결이 다르다 — 소음 녹음(STT-05)이 생기면 그 녹음으로 잰다. 파일을 통째로 받아쓰므로 서비스의 VAD 경로와 다르다.
+- **tts**: 합성한 음성을 같은 STT로 다시 받아써 원문과 비교한 CER로 알아듣기 쉬움을 대신 잰다. STT 오류도 섞이므로 값 하나보다 **같은 STT로 잰 다른 TTS와의 차이**를 본다. VITS는 합성할 때마다 조금씩 달라 여러 번 잰다. 사람이 듣고 매기는 점수(MOS)가 아니다.
+## fusion_eval.py — 상황 인식 평가 (FUS-07 · FUS-08)
+
+simulator 시나리오의 메시지를 판정기에 시간 순으로 넣고, 1초마다 판정 State를 정답(`expected`)과 비교한다. 버스·서비스 없이 돈다.
+
+```bash
+python -m bench.fusion_eval --judge temp --judge person --split val --per-scenario   # 분석은 val로
+python -m bench.fusion_eval --judge temp --judge person --split test                 # test는 비교에만
+python -m bench.fusion_eval --judge fusion --split test                              # State Machine v1 (FUS-08)
+```
+
+- 판정기: `temp`(온도만), `person`(사람만) — 단일 조건 Baseline. `fusion` — State Machine v1 ([`fusion_svc`](../services/fusion_svc/README.md)). 모두 `update(t, topic, payload)`로만 상태를 바꾸고 `state(t)`는 읽기만 한다.
+- 지표: State F1(macro)·State별 F1, 위험 미탐율(위험 구간 단위)·감지 지연, 위험 오탐. 정의는 [METRICS](../docs/METRICS.md) §1.
+- 분할: `data/fusion/split_v1.json` (시나리오 단위 val 17 · test 9, 종류별 비율, 고정 시드).
+
+## danger_path.py — 위험 감지 → 차단 지연 (FUS-09)
+
+recorder 녹화에서 자동 차단(`guard/decision`의 `reason`이 "자동 차단"으로 시작) 한 건마다 구간별 지연(ms)을 낸다. 서비스마다 세션 파일이 다르므로 폴더(또는 여러 파일)를 주면 `mono` 순으로 합친다.
+
+```bash
+python -m bench.danger_path data/sessions/
+```
+
+- 과열: 240°C 이상이 된 첫 `sensor/reading` → `fusion/state` → `guard/decision` → `control/command` → `control/result`
+- 방치: 사람 없음 60초가 된 `fusion/state`부터 (방치 판정 뒤 유예 30초는 정책이라 지연에서 빼고 따로 보인다)
+- Windows는 `time.monotonic()` 해상도가 15.6 ms라 ms 단위 지연을 잴 수 없다 — 보드(Linux)에서 잰다.
+
+## kitchen_check.py — 가상 주방 규격 자동 검사 (HW-24)
+
+보드 역할(생존 신호 1초, 명령 발행)로 `kitchen/*`를 주고받아 가상 주방(Unity 또는 가짜 가상 주방)이 [연결 규격](../recipes/unity-kitchen-link.md) §5.2를 지키는지 항목별로 판정한다.
+
+```bash
+python -m bench.kitchen_check                             # 약 15초
+python -m bench.kitchen_check --long --require-frames     # + 265°C 자체 끄기(약 80초 더), 화면 필수
+```
+
+| 항목 | 기대 |
+|---|---|
+| 명령 확인 | `ON hood` → 0.5초 안에 `ack ok=true`, 상태에 후드 켜짐 (왕복 시간 표시) |
+| 같은 seq | 처리한 번호로 다른 명령(`ON`)을 보내도 실행하지 않고 확인만 다시 |
+| 세기 · 거절 | `LEVEL` 반영, 규격에 없는 장치는 `ok=false` |
+| 가상 온도 | 1초마다, 규칙(`next_temperature`)과 차이 ≤ 1.5°C |
+| 생존 신호 | 끊으면 3~4.5초 뒤 가열 장치 OFF · `safe_stop`, 후드는 그대로, 끊긴 동안 켜기 거절, 돌아오면 다시 켜짐 |
+| 상태 주기 · 화면 | 상태 간격 ≤ 6초, 화면 JPEG 640×360 · 1초에 3~5장 (안 보내면 "해당 없음", `--require-frames`면 실패) |
+
+- 보드의 `kitchen_gw`와 함께 띄우지 않는다 — 생존 신호와 명령이 섞인다.
+- 시작할 때와 끝날 때 모든 장치를 끈다. 화면 크기는 JPEG 머리(SOF)만 읽어 확인한다.
+
+## board_day.py — 보드 받은 날 점검·측정 (INFRA-08)
+
+보드에서 설치가 맞는지 보고, 최종 측정을 순서대로 돌린다. 순서: [board-setup](../recipes/board-setup.md) "받은 날 순서".
+
+```bash
+python -m bench.board_day check                  # 점검표 (보드·NPU 드라이버·rknnlite·llama-cpp·모델·브로커·카메라·온도·RAM)
+python -m bench.board_day vision --compare       # YOLO 전처리/추론/후처리 ms: .rknn(NPU) vs .onnx(CPU), 같은 화면
+python -m bench.board_day vision --images <폴더>   # 사람이 있는 사진으로 (생략 시 무작위 화면 — 속도만)
+python -m bench.board_day measure --dry-run      # 실행할 명령 목록
+python -m bench.board_day measure                # check → vision → llm(GGUF test) → stt(val) → runs/board/<시각>/summary.md
+python -m bench.board_day measure --llm-cpus 4-7  # + LLM을 큰 코어에 고정해 한 번 더 (llm_cpus, LLM-19)
+```
+
+- 점검표는 실패한 항목에 고칠 방법을 붙인다. 하나라도 실패하면 종료 코드 1.
+- `vision --compare --images`는 같은 사진에서 ONNX(CPU)와 RKNN(NPU)이 찾은 사람을 상자 겹침 0.5 이상으로 짝지어 개수·짝·점수 차를 낸다 — INT8 변환으로 사람을 놓치는지 보는 것이다.
+- `vision`은 처음 5장을 빼고(런타임 준비) 평균·p95를 낸다. 전처리에는 엔진별 입력 변환까지 들어간다 (`vision_svc`의 `pre_ms`와 같다).
+- 시연 구성 동시 구동·장시간 구동은 마이크·카메라·사람이 필요해 이 도구로 돌리지 않는다 (recipe 7·8번).

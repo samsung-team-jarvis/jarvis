@@ -6,10 +6,11 @@ import dataclasses
 import time
 from collections.abc import Callable
 
+from common import kitchen_link as link
 from common.bus import Bus
 from common.messages import Envelope
 from services.audio_svc.wake import is_wake
-from services.simulator.scenario import Scenario, interpolate
+from services.simulator.scenario import HeaterStream, Scenario, interpolate
 
 SOURCE = "simulator"
 
@@ -30,6 +31,75 @@ def _ticks(duration: float, hz: float) -> list[float]:
     return [round(i * step, 6) for i in range(n) if i * step <= duration]
 
 
+# 가상 주방이 kitchen/state를 보내는 주기 (상태가 바뀔 때 + 이 주기, interfaces §4.2)
+STATE_PERIOD_S = 5.0
+
+
+@dataclasses.dataclass(frozen=True)
+class HeaterTick:
+    t: float
+    temps: dict[str, float]  # 이 시각의 온도 (반올림 전)
+    levels: dict[str, int]  # 이 시각부터 실제로 걸린 세기 (스스로 꺼졌으면 0)
+    safe_stop: bool  # 265°C 자체 차단으로 꺼진 장치가 있음 (§4.4)
+
+
+def heater_ticks(heaters: HeaterStream, duration: float) -> list[HeaterTick]:
+    """1초마다 가열 장치 3개의 온도와 실제 세기. 가상 주방과 같은 규칙이다 (interfaces §4.4·§4.5).
+
+    - 시작은 모두 실온(꺼짐 목표 온도), 1초마다 `next_temperature`로 세기의 목표 온도에 다가간다.
+    - 켜진 장치가 265°C에 닿으면 스스로 꺼진다 (L0). 시간표의 다음 세기 항목이 올 때까지 꺼져 있다.
+    """
+    temps = {h: link.TARGET_C[0] for h in link.HEATERS}
+    tripped: dict[str, float] = {}  # 장치 → 스스로 꺼진 시각
+    ticks = []
+    for t in _ticks(duration, 1.0 / link.TEMP_PERIOD_S):
+        before = dict(temps)
+        levels = {}
+        for h in link.HEATERS:
+            level = heaters.level_at(h, t)
+            if h in tripped:
+                if any(tripped[h] < start <= t for start, _ in heaters.levels.get(h, [])):
+                    del tripped[h]  # 새 명령을 받음
+                else:
+                    level = 0
+            levels[h] = level
+            temps[h] = link.next_temperature(temps[h], level)
+            if level > 0 and temps[h] >= link.HARD_LIMIT_C:
+                tripped[h] = t
+        # 이번 걸음에 꺼진 장치는 다음 시각부터 0 — 그 시각의 상태에 반영한다
+        ticks.append(HeaterTick(t, before, levels, bool(tripped) and not _all_new(tripped, t)))
+    return ticks
+
+
+def _all_new(tripped: dict[str, float], t: float) -> bool:
+    """방금(이 시각의 걸음에서) 꺼진 장치뿐이면 True — 가상 주방은 다음 시각에 알린다."""
+    return all(at == t for at in tripped.values())
+
+
+def heater_readings(heaters: HeaterStream, duration: float) -> list[tuple[float, dict[str, float]]]:
+    """1초마다 가열 장치 3개의 온도 (`sensor/reading`으로 나가는 값)."""
+    return [
+        (k.t, {h: round(v, 1) for h, v in k.temps.items()}) for k in heater_ticks(heaters, duration)
+    ]
+
+
+def device_states(heaters: HeaterStream, duration: float) -> list[tuple[float, dict]]:
+    """가상 주방이 보낼 `kitchen/state`(버스 `device/state`) — 바뀔 때와 5초마다.
+
+    시간표에 있는 가열 장치만 안다 (다른 장치는 시나리오에 없다). `safe_stop`은 265°C 자체 차단.
+    """
+    out: list[tuple[float, dict]] = []
+    last: dict | None = None
+    last_t = 0.0
+    for k in heater_ticks(heaters, duration):
+        devices = {h: {"on": k.levels[h] > 0, "level": k.levels[h]} for h in link.HEATERS}
+        payload = {"devices": devices, "safe_stop": k.safe_stop}
+        if payload != last or k.t - last_t >= STATE_PERIOD_S:
+            out.append((k.t, payload))
+            last, last_t = payload, k.t
+    return out
+
+
 def build_events(sc: Scenario) -> list[Event]:
     events: list[Event] = []
 
@@ -43,6 +113,14 @@ def build_events(sc: Scenario) -> list[Event]:
             cur = round(interpolate(s.current_a, t), 3)
             payload = {"device_id": s.device_id, "temperature_c": temp, "current_a": cur}
             events.append(Event(t, "sensor/reading", lambda p=payload: p))
+
+    if sc.heaters:
+        for t, temps in heater_readings(sc.heaters, sc.duration_s):
+            for device, temp in temps.items():
+                payload = {"device_id": device, "temperature_c": temp}
+                events.append(Event(t, "sensor/reading", lambda p=payload: p))
+        for t, payload in device_states(sc.heaters, sc.duration_s):
+            events.append(Event(t, "device/state", lambda p=payload: p))
 
     if sc.vision:
         v = sc.vision

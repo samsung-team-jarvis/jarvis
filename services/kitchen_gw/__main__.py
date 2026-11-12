@@ -86,7 +86,7 @@ def main() -> int:
     bus.close()
     print(
         f"OK: control/result {gateway.results}건 (실패 {gateway.failed}건), "
-        f"sensor/reading {gateway.readings}건"
+        f"sensor/reading {gateway.readings}건, device/state {gateway.states}건"
     )
     return 0
 

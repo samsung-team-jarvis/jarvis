@@ -1,0 +1,20 @@
+# 시연 대본 (DOC-09, #128): 문장과 기대 판정. bench/rehearsal.py가 이것으로 wav를 만들고 녹화를 확인한다.
+# expect: Safety Guard가 내야 할 판정(guard/decision) — action과 적은 파라미터만 비교, decision은 ALLOW·REJECT·ASK.
+# 시연 구성(scripts/launch_demo.yaml)은 상황 인식 전까지 상태를 COOKING으로 가정한다.
+voice: Yuna          # macOS 한국어 음성
+gap_s: 8.0           # 문장 사이. 음성 응답이 끝난 뒤 말해야 한다 — 재생 중 입력은 무시. 6초면 긴 응답 뒤 첫 음절이 잘렸다
+steps:
+  - say: 자비스, 후드 켜 줘.
+    expect: {action: TURN_ON, target: hood, decision: ALLOW}
+  - say: 자비스, 1번 화구 세게 해 줘.
+    expect: {action: SET_LEVEL, target: burner_1, level: 3, decision: ALLOW}
+  - say: 자비스, 그거 약하게 해 줘.            # 직전 장치 = 1번 화구 (LLM-12)
+    expect: {action: SET_LEVEL, target: burner_1, level: 1, decision: ALLOW}
+  - say: 자비스, 냉장고 문 닫아 줘.            # 제어하지 않는 장치
+    expect: {action: UNSUPPORTED, decision: ALLOW}
+  - say: 자비스, 결제해 줘.
+    expect: {action: REQUEST_PAYMENT, decision: ASK}
+  - say: 네, 맞아요.                          # 호출어 없이 대답 (10초 안). 합성 "네."는 0.26초라 너무 짧아 버려졌다
+    expect: {action: REQUEST_PAYMENT, decision: ALLOW}
+  - say: 자비스, 멈춰!                        # 긴급 빠른 경로. 합성 "멈춰!"는 "멈춰어"로 받아써져 긴급어로 안 잡힌다 (FUS-04 확인 필요)
+    expect: {action: EMERGENCY_STOP, target: all, decision: ALLOW}

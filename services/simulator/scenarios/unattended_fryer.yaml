@@ -1,0 +1,23 @@
+# 방치: 튀김기를 켜 둔 채 자리를 비운다.
+# 값은 개발용 가상 값이다 (측정값 아님). 온도는 세기 시간표로 계산한다 (interfaces §4.5).
+name: unattended_fryer
+description: 튀김기 세기 2, 40초에 사람이 사라짐 → 70초부터 방치
+duration_s: 120
+
+heaters:            # [시각, 세기 0~3] — 그 시각부터 다음 항목 전까지
+  fryer: [[0, 0], [3, 2]]
+
+vision:
+  fps: 2
+  objects:          # [시각, 보이는 클래스] — person이 없으면 조리 구역에 사람 없음
+    - [0, [person]]
+    - [40, []]
+
+stt:
+  - [3, "자비스 튀김기 중간으로 해줘"]
+
+expected:          # 정답 State (FUS-05 규칙으로 계산)
+  - [0, IDLE]
+  - [3, PREHEAT]
+  - [16, COOKING]
+  - [70, UNATTENDED]

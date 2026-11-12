@@ -23,6 +23,7 @@ TOPIC_HEARTBEAT = "kitchen/heartbeat"  # 보드 → 가상 주방: 생존 신호
 TOPIC_STATE = "kitchen/state"  # 가상 주방 → 보드: 장치 상태
 
 CMDS = ("ON", "OFF", "LEVEL")
+MAX_SEQ = 2**31 - 1  # Unity(C# int)가 읽을 수 있는 가장 큰 수
 HEATERS = ("burner_1", "burner_2", "fryer")  # 온도를 가진 가열 장치
 
 ACK_TIMEOUT_S = 0.5  # 이 안에 확인이 없으면 다시 보낸다
@@ -50,8 +51,8 @@ def _is_int(value: Any) -> bool:
 def validate_command(payload: dict[str, Any]) -> None:
     """`control/command`·`kitchen/cmd` payload `{seq, cmd, target, value}`를 검사한다."""
     seq, cmd, target, value = (payload.get(k) for k in ("seq", "cmd", "target", "value"))
-    if not _is_int(seq) or seq < 0:
-        raise LinkError(f"seq는 0 이상의 정수여야 합니다: {seq!r}")
+    if not _is_int(seq) or not 0 <= seq <= MAX_SEQ:
+        raise LinkError(f"seq는 0 이상 {MAX_SEQ} 이하의 정수여야 합니다: {seq!r}")
     if cmd not in CMDS:
         raise LinkError(f"cmd는 {CMDS} 중 하나여야 합니다: {cmd!r}")
     if target not in TARGETS:
@@ -61,6 +62,16 @@ def validate_command(payload: dict[str, Any]) -> None:
     expected = {"ON": (1,), "OFF": (0,), "LEVEL": LEVELS}[cmd]
     if not _is_int(value) or value not in expected:
         raise LinkError(f"{cmd}의 value는 {expected} 중 하나여야 합니다: {value!r}")
+
+
+def first_seq(now_s: float) -> int:
+    """명령 번호(seq)의 시작값. 시각(초)에서 정해 다시 시작해도 앞에서 쓴 번호와 겹치지 않게 한다.
+
+    가상 주방은 최근 seq를 기억해 같은 번호를 다시 실행하지 않는다 (재전송 중복 방지). 발행하는 쪽이
+    다시 시작할 때마다 1부터 세면 새 명령이 중복으로 보여 무시된다. 1초에 번호 1,000개를 쓸 수 있고,
+    1,000,000초(약 11.6일)마다 한 바퀴 돈다 — 최대값이 MAX_SEQ 아래다.
+    """
+    return int(now_s) % 1_000_000 * 1_000
 
 
 def command_for(call: dict[str, Any], seq: int) -> dict[str, Any] | None:

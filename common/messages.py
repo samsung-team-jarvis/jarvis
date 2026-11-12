@@ -20,6 +20,7 @@ TOPIC_REQUIRED_FIELDS: dict[str, frozenset[str]] = {
     "vision/objects": frozenset({"objects", "frame_id", "pre_ms", "npu_ms", "post_ms"}),
     # current_a는 선택 필드 (가상 주방에 없음)
     "sensor/reading": frozenset({"device_id", "temperature_c"}),
+    "device/state": frozenset({"devices", "safe_stop"}),
     "fusion/state": frozenset({"state", "prev_state", "evidence", "risk"}),
     "llm/function_call": frozenset({"call", "raw_text", "valid", "fallback", "gen_ms", "tokens"}),
     "guard/decision": frozenset({"call", "decision", "reason"}),

@@ -125,6 +125,13 @@ def main() -> int:
     parser.add_argument("--warmup", type=float, default=0.05, help="전체 갱신 횟수 중 warmup 비율")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--limit", type=int, default=None, help="앞에서 N개만 (빠른 확인용)")
+    parser.add_argument(
+        "--extra",
+        type=pathlib.Path,
+        action="append",
+        default=[],
+        help="train에 더할 jsonl (보강 문장 — build_augment.py). 여러 번 쓸 수 있다",
+    )
     args = parser.parse_args()
 
     import torch  # 학습 환경(.venv-llm)에만 있다. 위의 함수들은 torch 없이 테스트한다
@@ -160,6 +167,8 @@ def main() -> int:
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
     train_records = load(split_dir / "train.jsonl", args.limit)
+    for path in args.extra:
+        train_records += load(path, args.limit)
     train_items = [encode(tok, r) for r in train_records]
     val_items = [encode(tok, r) for r in load(split_dir / "val.jsonl", args.limit)]
     lengths = [len(x) for x, _ in train_items]
@@ -180,6 +189,7 @@ def main() -> int:
     log = {
         "base": args.model,
         "data": f"split_{args.data}",
+        "extra": [str(p) for p in args.extra],
         "commit": git_commit(),
         "device": device,
         "dtype": str(dtype),

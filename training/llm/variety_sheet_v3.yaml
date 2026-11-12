@@ -1,0 +1,52 @@
+# LLM 말투 다양성 시트 v3 (LLM-17) — 새 말투 템플릿으로 train에만 더하는 문장
+#
+# - v1·v2를 더한 LoRA v4가 가장 좋았다. v1·v2는 그대로 두고 이 시트를 더한다.
+# - 방향: v4의 **val 오류** 6건(training/llm/README.md "v4의 val 오류")만 본다. test 문장은 보지 않는다.
+#   test에서만 늘어난 유형(규칙 위반)은 겨냥하지 않는다 — 겨냥하면 test에 맞추는 것이 된다.
+#   · "결제하지 마" → 결제 요청: 기존 보강에 결제를 하지 말라는 말이 하나도 없었다
+#   · "주문 확인해 줘" → 결제 요청: 주문·결제 내역 같은 가게 일
+#   · "어/음/아 그러니까" → 네·아니요: v1·v2의 "그러니까" 문장은 val과 비슷해서 모두 빠졌다.
+#     더 긴 머뭇거림과, 머뭇거린 뒤 네·아니요를 말하는 대비 문장을 더한다
+#   · "요리 다 끝났어 불 다 꺼도 돼" → 장치 되묻기: "불 다 꺼"(전체 끄기)와 "불 꺼"(장치 되묻기)의 대비
+# - 정답 규칙은 plan_sheet 머리말과 hard_negatives를 따른다:
+#   · 결제를 하지 말라는 말은 아니요 (hn_pay), 지금 결제할 금액이 아닌 가게 일은 지원 외 (hn_nm_12)
+#   · "불"만 말하면 화구인지 조명인지 모른다 → 장치 되묻기. "불 다·전부·모두 꺼"는 전체 끄기
+#   · "멈춰·정지·그만·스톱"은 쓰지 않는다 (긴급 빠른 경로와 겹치지 않게 — 테스트가 확인한다)
+#
+# 생성: Claude (Claude Code, claude-opus-5-5), 2026-10-13, 사람 검수 전.
+
+seed: 0
+source: variety
+max_per_template: 10
+
+templates:
+  DENY:
+    # 결제를 하지 말라는 말
+    - {id: var3_no_01, tone: 명령, text: "(결제|계산|카드 결제) (하지 마요|하지 말아 줘|안 해도 돼|하지 말자)", output: {action: DENY}}
+    - {id: var3_no_02, tone: 명령, text: "(아직|지금은) (계산하면 안 돼|결제하면 안 돼|결제 넘기지 마|계산 넘기지 마)", output: {action: DENY}}
+    - {id: var3_no_03, tone: 평서, text: "(손님 아직 드시는 중이야|손님 아직 안 가셨어|더 시키신대) (결제|계산) (하지 마|하지 마요|기다려)", output: {action: DENY}, indirect: true}
+    - {id: var3_no_04, tone: 평서, text: "(결제|계산) (나중에 할게|이따 할게|좀 미뤄 줘|보류해 줘)", output: {action: DENY}}
+    - {id: var3_no_05, tone: 명령, text: "(카드 긁지 마|결제 요청 보내지 마|결제창 띄우지 마|단말기 결제 하지 마)", output: {action: DENY}}
+    # 머뭇거린 뒤 아니요
+    - {id: var3_no_06, tone: 평서, text: "(음|어|아) (아니 하지 마|아니 됐어|아니요 안 해요|아냐 안 할래)", output: {action: DENY}}
+  CONFIRM:
+    # 머뭇거린 뒤 네 (머뭇거림만 있으면 되묻기 — 아래 ASK_CLARIFY와 대비)
+    - {id: var3_yes_01, tone: 평서, text: "(음|어|아) (네 맞아요|그래 그렇게 해|응 해 줘|네 진행해 주세요)", output: {action: CONFIRM}}
+  ASK_CLARIFY:
+    # 머뭇거림만 — 무엇을 하려는지 모름
+    - {id: var3_ask_01, tone: 평서, text: "(그러니까|그니까|그러니깐) (저기|뭐냐|그게 말이야|내 말은)", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    - {id: var3_ask_02, tone: 평서, text: "(어어|음음|아아|으음) (그게 말이야|뭐랄까|내 말은|잠깐만 그게)", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    - {id: var3_ask_03, tone: 평서, text: "(그|저) (뭐야|뭐더라|머시기) (그거|있잖아|그게)", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    - {id: var3_ask_04, tone: 평서, text: "(어|음|아) (그니까는|그러니까요|그러니까 그게 뭐냐면|그러니깐 저기)", output: {action: ASK_CLARIFY, for_action: null, missing: []}}
+    # "불"만 — 장치 되묻기 (아래 TURN_OFF "불 다 꺼"와 대비)
+    - {id: var3_ask_05, tone: 평서, text: "(요리 다 했으니까|정리하자|퇴근할게|이제 됐다) 불 (꺼 줘|꺼|끄자)", output: {action: ASK_CLARIFY, for_action: TURN_OFF, missing: [target]}, indirect: true}
+  TURN_OFF:
+    # "불 다·전부·모두 꺼" — 전체 끄기 (급한 말이 없다)
+    - {id: var3_off_01, tone: 평서, text: "(요리 다 했으니까|오늘 장사 끝|퇴근할게|정리하자) (불 다|불 전부|불 모두) (꺼 줘|꺼|끄자)", output: {action: TURN_OFF, target: all}, indirect: true}
+    - {id: var3_off_02, tone: 명령, text: "(불 다|불 전부|불 모두) (꺼 줘요|끄고 가자|꺼 놓을래|꺼도 돼요)", output: {action: TURN_OFF, target: all}}
+  UNSUPPORTED:
+    # 주문·결제 내역 같은 가게 일 (지금 결제할 금액이 아님)
+    - {id: var3_un_01, tone: 명령, text: "(주문|배달 주문|포장 주문) (들어왔어|몇 개야|몇 건 있어|내역 보여 줘|목록 봐 줘)", output: {action: UNSUPPORTED}}
+    - {id: var3_un_02, tone: 명령, text: "(결제 내역|카드 내역|영수증|현금 영수증) (보여 줘|뽑아 줘|확인해 줘|출력해 줘)", output: {action: UNSUPPORTED}}
+    - {id: var3_un_03, tone: 명령, text: "(주문서|메뉴판|가격표) (출력해 줘|바꿔 줘|읽어 줘)", output: {action: UNSUPPORTED}}
+    - {id: var3_un_04, tone: 명령, text: "(아까 결제|어제 결제|지난 결제) (환불해 줘|환불 처리해 줘|다시 확인해 줘)", output: {action: UNSUPPORTED}}

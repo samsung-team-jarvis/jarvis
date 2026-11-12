@@ -4,7 +4,7 @@
 
 ```text
 마이크 / wav ─▶ Silero VAD ─(발화 구간)─▶ SenseVoice STT ─▶ 호출어 판정 ─▶ stt/text
-guard/decision · fusion/state ─▶ 응답 문장 ─▶ 한국어 VITS ─▶ 스피커   (재생 중 마이크 입력은 무음)
+guard/decision · fusion/state · device/state ─▶ 응답 문장 ─▶ 한국어 VITS ─▶ 스피커   (재생 중 마이크 입력은 무음)
 ```
 
 ## 빠른 실행
@@ -50,7 +50,7 @@ cd ..
 |---|---|---|
 | `--input` | `mic` | `mic` 또는 wav 경로 (16kHz·16-bit — 변환: `ffmpeg -i in.m4a -ar 16000 -ac 1 -sample_fmt s16 out.wav`) |
 | `--realtime` | 꺼짐 | wav를 마이크처럼 실제 속도로 (지연 측정용) |
-| `--device` | 기본 장치 | 마이크 번호·이름 (`python -c "import sounddevice; print(sounddevice.query_devices())"`) |
+| `--device` | 기본 장치 | 마이크 번호·이름 (`python -c "import sounddevice; print(sounddevice.query_devices())"`). 16 kHz를 못 받는 마이크(USB 마이크는 44.1·48 kHz만 받는 것이 많다)는 장치 기본 샘플레이트로 열고 16 kHz로 줄인다 — 시작할 때 "… Hz로 열고 16000 Hz로 줄입니다"가 나온다 (STT-14) |
 | `--bus` / `--session` | `JARVIS_BUS` / `s_<시각>` | 버스 주소 / 세션 ID |
 | `--language` / `--threads` | `ko` / 4 | `auto`는 짧은 명령을 다른 언어로 잘못 감지한 사례가 있어 `ko` 고정 |
 | `--no-tts` / `--no-play` / `--tts-out` | | 음성 응답 끄기 / 재생하지 않기 / 응답을 wav로 저장 |
@@ -67,6 +67,8 @@ cd ..
 ### VAD
 
 소리 중 말하는 구간만 골라낸다. 말이 끝나고 `min_silence`(0.5 s)만큼 조용해야 "발화 끝"이다. 발화 끝 → 발행 시간의 대부분이 이 대기다 (조정은 STT-11).
+
+VAD는 말이 시작됐다고 판단한 곳부터 자르므로 "자"처럼 약하게 시작하는 첫 음절이 빠진다 ("자비스" → "비스" → 호출어 실패). 그래서 받은 오디오를 남겨 두고 **구간 앞에 0.3초를 더 붙인다** (`pre_roll_s`, #128). spk01 val 40문장을 서비스와 같은 구간 자르기로 받아쓰면 호출어 인식 19/34 → 31/34, CER 18.5% → 7.9% (Mac, 2026-10-29). 아래 2026-10-02 확인 기록은 파일을 통째로 받아쓴 값이라 이 문제가 드러나지 않았다.
 
 ### 호출어
 
@@ -87,18 +89,25 @@ cd ..
 | ALLOW `ASK_CLARIFY TURN_ON / target` | 어느 장치를 켤까요? |
 | REJECT `TURN_ON burner_1` + reason | 지금은 1번 화구를 제어할 수 없어요. {reason} |
 | ASK (Guard가 확인 요청) | 정말 1번 화구를 제어할까요? |
-| `fusion/state` risk가 warn·danger로 **올라갈 때만** | 주의하세요… / 위험 상황이에요. 불을 확인해 주세요. |
+| ALLOW 자동 차단 (`reason` "자동 차단: 과열 …" / "… 방치 …", FUS-09) | 온도가 너무 높아 1번 화구를 껐습니다. / 자리를 오래 비우셔서 1번 화구를 껐습니다. |
+| ALLOW `CHECK_STATUS` | 지금은 조리 중이에요. 켜진 장치는 1번 화구 강 182도, 후드 중이에요. |
+| ALLOW `CHECK_STATUS burner_1` | 1번 화구는 켜져 있어요. 세기 강, 182도예요. / 1번 화구는 꺼져 있어요. 아직 150도라 뜨거워요. |
+| ALLOW `CHECK_RISK` | 지금은 위험하지 않아요. / 주의가 필요해요. 2번 화구가 205도예요. 사람 없이 14초째 켜져 있어요. |
+| `fusion/state` warn으로 **올라갈 때** | 주의하세요. 1번 화구가 210도예요. |
+| `fusion/state` danger로 올라가거나 **위험 종류가 바뀔 때** | `DANGER`: 위험해요. 1번 화구가 241도로 너무 뜨거워요. / `UNATTENDED`: 가열 장치가 켜진 채 자리를 비우셨어요. 30초 안에 돌아오지 않으면 불을 끕니다. |
 
-TTS 모델이 없으면 경고만 내고 STT는 계속 동작한다. `CHECK_STATUS`·`CHECK_RISK`는 읽을 상태가 아직 없어 "준비 중" 문장 (FUS-08 이후).
+TTS 모델이 없으면 경고만 내고 STT는 계속 동작한다.
+
+상태·위험 확인(STT-13)은 마지막 `fusion/state`의 `evidence`(interfaces §2.3)와 `device/state`(후드·조명 등 가열 장치가 아닌 장치)로 답한다. 상태를 받은 적이 없거나 5초 넘게 끊겼으면 "상태 정보를 아직 받지 못했어요" / "상태 정보가 끊겨서 지금 상태를 알 수 없어요" — 오래된 상태로 "위험하지 않아요"라고 하지 않는다. 온도를 모르는 장치는 "온도는 알 수 없어요"라고 말한다.
 
 ## Spec
 
 | 항목 | 내용 |
 |---|---|
-| 입력 | 마이크(`sounddevice`, 16kHz mono) / wav · `guard/decision` · `fusion/state` |
+| 입력 | 마이크(`sounddevice`, 16kHz mono — 못 받으면 기본 샘플레이트로 열어 16kHz로 줄임) / wav · `guard/decision` · `fusion/state` · `device/state` |
 | 출력 | `stt/text` `{text, wake, audio_ms, stt_ms, speech_end_mono}` ([interfaces](../../docs/architecture/interfaces.md) §2), `system/heartbeat` 1초마다, 스피커 |
 | `speech_end_mono` | 발화 마지막 샘플이 들어온 시각(`time.monotonic`) — 지연 측정의 출발점. 마이크는 콜백 시각 기준이라 실제보다 수십 ms 늦다 |
-| VAD | threshold 0.5, min_silence 0.5 s, min_speech 0.25 s, max_speech 20 s (특강 p.36) |
+| VAD | threshold 0.5, min_silence 0.5 s, min_speech 0.25 s, max_speech 20 s (특강 p.36), 앞여유 0.3 s (#128) |
 | 실행 장치 | CPU — STT 4스레드, TTS 2스레드 (특강 p.34). NPU는 LLM·YOLO 몫 |
 | 실패 시 | 모델 없음 → 원인·받는 방법 안내 후 종료(코드 1). 빈 받아쓰기(잡음)는 발행하지 않음. 마이크 입력이 3초간 완전히 0이면 권한 경고 |
 | 아직 안 하는 일 | 호출어만 말한 뒤 다음 발화를 이어 받기, 소음 대응 VAD 조정(STT-11) |

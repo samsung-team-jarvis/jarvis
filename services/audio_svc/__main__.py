@@ -16,7 +16,7 @@ import threading
 
 from common.bus import connect
 from common.messages import Envelope
-from services.audio_svc.responses import RiskWatcher, reply_for_decision
+from services.audio_svc.responses import KitchenStatus, RiskWatcher, reply_for_decision
 from services.audio_svc.service import AudioService
 from services.audio_svc.sources import mic_chunks, wav_chunks
 from services.audio_svc.speaker import Speaker
@@ -37,7 +37,10 @@ def show(msg: Envelope) -> None:
 
 
 def start_speaker(args: argparse.Namespace, bus) -> Speaker | None:
-    """guard/decision·fusion/state를 구독해 음성으로 응답한다. TTS 모델이 없으면 응답 없이 진행."""
+    """guard/decision·fusion/state(·device/state)를 구독해 음성으로 응답한다.
+
+    TTS 모델이 없으면 응답 없이 진행.
+    """
     try:
         tts = KoreanTts(args.tts_model_dir or tts_model_dir_from_env(), args.tts_threads)
     except FileNotFoundError as e:
@@ -50,17 +53,20 @@ def start_speaker(args: argparse.Namespace, bus) -> Speaker | None:
         on_spoken=lambda text, sec: print(f"[tts] {text!r} ({sec:.1f} s)"),
     )
     watcher = RiskWatcher()
+    status = KitchenStatus()  # 상태·위험 확인에 답할 마지막 상태 (STT-13)
 
     def on_decision(msg: Envelope) -> None:
-        if text := reply_for_decision(msg.payload):
+        if text := reply_for_decision(msg.payload, status):
             speaker.say(text)
 
     def on_state(msg: Envelope) -> None:
+        status.on_state(msg.payload)
         if text := watcher.update(msg.payload):
             speaker.say(text)
 
     bus.subscribe("guard/decision", on_decision)
     bus.subscribe("fusion/state", on_state)
+    bus.subscribe("device/state", lambda msg: status.on_devices(msg.payload))
     return speaker
 
 

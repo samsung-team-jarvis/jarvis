@@ -1,5 +1,7 @@
 # Recipe: 소형 LLM 학습 → RKLLM(W8A8) 변환 → 보드 추론·서빙
 
+> **2026-10-29부터 이 경로(RKLLM 변환·보드 NPU)는 쓰지 않는다.** LLM은 llama.cpp(GGUF 8비트, CPU)로 돌린다 ([decision](../docs/decisions/2026-10-29-llamacpp-and-rebalance.md), PLAN LLM-18). 학습(§1·2)과 측정 원칙(§7)은 그대로 쓰고, 나머지는 학교 특강 절차의 기록으로 남긴다.
+
 > 기준 자료: 학교 특강2 (마음AI, [school-materials](../docs/school-materials.md)) + airockchip/rknn-llm. **학교 제공 환경(A100 서버 + 변환 도커 + 보드 배포 이미지)이 기본 경로**이고, Colab 노트북은 서버를 쓸 수 없을 때의 대체 경로다. 실제 실행 결과(BOARD-05·06, LLM-07·08)는 아직 없다.
 
 ## 개념 3줄
