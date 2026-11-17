@@ -16,7 +16,7 @@ from common.messages import Envelope
 from services.audio_svc.sources import Chunk
 from services.audio_svc.stt import Transcript
 from services.audio_svc.vad import SAMPLE_RATE, SpeechSegment
-from services.audio_svc.wake import is_wake
+from services.audio_svc.wake import is_wake, split_wake
 
 SOURCE = "audio_svc"
 
@@ -41,6 +41,7 @@ class AudioService:
         on_text: Callable[[Envelope], None] | None = None,
         clock: Callable[[], float] = time.monotonic,
         mute: Callable[[float], bool] | None = None,
+        followup_s: float = 12.0,
     ) -> None:
         self.stt = stt
         self.segmenter = segmenter
@@ -54,6 +55,12 @@ class AudioService:
         self.ignored = 0  # 그중 호출어가 없어 명령으로 처리하지 않을 발화 수 (wake=false)
         self.skipped = 0  # 받아쓴 결과가 비어 버린 구간 수 (잡음 등)
         self._last_heartbeat: float | None = None
+        # 되묻기 뒤 대답·대화 모드 (#STT-14): 응답 뒤 followup_s 동안은 호출어 없는 말 한 번을
+        # 명령으로 낸다. 되묻기면 앞 명령과 합친다 ("켜줘" + "후드" → "자비스 후드 켜줘")
+        self.followup_s = followup_s
+        self._last_command = ""
+        self._reply_until: float | None = None
+        self._reply_prefix = ""
 
     def run(self, chunks: Iterable[Chunk]) -> int:
         """입력이 끝날 때까지 처리하고, 발행한 stt/text 수를 돌려준다."""
@@ -72,9 +79,9 @@ class AudioService:
             if not result.text:
                 self.skipped += 1
                 continue
-            wake = is_wake(result.text)
+            text, wake = self._with_followup(result.text)
             payload = {
-                "text": result.text,
+                "text": text,
                 "wake": wake,
                 "audio_ms": result.audio_ms,
                 "stt_ms": result.stt_ms,
@@ -86,6 +93,31 @@ class AudioService:
             self.ignored += not wake
             if self.on_text:
                 self.on_text(msg)
+
+    def expect_reply(self, merge: bool = True) -> None:
+        """응답을 읽어 줄 때 부른다: followup_s 동안 다음 한 번은 호출어 없이 받는다.
+
+        merge=True(되묻기): 대답을 앞 명령과 합친다 ("켜줘" + "후드" → "후드 켜줘").
+        merge=False(대화 모드): 명령을 실행한 뒤 이어 말하는 새 명령 ("후드도 켜줘").
+        """
+        self._reply_until = self.clock() + self.followup_s
+        self._reply_prefix = self._last_command if merge else ""
+
+    def _with_followup(self, text: str) -> tuple[str, bool]:
+        if is_wake(text):
+            self._last_command = split_wake(text) or ""
+            self._reply_until = None
+            return text, True
+        if self._reply_until is None or self.clock() > self._reply_until:
+            return text, False
+        self._reply_until = None
+        if self._reply_prefix:
+            reply = text.strip().rstrip(".。!?,")
+            merged = f"자비스 {reply} {self._reply_prefix}".strip()
+        else:
+            merged = f"자비스 {text.strip()}"
+        self._last_command = split_wake(merged) or ""
+        return merged, True
 
     def heartbeat(self) -> None:
         now = self.clock()

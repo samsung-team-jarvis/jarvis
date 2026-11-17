@@ -13,6 +13,7 @@ import datetime
 import signal
 import sys
 import threading
+from collections.abc import Callable
 
 from common.bus import connect
 from common.messages import Envelope
@@ -22,7 +23,7 @@ from services.audio_svc.sources import mic_chunks, wav_chunks
 from services.audio_svc.speaker import Speaker
 from services.audio_svc.stt import LANGUAGES, SenseVoice, model_dir_from_env
 from services.audio_svc.tts import KoreanTts, tts_model_dir_from_env
-from services.audio_svc.vad import Segmenter, vad_model_from_env
+from services.audio_svc.vad import Segmenter, VadConfig, vad_model_from_env
 from services.audio_svc.wake import split_wake
 
 
@@ -36,7 +37,29 @@ def show(msg: Envelope) -> None:
         print(f"[stt/text] 무시(호출어 없음) {p['text']!r} ({timing})")
 
 
-def start_speaker(args: argparse.Namespace, bus) -> Speaker | None:
+# 사용자 명령에 대한 응답이 아닌 판정 (자동 차단·긴급 빠른 경로) — 대화 모드를 열지 않는다
+_NOT_USER_REASONS = ("자동 차단", "긴급 빠른 경로")
+# 실행이 아닌 응답 — 대화 모드를 열지 않는다 (지원 외 응답 뒤 잡담이 계속 명령이 되지 않게)
+_NO_FOLLOWUP_ACTIONS = ("UNSUPPORTED", "EMERGENCY_STOP", "CONFIRM", "DENY")
+
+
+def followup_kind(payload: dict) -> bool | None:
+    """guard/decision 뒤 호출어 없이 받을지.
+
+    True=되묻기(앞 명령과 합침), False=대화 모드, None=받지 않음.
+    """
+    action = payload["call"].get("action")
+    reason = payload.get("reason") or ""
+    if reason.startswith(_NOT_USER_REASONS) or action in _NO_FOLLOWUP_ACTIONS:
+        return None
+    if action == "ASK_CLARIFY":
+        return True
+    return False if payload["decision"] == "ALLOW" else None
+
+
+def start_speaker(
+    args: argparse.Namespace, bus, on_followup: Callable[[bool], None] | None = None
+) -> Speaker | None:
     """guard/decision·fusion/state(·device/state)를 구독해 음성으로 응답한다.
 
     TTS 모델이 없으면 응답 없이 진행.
@@ -58,6 +81,8 @@ def start_speaker(args: argparse.Namespace, bus) -> Speaker | None:
     def on_decision(msg: Envelope) -> None:
         if text := reply_for_decision(msg.payload, status):
             speaker.say(text)
+            if on_followup and (merge := followup_kind(msg.payload)) is not None:
+                on_followup(merge)  # 되묻기 대답·대화 모드는 호출어 없이 받는다 (#STT-14)
 
     def on_state(msg: Envelope) -> None:
         status.on_state(msg.payload)
@@ -83,6 +108,15 @@ def main() -> int:
         "--model-dir", default=None, help="생략 시 JARVIS_STT_MODEL_DIR 또는 기본 폴더"
     )
     parser.add_argument("--vad-model", default=None, help="생략 시 JARVIS_VAD_MODEL 또는 기본 경로")
+    parser.add_argument(
+        "--min-silence",
+        type=float,
+        default=VadConfig.min_silence_s,
+        help="이만큼 조용하면 발화 끝 (초, 짧을수록 빠르지만 말 중간에서 끊길 수 있다)",
+    )
+    parser.add_argument(
+        "--pre-roll", type=float, default=VadConfig.pre_roll_s, help="구간 앞에 더 붙이는 길이 (초)"
+    )
     parser.add_argument("--language", default="ko", choices=LANGUAGES)
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--quiet", action="store_true", help="발행할 때마다 출력하지 않음")
@@ -98,7 +132,8 @@ def main() -> int:
         stt = SenseVoice(
             args.model_dir or model_dir_from_env(), language=args.language, num_threads=args.threads
         )
-        segmenter = Segmenter(args.vad_model or vad_model_from_env())
+        config = VadConfig(min_silence_s=args.min_silence, pre_roll_s=args.pre_roll)
+        segmenter = Segmenter(args.vad_model or vad_model_from_env(), config)
     except (FileNotFoundError, ValueError) as e:
         print(f"오류: {e}", file=sys.stderr)
         return 1
@@ -113,7 +148,13 @@ def main() -> int:
 
     session_id = args.session or f"s_{datetime.datetime.now():%Y%m%d_%H%M%S}"
     bus = connect(args.bus, client_id="audio_svc")
-    speaker = None if args.no_tts else start_speaker(args, bus)
+    services: list[AudioService] = []  # 응답(speaker)이 서비스보다 먼저 만들어져서 나중에 채운다
+
+    def on_followup(merge: bool) -> None:
+        if services:
+            services[0].expect_reply(merge)
+
+    speaker = None if args.no_tts else start_speaker(args, bus, on_followup=on_followup)
     service = AudioService(
         stt,
         segmenter,
@@ -122,6 +163,7 @@ def main() -> int:
         on_text=None if args.quiet else show,
         mute=speaker.is_muted if speaker else None,
     )
+    services.append(service)
     print(f"audio_svc 시작: input={args.input} session={session_id} (Ctrl+C로 종료)")
     code = 0
     try:

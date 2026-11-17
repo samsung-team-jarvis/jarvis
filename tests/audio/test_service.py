@@ -155,3 +155,57 @@ def test_real_vad_and_stt_split_two_utterances(tmp_path: pathlib.Path) -> None:
     assert service.run(wav_chunks(path)) == 2
     assert all("생각" in m.payload["text"] for m in got)
     assert got[0].payload["speech_end_mono"] < got[1].payload["speech_end_mono"]
+
+
+def _listen(bus: MemoryBus) -> list[tuple[str, bool]]:
+    got: list[tuple[str, bool]] = []
+    bus.subscribe("stt/text", lambda m: got.append((m.payload["text"], m.payload["wake"])))
+    return got
+
+
+def test_followup_reply_merges_with_previous_command() -> None:
+    """되묻기 뒤 한 번은 호출어 없이 받아 앞 명령과 합친다 (#STT-14)."""
+    bus, clock = MemoryBus(), FakeClock()
+    got = _listen(bus)
+    stt = FakeSTT(["자비스 켜줘.", "후드.", "오늘 저녁 뭐 먹지"])
+    service = AudioService(stt, FakeSegmenter([], []), bus, "s", 1e9, clock=clock)
+    service.handle([seg(1, 1.0)])
+    service.expect_reply()  # "어느 장치를 켤까요?"
+    clock.t += 3
+    service.handle([seg(1, 2.0)])
+    service.handle([seg(1, 3.0)])  # 대답은 한 번만 — 그다음은 다시 호출어가 필요
+    assert got == [
+        ("자비스 켜줘.", True),
+        ("자비스 후드 켜줘.", True),
+        ("오늘 저녁 뭐 먹지", False),
+    ]
+
+
+def test_followup_window_expires() -> None:
+    bus, clock = MemoryBus(), FakeClock()
+    got = _listen(bus)
+    stt = FakeSTT(["자비스 켜줘.", "후드."])
+    service = AudioService(stt, FakeSegmenter([], []), bus, "s", 1e9, clock=clock)
+    service.handle([seg(1, 1.0)])
+    service.expect_reply()
+    clock.t += 13  # followup_s(12초)가 지남
+    service.handle([seg(1, 2.0)])
+    assert got[-1] == ("후드.", False)
+
+
+def test_conversation_mode_takes_next_command_without_wake() -> None:
+    """명령을 실행한 뒤에는 이어 말하는 새 명령도 호출어 없이 받는다 (대화 모드, #STT-14)."""
+    bus, clock = MemoryBus(), FakeClock()
+    got = _listen(bus)
+    stt = FakeSTT(["자비스 1번 화구 켜줘.", "후드도 켜줘.", "음악 틀어줘."])
+    service = AudioService(stt, FakeSegmenter([], []), bus, "s", 1e9, clock=clock)
+    service.handle([seg(1, 1.0)])
+    service.expect_reply(merge=False)
+    service.handle([seg(1, 2.0)])
+    service.expect_reply(merge=False)  # 그 명령도 실행되면 다시 열린다
+    service.handle([seg(1, 3.0)])
+    assert got == [
+        ("자비스 1번 화구 켜줘.", True),
+        ("자비스 후드도 켜줘.", True),
+        ("자비스 음악 틀어줘.", True),
+    ]
