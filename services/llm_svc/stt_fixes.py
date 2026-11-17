@@ -26,9 +26,14 @@ FIXES: tuple[tuple[str, str], ...] = (
 _BURNER_HAGO = re.compile(r"(\d)\s*번\s*하고(?=\s*(?:켜|꺼|끄|세|약|중|강))")
 
 
+# "튀김 켜 줘"처럼 튀김기를 줄여 말함 (보드 실사용 2026-11-17, #STT-14). 켜기·끄기·세기 앞일 때만
+_FRYER_SHORT = re.compile(r"튀김(?!기)(?=\s*(?:켜|꺼|끄|틀|세|약|중|강))")
+
+
 def normalize(text: str) -> str:
     for wrong, right in FIXES:
         text = text.replace(wrong, right)
+    text = _FRYER_SHORT.sub("튀김기", text)
     return _BURNER_HAGO.sub(r"\1번 화구", text)
 
 

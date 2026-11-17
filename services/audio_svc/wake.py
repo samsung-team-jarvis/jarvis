@@ -16,8 +16,8 @@ from __future__ import annotations
 WAKE_INITIAL_VARIANTS = "자다바차짜사타"
 # "자비스야"에서 '스'가 빠지거나 띄어진 형태 (spk01 val: "자비야", "자비 쓰야", #61)
 WAKE_VOCATIVE_FORMS = ("자비야", "자비쓰야")
-# 보드 핀마이크 실사용 출력 (2026-11-17, #STT-14): "저비스 1번하고 켜줘", "잡비스 …"
-WAKE_OTHER_FORMS = ("저비스", "잡비스")
+# 보드 핀마이크 실사용 출력 (2026-11-17, #STT-14): "저비스 1번하고 켜줘", "잡비스 …", "자이스 …"
+WAKE_OTHER_FORMS = ("저비스", "잡비스", "자이스")
 WAKE_WORDS: tuple[str, ...] = (
     tuple(f"{c}비스" for c in WAKE_INITIAL_VARIANTS) + WAKE_VOCATIVE_FORMS + WAKE_OTHER_FORMS
 )
