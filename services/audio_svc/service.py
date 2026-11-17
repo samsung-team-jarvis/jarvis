@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import time
+from collections import deque
 from collections.abc import Callable, Iterable
 from typing import Protocol
 
@@ -17,8 +18,11 @@ from services.audio_svc.sources import Chunk
 from services.audio_svc.stt import Transcript
 from services.audio_svc.vad import SAMPLE_RATE, SpeechSegment
 from services.audio_svc.wake import is_wake, split_wake
+from services.safety_guard.emergency import is_emergency
 
 SOURCE = "audio_svc"
+CHUNK_MARGIN_S = 0.2  # 청크가 도착한 시각과 그 소리 사이의 여유
+MIN_TAIL_S = 0.4  # 응답 뒤에 이만큼은 남아야 다시 받아쓴다
 
 
 class Transcriber(Protocol):
@@ -50,10 +54,15 @@ class AudioService:
         self.heartbeat_s = heartbeat_s
         self.on_text = on_text
         self.clock = clock
-        self.mute = mute  # TTS 재생 중이면 True → 그 구간 입력을 무음으로 (에코 방지, STT-12)
+        # TTS 재생 중이면 True. 그 구간에 걸친 말은 긴급 정지만 받는다
+        # (에코가 명령이 되지 않게, STT-12). 예전에는 무음으로 바꿨는데,
+        # 경고를 읽는 동안 외친 "멈춰"를 못 들었다 (보드 리허설, #STT-14)
+        self.mute = mute
         self.published = 0  # 발행한 stt/text 수
         self.ignored = 0  # 그중 호출어가 없어 명령으로 처리하지 않을 발화 수 (wake=false)
         self.skipped = 0  # 받아쓴 결과가 비어 버린 구간 수 (잡음 등)
+        self.echo = 0  # 음성 응답 중에 들어와 버린 구간 수 (긴급 정지가 아니라서)
+        self._muted_at: deque[float] = deque(maxlen=2000)  # 재생 중에 받은 청크 시각
         self._last_heartbeat: float | None = None
         # 되묻기 뒤 대답·대화 모드 (#STT-14): 응답 뒤 followup_s 동안은 호출어 없는 말 한 번을
         # 명령으로 낸다. 되묻기면 앞 명령과 합친다 ("켜줘" + "후드" → "자비스 후드 켜줘")
@@ -66,8 +75,7 @@ class AudioService:
         """입력이 끝날 때까지 처리하고, 발행한 stt/text 수를 돌려준다."""
         for samples, arrival_mono in chunks:
             if self.mute and self.mute(arrival_mono):
-                # 건너뛰지 않고 무음으로 넣는다: 샘플 수로 계산하는 발화 끝 시각이 어긋나지 않게
-                samples = np.zeros_like(samples)
+                self._muted_at.append(arrival_mono)
             self.handle(self.segmenter.feed(samples, arrival_mono))
             self.heartbeat()
         self.handle(self.segmenter.flush())
@@ -79,7 +87,21 @@ class AudioService:
             if not result.text:
                 self.skipped += 1
                 continue
-            text, wake = self._with_followup(result.text)
+            if (tail := self._after_tts(seg)) is not None:
+                wake = is_wake(result.text)
+                if is_emergency(result.text, wake):
+                    text = result.text  # 경고 중에도 "멈춰"는 받는다
+                else:
+                    self.echo += 1
+                    # 응답 직후 이어 말하면 한 구간으로 붙는다 → 응답 뒤 부분만 다시 받아쓴다
+                    if len(tail) < MIN_TAIL_S * SAMPLE_RATE:
+                        continue
+                    result = self.stt.transcribe(tail, SAMPLE_RATE)
+                    if not result.text:
+                        continue
+                    text, wake = self._with_followup(result.text)
+            else:
+                text, wake = self._with_followup(result.text)
             payload = {
                 "text": text,
                 "wake": wake,
@@ -93,6 +115,15 @@ class AudioService:
             self.ignored += not wake
             if self.on_text:
                 self.on_text(msg)
+
+    def _after_tts(self, seg: SpeechSegment) -> np.ndarray | None:
+        """구간이 음성 응답 재생과 겹치면 재생이 끝난 뒤의 소리, 안 겹치면 None."""
+        start = seg.end_mono - len(seg.samples) / SAMPLE_RATE
+        muted = [t for t in self._muted_at if start - CHUNK_MARGIN_S <= t <= seg.end_mono]
+        if not muted:
+            return None
+        cut = int((max(muted) + CHUNK_MARGIN_S - start) * SAMPLE_RATE)
+        return seg.samples[max(cut, 0) :]
 
     def expect_reply(self, merge: bool = True) -> None:
         """응답을 읽어 줄 때 부른다: followup_s 동안 다음 한 번은 호출어 없이 받는다.

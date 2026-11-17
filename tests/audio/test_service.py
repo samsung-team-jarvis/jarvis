@@ -209,3 +209,28 @@ def test_conversation_mode_takes_next_command_without_wake() -> None:
         ("자비스 후드도 켜줘.", True),
         ("자비스 음악 틀어줘.", True),
     ]
+
+
+def test_during_tts_only_emergency_is_taken() -> None:
+    """음성 응답 중에 들어온 말은 긴급 정지만 받는다 — 경고 중 "멈춰" (#STT-14)."""
+    bus = MemoryBus()
+    got = _listen(bus)
+    stt = FakeSTT(["후드를 켰습니다.", "멈춰!", "자비스 후드 켜줘."])
+    segmenter = FakeSegmenter([[seg(1, 1.0)], [seg(1, 2.0)], [seg(1, 9.0)]], [])
+    chunk = np.zeros(1600, dtype=np.float32)
+    service = AudioService(stt, segmenter, bus, "s", 1e9, mute=lambda t: t < 5)
+    service.run([(chunk, 0.9), (chunk, 1.9), (chunk, 8.9)])
+    assert got == [("멈춰!", False), ("자비스 후드 켜줘.", True)]
+    assert service.echo == 1
+
+
+def test_speech_right_after_tts_is_still_heard() -> None:
+    """응답이 끝나자마자 말해 한 구간으로 붙어도, 응답 뒤 부분은 명령으로 받는다 (#STT-14)."""
+    bus = MemoryBus()
+    got = _listen(bus)
+    stt = FakeSTT(["후드를 켰습니다 자비스 음악 틀어줘.", "자비스 음악 틀어줘."])
+    segmenter = FakeSegmenter([[], [seg(3, 4.0)]], [])  # 1.0~4.0초, 재생은 2초 전까지
+    chunk = np.zeros(1600, dtype=np.float32)
+    service = AudioService(stt, segmenter, bus, "s", 1e9, mute=lambda t: t < 2)
+    service.run([(chunk, 1.5), (chunk, 3.9)])
+    assert got == [("자비스 음악 틀어줘.", True)]
