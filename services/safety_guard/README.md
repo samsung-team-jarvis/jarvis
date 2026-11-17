@@ -33,6 +33,7 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 - **끄는 쪽은 어떤 상태에서도 막지 않는다.** 막으면 더 위험해진다.
 - 위험 상태에서는 세기를 **낮추는** 명령도 막는다. Guard는 지금 세기를 모르므로 "낮춤"과 "꺼진 화구를 켜기"를 구분할 수 없다. 대신 REJECT 이유로 "끄려면 꺼 달라고 말해 주세요"를 안내한다.
 - `fusion/state`를 한 번도 받지 못했으면 **상태 모름 = 위험 상태처럼** 판정한다. 그래서 상황 인식이 없을 때도 후드는 켜지지만(Gate 2) 화구는 켜지지 않는다. 개발할 때는 `--assume-state`로 가정 상태를 준다.
+- `fusion/state`를 받은 적이 있는데 **3초 넘게 끊기면** 마지막 State를 믿지 않고 가열 켜기·세기 바꾸기를 거부한다 ("상황 인식이 끊겨서 지금은 켤 수 없어요.", FUS-12, [decision](../../docs/decisions/2026-11-16-guard-state-expiry.md)). 끄기·긴급 정지는 그대로 허용하고, 새 값이 오면 바로 원래대로 판정한다. 끊긴 동안 이미 켜진 장치를 끄지는 않는다. 가정 상태(`--assume-state`)는 `fusion/state`를 받기 전까지 만료되지 않는다.
 - REJECT 이유는 음성 응답이 "지금은 ○○을 제어할 수 없어요." 뒤에 붙여 읽는다 ([responses](../audio_svc/responses.py)).
 - 위험 상황 Hard Negative 34건(`data/llm/hard_negative_v1.jsonl`·`hard_negative_v2.jsonl`의 `expect_guard`)과 이 규칙의 판정이 같은지 테스트로 검사한다. 규칙을 바꾸면 데이터의 `expect_guard`도 같이 바꾼다.
 
@@ -97,7 +98,7 @@ python -m services.safety_guard judge '{"action":"TURN_ON","target":"burner_1"}'
 | 출력 | `guard/decision` (명령마다, 자동 차단마다), `control/command` (허용된 제어·자동 차단만), `system/heartbeat` (1초) |
 | 설정 | `--bus`, `--session`, `--assume-state`(개발용), `--quiet` |
 | 자원 | CPU 무시할 수준 (규칙 판정 1건 1ms 미만) |
-| 실패 시 | 상태 입력이 없으면 화구 켜기·세기 거부. 형식이 틀린 명령은 거부. 이 서비스가 죽으면 제어 명령이 나가지 않는다 (장치는 그대로) — 가열 장치의 최종 안전은 가상 주방 쪽 안전장치(L0, HW-18)가 맡는다 |
+| 실패 시 | 상태 입력이 없거나 3초 넘게 끊기면 화구 켜기·세기 거부 (끊겼을 때 로그 경고 1번). 형식이 틀린 명령은 거부. 이 서비스가 죽으면 제어 명령이 나가지 않는다 (장치는 그대로) — 가열 장치의 최종 안전은 가상 주방 쪽 안전장치(L0, HW-18)가 맡는다 |
 | 하지 않는 일 | 결제 실행(HW-23), 타이머 실행 |
 
 ## 확인 기록

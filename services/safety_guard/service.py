@@ -9,6 +9,11 @@
   (`stt/text`의 wake=false 문장을 규칙 파서로 읽어 CONFIRM·DENY일 때만).
 - 자동 차단(FUS-09): `fusion/state`가 과열(켜진 가열 장치 240°C 이상)이나 방치(켜진 채 사람 없음
   60초)를 알려 오면 그 가열 장치를 끈다 (`auto_stop.py`). LLM·사람을 기다리지 않는다.
+- State 만료(FUS-12): `fusion/state`가 STATE_STALE_S(3초, fusion_svc 발행 주기 1초의 3배)
+  넘게 끊기면 마지막 값을 더 이상 믿지 않고 상태를 모르는 것과 같게 본다 — 가열 켜기·세기
+  바꾸기는 거부하고, 끄기·긴급 정지는 그대로 허용한다. v1은 거부 + 로그 경고만 하고, 끊긴 동안
+  이미 켜져 있던 가열 장치를 자동으로 끄지는 않는다 (근거 없이 끄면 오탐 위험 — 실제 과열·방치
+  자동 차단은 FUS-09가 센서 근거로 처리한다).
 - `control/command`는 이 서비스만 발행한다 (LLM 출력이 Guard를 건너뛰는 경로가 없게).
 """
 
@@ -35,6 +40,8 @@ FAST_PATH_REASON = "긴급 빠른 경로"
 EMERGENCY_DEDUP_S = 3.0
 # ASK로 물은 뒤 대답을 기다리는 시간 (v0 값 — 써 보고 조정한다)
 CONFIRM_TIMEOUT_S = 10.0
+# FUS-12: fusion/state가 이보다 오래 끊기면 마지막 값을 믿지 않는다 (발행 주기 1초의 3배)
+STATE_STALE_S = 3.0
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +71,11 @@ class SafetyGuard:
         self.state: str | None = assume_state  # 개발용 가정 상태 (상황 인식 전). 운영에서는 None
         self.on_decision = on_decision
         self.clock = clock
+        # fusion/state를 마지막으로 받은 시각 (FUS-12). None = 아직 받은 적 없음.
+        # assume_state(개발용 가정 상태)는 fusion_svc 없이 쓰는 것이라 만료시키지 않는다 —
+        # fusion/state를 한 번 받으면 그때부터 만료를 본다
+        self.state_at: float | None = None
+        self._state_stale_warned = False
         # 첫 control/command의 seq는 seq_start + 1. 기본은 시각에서 정한다 (재시작해도 안 겹치게)
         self.seq = first_seq(time.time()) if seq_start is None else seq_start
         self.counts = {
@@ -90,6 +102,8 @@ class SafetyGuard:
             log.warning("모르는 State 무시: %r", state)
             return
         self.state = state
+        self.state_at = self.clock()
+        self._state_stale_warned = False
         for target, reason in self.auto_stop.check(msg.payload, self.clock()):
             self.counts["auto_stop"] += 1
             call = {"action": "TURN_OFF", "target": target}
@@ -120,12 +134,27 @@ class SafetyGuard:
             return
         # 다른 명령이 오면 기다리던 질문은 버린다 (나중의 "네"가 엉뚱하게 실행되지 않게)
         self.pending = None
-        decision = judge(call, self.state)
+        stale = self._state_stale()
+        if stale and not self._state_stale_warned:
+            log.warning(
+                "fusion/state가 %.1fs 넘게 끊겼습니다. 가열 켜기·세기 바꾸기를 거부합니다.",
+                STATE_STALE_S,
+            )
+            self._state_stale_warned = True
+        decision = judge(call, self.state, stale=stale)
         if decision.decision == ALLOW and action == "EMERGENCY_STOP":
             self._last_emergency = self.clock()
         if decision.decision == ASK:
             self.pending = Pending(call, msg.session_id, self.clock() + CONFIRM_TIMEOUT_S)
         self._publish(call, decision, msg.session_id)
+
+    def _state_stale(self) -> bool:
+        """FUS-12: State를 받은 적은 있지만(state_at 있음) 너무 오래전이면 더 믿지 않는다.
+
+        한 번도 받지 못한 경우(state_at=None)는 여기서 다루지 않는다 — state=None 그대로
+        judge()가 "상태 모름"으로 판정한다 (이유 문장이 다르다).
+        """
+        return self.state_at is not None and self.clock() - self.state_at > STATE_STALE_S
 
     def _waiting(self) -> bool:
         if self.pending is not None and self.clock() > self.pending.deadline:
