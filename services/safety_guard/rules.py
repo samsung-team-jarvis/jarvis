@@ -4,7 +4,7 @@
 결정 근거: docs/decisions/2026-10-01-safety-layers.md, 2026-10-02-llm-literal-guard-decides.md
 (LLM은 말 그대로 해석하고, 위험 판단은 여기서 한다).
 
-| 명령 | 평소 상태 | 위험 상태·상태 모름 |
+| 명령 | 평소 상태 | 위험 상태·상태 모름·상태 끊김 |
 |---|---|---|
 | 형식이 틀린 명령 | REJECT | REJECT |
 | 가열 장치(화구 2개·튀김기) 켜기·세기 바꾸기 | ALLOW | REJECT |
@@ -16,6 +16,8 @@
 - 세기를 낮추는 명령도 위험 상태에서는 막는다. Guard는 지금 세기를 모르므로 "낮춤"과
   "꺼진 화구를 켜는 것"을 구분할 수 없다. 대신 이유에 "끄려면 꺼 달라고 말하라"를 안내한다.
 - 상태를 아직 한 번도 받지 못했으면(상황 인식이 없거나 아직 안 뜸) 위험 상태와 같게 본다.
+- `fusion/state`가 끊겨 오래된 상태(`stale=True`, FUS-12)면 마지막 값이 무엇이었든 믿지 않고
+  위험 상태와 같게 본다 — 과열·방치가 실제로 일어나도 알 길이 없기 때문이다.
 - 결제는 되돌리기 어려워서 상태와 무관하게 항상 확인(ASK)을 받는다. 확인을 기다리는 동안의
   "네"·"아니요"는 서비스(service.py)가 처리하고, 여기서는 기다리는 질문이 없는 경우만 판정한다.
 """
@@ -54,6 +56,8 @@ REASONS = {
 INVALID_REASON = "명령을 이해하지 못했어요."
 ASK_REASON = "결제는 확인을 받은 뒤 실행해요."
 NO_QUESTION_REASON = "확인할 질문이 없어요."
+# FUS-12: fusion/state가 끊겨 마지막 값을 더 이상 믿을 수 없을 때
+STALE_REASON = "상황 인식이 끊겨서 지금은 켤 수 없어요."
 
 
 @dataclasses.dataclass(frozen=True)
@@ -62,9 +66,11 @@ class Decision:
     reason: str  # REJECT·ASK일 때 읽어 줄 이유, ALLOW면 ""
 
 
-def judge(call: dict[str, Any], state: str | None) -> Decision:
+def judge(call: dict[str, Any], state: str | None, stale: bool = False) -> Decision:
     """명령과 지금 상태로 허용 여부를 정한다. state=None은 상태를 모르는 경우.
 
+    stale=True(FUS-12)는 state를 한 번 받았지만 너무 오래돼 더 믿을 수 없는 경우 —
+    상태를 아예 모르는 경우와 같게 가열 켜기·세기 바꾸기를 막되, 이유는 따로 안내한다.
     "네"·"아니요"는 기다리는 질문이 없다고 보고 판정한다 (질문이 있으면 서비스가 먼저 처리한다).
     """
     try:
@@ -77,6 +83,8 @@ def judge(call: dict[str, Any], state: str | None) -> Decision:
     if call["action"] in REPLY_ACTIONS:
         return Decision(REJECT, NO_QUESTION_REASON)
     heating_up = call["action"] in HEATING_UP_ACTIONS and call.get("target") in HEATING_DEVICES
+    if heating_up and stale:
+        return Decision(REJECT, STALE_REASON)
     if heating_up and (state is UNKNOWN_STATE or state in RISKY_STATES):
         return Decision(REJECT, REASONS[state])
     return Decision(ALLOW, "")
