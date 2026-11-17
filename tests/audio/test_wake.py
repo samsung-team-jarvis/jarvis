@@ -23,6 +23,12 @@ from services.audio_svc.wake import is_wake, split_wake
         # spk01 val: "자비스야"에서 '스'가 빠지거나 띄어진 형태 (#61)
         ("자비야 이번 불 켜줘.", "이번 불 켜줘."),
         ("자비 쓰야.", ""),
+        # 보드 핀마이크 실사용 (2026-11-17, #STT-14): 문장 중간의 호출어 — 마지막 것 뒤
+        ("비 멈춰 자비스 멈춰.", "멈춰."),
+        ("아 진짜  멈추지지만 못하네 자비스 멈춰.", "멈춰."),
+        ("저기 자비스 후드 켜 줘.", "후드 켜 줘."),
+        ("저비스 1번하고 켜줘.", "1번하고 켜줘."),  # 변형
+        ("잡비스 후드 켜줘", "후드 켜줘"),
     ],
 )
 def test_wake_utterance_gives_command_part(text: str, command: str) -> None:
@@ -33,7 +39,7 @@ def test_wake_utterance_gives_command_part(text: str, command: str) -> None:
 @pytest.mark.parametrize(
     "text",
     [
-        "저기 자비스 후드 켜 줘.",  # Q-08 v0: 시작할 때만
+        "그 자비스한테 시켜",  # 중간 호출어는 단어로 떨어졌을 때만
         "오늘 저녁 뭐 먹지?",
         "다비 이번 화구 꺼줘.",  # '스'까지 빠지면 호출 아님 (사람 음성 실제 출력)
         "서비스 좋네",  # 흔한 말 — 첫 글자 모음이 ㅏ가 아님
