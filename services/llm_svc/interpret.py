@@ -32,6 +32,11 @@ class Resolved:
     tokens: int  # LLM이 생성한 토큰 수 (대체돼도 쓴 만큼 센다)
 
 
+# LLM이 지원 외(UNSUPPORTED)라고 해도 규칙 파서가 이 동작 + 장치를 찾으면 규칙을 따른다
+RULE_OVER_UNSUPPORTED = ("TURN_ON", "TURN_OFF", "SET_LEVEL", "SET_TIMER")
+NEGATION = re.compile(r"지\s*마|지\s*말|말아|않|안\s*돼|하지")
+
+
 def command_text(stt_text: str) -> str | None:
     """호출어가 있으면 파서에 넣을 명령 문장(오인식 사전·숫자 정규화 적용), 없으면 None."""
     command = split_wake(stt_text)
@@ -59,6 +64,18 @@ def resolve(command: str, context: dict[str, Any], generate: Generate | None = N
         return Resolved(parse(command), command, valid=True, fallback=True, tokens=0)
     raw, tokens = generate(text, context)
     try:
-        return Resolved(parse_tokens(raw), raw, valid=True, fallback=False, tokens=tokens)
+        call = parse_tokens(raw)
     except FunctionCallError:
         return Resolved(parse(command), command, valid=False, fallback=True, tokens=tokens)
+    if call["action"] == "UNSUPPORTED":
+        # LLM은 지원 외라는데 규칙 파서가 장치와 동작을 분명히 찾으면 규칙을 따른다 (#STT-14).
+        # 보드 실사용 "선풍기 틀어줘" → LLM 지원 외. 결정은 val로 했다 (METRICS)
+        # 부정("끄지 마")은 규칙 파서가 반대로 읽어서 제외한다 (val 부정 8문장)
+        rule = parse(command)
+        if (
+            rule["action"] in RULE_OVER_UNSUPPORTED
+            and rule.get("target")
+            and not NEGATION.search(command)
+        ):
+            return Resolved(rule, raw, valid=True, fallback=True, tokens=tokens)
+    return Resolved(call, raw, valid=True, fallback=False, tokens=tokens)

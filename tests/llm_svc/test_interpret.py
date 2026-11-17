@@ -119,3 +119,17 @@ def test_numerals(stt: str, fixed: str) -> None:
 
 def test_command_text_applies_numerals_after_the_dictionary() -> None:
     assert command_text("자비스 입 번 불 켜줘.") == "2번 불 켜줘."
+
+
+@pytest.mark.parametrize(
+    ("stt_text", "command"),
+    [
+        # 보드 핀마이크 실사용 (2026-11-17, #STT-14): "1번 화구" → "일본하고" / "1번하고"
+        ("자비스 일본하고 켜줘.", "1번 화구 켜줘."),
+        ("자비스 1번하고 켜줘.", "1번 화구 켜줘."),
+        ("자비스 2번 하고 꺼줘", "2번 화구 꺼줘"),
+        ("자비스 1번하고 2번 켜줘", "1번하고 2번 켜줘"),  # 켜·꺼가 바로 오지 않으면 그대로
+    ],
+)
+def test_burner_hago_fix(stt_text: str, command: str) -> None:
+    assert command_text(stt_text) == command

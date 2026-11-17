@@ -1,7 +1,11 @@
 """텍스트 기반 호출어 (docs/decisions/open-questions.md Q-08 v0).
 
-받아쓴 문장이 호출어로 시작할 때만 명령으로 본다. 비교할 때 띄어쓰기·문장부호는 무시한다
+받아쓴 문장이 호출어로 시작하면 명령으로 본다. 비교할 때 띄어쓰기·문장부호는 무시한다
 (SenseVoice가 "자비스야"를 "자비 스야"로 받아쓴 사례가 있다). 첫 자음 오인식 변형도 호출로 본다.
+
+2026-11-17 보드 실사용(#STT-14): 다급하게 "자비스 멈춰 자비스 멈춰"처럼 이어 말하면 첫 "자"가 잘려
+"비 멈춰 자비스 멈춰"가 된다. 그래서 문장 중간이라도 **단어로 떨어진** 호출어가 있으면 마지막 호출어
+뒤를 명령으로 본다 (문장 중간의 "자비스한테"처럼 다른 말에 붙은 것은 아니다).
 """
 
 from __future__ import annotations
@@ -12,7 +16,11 @@ from __future__ import annotations
 WAKE_INITIAL_VARIANTS = "자다바차짜사타"
 # "자비스야"에서 '스'가 빠지거나 띄어진 형태 (spk01 val: "자비야", "자비 쓰야", #61)
 WAKE_VOCATIVE_FORMS = ("자비야", "자비쓰야")
-WAKE_WORDS: tuple[str, ...] = tuple(f"{c}비스" for c in WAKE_INITIAL_VARIANTS) + WAKE_VOCATIVE_FORMS
+# 보드 핀마이크 실사용 출력 (2026-11-17, #STT-14): "저비스 1번하고 켜줘", "잡비스 …", "자이스 …"
+WAKE_OTHER_FORMS = ("저비스", "잡비스", "자이스")
+WAKE_WORDS: tuple[str, ...] = (
+    tuple(f"{c}비스" for c in WAKE_INITIAL_VARIANTS) + WAKE_VOCATIVE_FORMS + WAKE_OTHER_FORMS
+)
 # 호출어 바로 뒤의 호격 조사 ("자비스야", "자비스아")
 _VOCATIVES = ("야", "아")
 
@@ -42,24 +50,40 @@ def _strip_leading(text: str) -> str:
     return text[i:]
 
 
+def _after_wake(rest: str) -> str:
+    for v in _VOCATIVES:
+        after = rest[len(v) :]
+        if rest.startswith(v) and (not after or _skippable(after[0])):
+            rest = after
+            break
+    return _strip_leading(rest).strip()
+
+
 def split_wake(text: str, wake_words: tuple[str, ...] = WAKE_WORDS) -> str | None:
-    """호출어로 시작하면 호출어 뒤의 명령 부분을, 아니면 None을 돌려준다.
+    """호출어가 있으면 (마지막) 호출어 뒤의 명령 부분을, 없으면 None을 돌려준다.
 
     "자비스, 후드 켜 줘." → "후드 켜 줘."   "자비 스야 후드 켜 줘." → "후드 켜 줘."
-    "자비스." → "" (호출만 함)              "저기 자비스 후드 켜 줘" → None
+    "자비스." → "" (호출만 함)              "비 멈춰 자비스 멈춰." → "멈춰."
+    "저기 자비스 후드 켜 줘" → "후드 켜 줘"  "그 자비스한테 시켜" → None (중간 호출어는 단어일 때만)
     """
     for word in wake_words:
         end = _match(text, word)
-        if end is None:
+        if end is not None:
+            return _after_wake(text[end:])
+    # 문장 중간: 앞이 띄어쓰기·문장부호이고 뒤도 끝·띄어쓰기·문장부호·호격 조사인 마지막 호출어
+    found: int | None = None
+    for start in range(1, len(text)):
+        if not _skippable(text[start - 1]) or _skippable(text[start]):
             continue
-        rest = text[end:]
-        for v in _VOCATIVES:
-            after = rest[len(v) :]
-            if rest.startswith(v) and (not after or _skippable(after[0])):
-                rest = after
-                break
-        return _strip_leading(rest).strip()
-    return None
+        for word in wake_words:
+            end = _match(text[start:], word)
+            if end is None:
+                continue
+            rest = text[start + end :]
+            if not rest or _skippable(rest[0]) or rest[0] in _VOCATIVES:
+                found = start + end
+            break
+    return None if found is None else _after_wake(text[found:])
 
 
 def is_wake(text: str, wake_words: tuple[str, ...] = WAKE_WORDS) -> bool:

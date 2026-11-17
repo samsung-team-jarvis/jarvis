@@ -159,13 +159,14 @@ class NoStt:
         raise AssertionError("구간이 없으니 불리면 안 됨")
 
 
-def test_audio_service_feeds_silence_while_muted() -> None:
+def test_audio_service_keeps_listening_while_muted() -> None:
+    """재생 중에도 소리는 그대로 넣는다 — 그 구간의 말은 긴급 정지만 받는다 (#STT-14)."""
     seg = RecordingSegmenter()
     service = AudioService(NoStt(), seg, MemoryBus(), "s", 1e9, mute=lambda t: 1.0 <= t < 2.0)
     loud = np.ones(1600, dtype=np.float32)
     service.run([(loud, 0.5), (loud, 1.5), (loud, 2.5)])
-    assert [float(c.max()) for c in seg.fed] == [1.0, 0.0, 1.0]
-    assert all(len(c) == 1600 for c in seg.fed)  # 길이는 그대로 (시각 계산 유지)
+    assert [float(c.max()) for c in seg.fed] == [1.0, 1.0, 1.0]
+    assert list(service._muted_at) == [1.5]
 
 
 @pytest.mark.skipif(not (TTS_DIR / "tokens.txt").is_file(), reason="TTS 모델 없음")
