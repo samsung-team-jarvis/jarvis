@@ -21,6 +21,9 @@ TOPIC_TEMP = "kitchen/temp"  # 가상 주방 → 보드: 가열 장치 온도 (1
 TOPIC_FRAME = "kitchen/frame"  # 가상 주방 → 보드: 인식용 카메라 화면 (JPEG 바이트, 봉투·JSON 아님)
 TOPIC_HEARTBEAT = "kitchen/heartbeat"  # 보드 → 가상 주방: 생존 신호
 TOPIC_STATE = "kitchen/state"  # 가상 주방 → 보드: 장치 상태
+TOPIC_OVERLAY = (
+    "kitchen/overlay"  # 보드 → 가상 주방: 화면에 겹쳐 띄울 정보 (UI-01, 1초마다 + 바뀔 때)
+)
 
 CMDS = ("ON", "OFF", "LEVEL")
 MAX_SEQ = 2**31 - 1  # Unity(C# int)가 읽을 수 있는 가장 큰 수
