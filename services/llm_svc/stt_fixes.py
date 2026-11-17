@@ -21,10 +21,15 @@ FIXES: tuple[tuple[str, str], ...] = (
 )
 
 
+# 숫자 + 번 + "하고" + 켜/꺼/세기 → "번 화구". 보드 핀마이크 실사용에서 "1번 화구 켜줘"가
+# "일본하고 켜줘"(→ "1번하고 켜줘")로 3번 나왔다 (2026-11-17, #STT-14). 숫자 바로 뒤일 때만 바꾼다.
+_BURNER_HAGO = re.compile(r"(\d)\s*번\s*하고(?=\s*(?:켜|꺼|끄|세|약|중|강))")
+
+
 def normalize(text: str) -> str:
     for wrong, right in FIXES:
         text = text.replace(wrong, right)
-    return text
+    return _BURNER_HAGO.sub(r"\1번 화구", text)
 
 
 # 한자어 숫자 + 단위 → 아라비아 숫자. 서비스 입력(command_text)에만 — 학습 데이터 생성엔 안 쓴다.

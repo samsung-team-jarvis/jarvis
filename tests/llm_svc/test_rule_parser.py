@@ -92,6 +92,7 @@ CASES = [
     ("칼로리 계산해 줘", {"action": "UNSUPPORTED"}),  # 문장 맨 앞의 "계산"만 결제로 본다
     # 확인에 대한 답 — 그 말만 했을 때
     ("네", {"action": "CONFIRM"}),
+    ("어", {"action": "CONFIRM"}),  # 보드 실사용 (#STT-14)
     ("그래요.", {"action": "CONFIRM"}),
     ("아니요", {"action": "DENY"}),
     ("취소", {"action": "DENY"}),
