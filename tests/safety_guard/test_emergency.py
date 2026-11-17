@@ -14,6 +14,12 @@ from services.safety_guard.emergency import is_emergency
         ("그만 그만.", False),
         ("긴급 정지", False),
         ("스톱", False),
+        ("자비스 기름에 불 났어", True),  # 불이 났다는 말 (#164)
+        ("자비스, 팬에 불 붙었어!", True),
+        ("자비스 냄비에 불붙었어", True),
+        ("자비스 타이머 쪽에 불났어", True),  # 타이머 말이 섞여도 불은 긴급
+        ("불이야!", False),
+        ("불났어!", False),
     ],
 )
 def test_emergency(text: str, wake: bool) -> None:
@@ -30,6 +36,10 @@ def test_emergency(text: str, wake: bool) -> None:
         ("그만 먹을래", False),  # 호출어 없는 대화 속 긴급어
         ("이제 멈춰야겠다", False),
         ("오늘 저녁 뭐 먹지", False),
+        ("자비스 불 꺼 줘", True),  # 조명 (#164: 불 + 끄기는 긴급 아님)
+        ("자비스 불 켜 줘", True),
+        ("자비스 1번 화구 불 붙여 줘", True),  # 점화 요청
+        ("어제 옆 가게에 불 났대", False),  # 호출어 없는 대화
     ],
 )
 def test_not_emergency(text: str, wake: bool) -> None:
