@@ -61,7 +61,7 @@
 - [x] HW-13 메타버스 플랫폼 선정 — 보드와 메시지 주고받기, 인식용 카메라 화면 캡처, 장치 상태를 스크립트로 바꾸기, 비용을 확인해 open-questions Q-11 답 | 선행: - | 담당: 최석진 (#75 — Unity 6.3 LTS, 공식 문서 확인. 실동작은 HW-16·20 ([decision](./decisions/2026-10-05-unity-virtual-kitchen.md)))
 - [x] HW-14 보드 ↔ 가상 주방 연결 규격 v0.1 (제어 명령·결과 확인·온도·캡처 화면·생존 신호의 전달 방식) — interfaces §4 확정 | 선행: HW-13, FUS-01 | 담당: 이현종 (#80 — 연결 토픽 `kitchen/*`, `common/kitchen_link.py`, [Unity 안내](../recipes/unity-kitchen-link.md). Unity와의 실동작은 HW-16)
 - [x] LLM-13 Function Call 스키마 v0.2 (장치 8종: 튀김기·조명·에어컨·선풍기·음악 target 추가, 세기 1~3 통일, 금액 확인·결제 요청·네·아니요 Action → 14개) — interfaces §3·§5 확정, `common/function_call.py`·규칙 파서·응답 문장·테스트 반영 | 선행: LLM-01 | 담당: 이현종 (#84, [decision](./decisions/2026-10-06-function-call-schema-v02.md) — 결제 연결·확인 흐름은 FUS-03·HW-23)
-- [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면)
+- [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면) (#162 — Orange Pi 5 Plus 16 GB, microSD 29 GB(학교 이미지), 커널에 팬 장치 없음(방열판은 확인 필요), 측정 중 82 °C)
 
 ### BOM (2026-10-05 갱신)
 
@@ -82,15 +82,15 @@
 
 **Gate 1:** 아래 5개가 각각 단독으로 시연 가능 — ① 보드에서 기본 YOLOv8 RKNN 예제 실행 ② 기본 LLM 대화 (2026-10-29부터 llama.cpp) ③ SenseVoice 한국어 받아쓰기 ④ 가상 주방의 장치 1개를 메시지로 켜고 끄기 ⑤ 버스로 가짜 메시지 송수신
 
-- [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면)
-- [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 이현종 (2026-10-29 신지호에서 이관, RKLLM은 쓰지 않음)
+- [ ] BOARD-02 OS 설치(공식 Ubuntu 이미지), SSH·원격 개발 환경 — Mac에서 SSH 접속, VS Code Remote 동작 | 선행: BOARD-01 | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면) (#162 — Orange Pi 1.2.2 Jammy(Ubuntu 22.04, 커널 6.1.99) 사전 설치, Mac에서 SSH 키 접속. VS Code Remote는 미확인)
+- [ ] BOARD-03 NPU 드라이버 버전 확인, RKNN 툴/런타임 버전 조합 결정 → `docs/conventions/versions.md` 고정 | 선행: BOARD-02 | 담당: 이현종 (2026-10-29 신지호에서 이관, RKLLM은 쓰지 않음) (#162 — 드라이버 v0.9.8, rknn-toolkit-lite2 2.3.2로 NPU 실행 확인. librknnrt는 이미지 기본 2.3.0 → 2.3.2로 맞출지 남음)
 - [ ] BOARD-04 `rknn_model_zoo` YOLOv8 예제를 보드에서 실행 (기본 모델) — 이미지 1장 추론 결과 확인 | 선행: BOARD-03 | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면)
 - [x] ~~BOARD-05 RKLLM 데모를 지원 모델 1개로 보드에서 실행~~ — 취소 (2026-10-29 RKLLM 대신 llama.cpp → LLM-18, [decision](./decisions/2026-10-29-llamacpp-and-rebalance.md))
 - [x] ~~BOARD-06 Colab에서 rkllm-toolkit·rknn-toolkit2 설치 노트북~~ — 취소 (2026-10-29). RKNN 변환은 Docker amd64로 성공해(#13) VIS-07에서 그대로 쓰고, RKLLM은 쓰지 않는다
 - [x] INFRA-03 `common/` 메시지 봉투 dataclass + 버스 래퍼 (Q-06 결정 방식) — 가짜 publisher/subscriber 예제 동작 | 선행: FUS-01 (v0.1 초안 기준 선진행) | 담당: 이현종 (#20)
 - [x] INFRA-04 가짜 메시지 생성기 (stt/vision/sensor 모의) — 다른 모듈 없이 각 서비스 개발 가능 | 선행: INFRA-03 | 담당: 이현종 (#29, `services/simulator`)
 - [x] STT-01 Mac에서 sherpa-onnx + SenseVoice-Small 한국어 wav 받아쓰기 — 결과 텍스트 출력 | 선행: - | 담당: 이현종 (#33, `services/audio_svc`)
-- [ ] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 이현종 (2026-10-29 신지호에서 이관, #71 이관 — `python -m services.audio_svc.transcribe` 한 줄, [audio_svc](../services/audio_svc/README.md))
+- [x] STT-02 보드에서 동일 STT 실행 — RTF(처리시간/음성길이) 메모 | 선행: STT-01, BOARD-02 | 담당: 이현종 (2026-10-29 신지호에서 이관, #71 이관 — `python -m services.audio_svc.transcribe` 한 줄, [audio_svc](../services/audio_svc/README.md)) (#162 — 보드 CER 10.6% · RTF 0.047, Mac과 같은 받아쓰기)
 - [ ] VIS-01 Mac에서 ultralytics 기본 YOLOv8n으로 가상 주방 캡처 화면(장면이 없으면 비슷한 주방 영상) 추론 — 기본 COCO 클래스로 잡히는 것 목록화 | 선행: - | 담당: 최지환 (2026-10-29 신지호에서 이관)
 - [x] ~~HW-03 ESP32 BLE 서버~~ — 취소 (2026-10-05 → HW-16)
 - [x] ~~HW-04 열전대·INA219 값 시리얼 출력~~ — 취소 (2026-10-05 → HW-19)
@@ -147,7 +147,7 @@
 - [ ] STT-07 SenseVoice 기본 설정 Baseline (CER by 소음 조건, RTF) | 선행: STT-06 | 담당: 최석진 (2026-10-05 조정 — [stt_eval](../bench/README.md) 실행, 결과 분석은 이현종이 지원)
 - [ ] STT-08 비교군 Whisper(small/base) 측정 — STT 모델 결정 decision log 작성 | 선행: STT-06 | 담당: 최석진 (2026-10-05 조정 — 측정 실행. decision log는 이현종과 함께)
 - [ ] STT-09 마이크 비교 (핀마이크 vs 노트북 내장) CER | 선행: STT-06 | 담당: 최석진 (#71 이관 — 마이크는 부품 담당, [stt_eval](../bench/README.md)로 측정)
-- [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 (mAP는 보드 없이) | 담당: 이현종 (2026-10-29 신지호에서 이관) — #122: 사전학습 모델 Mac 속도(전처리 2~4 · 추론 75~91 · 후처리 3~5 ms, CPU 2스레드). mAP·보드 지연은 데이터·보드가 생기면
+- [ ] VIS-05 기본 YOLOv8n Baseline (mAP50, P/R) + 보드 지연(전처리/NPU/후처리 분리) | 선행: VIS-04, BOARD-04 (mAP는 보드 없이) | 담당: 이현종 (2026-10-29 신지호에서 이관) — #122: 사전학습 모델 Mac 속도(전처리 2~4 · 추론 75~91 · 후처리 3~5 ms, CPU 2스레드). mAP·보드 지연은 데이터·보드가 생기면 (#162 — 보드 NPU 4.8 / 18.2 / 10.2 ms, 합계 33 ms. mAP는 남음)
 - [ ] LLM-06 LLM 후보 2~3개 (Llama-3.2-1B / Qwen2.5-0.5B·1.5B 등, RKLLM 지원 목록 확인) 프롬프트·few-shot Baseline — Action Acc, JSON Valid, Unsafe Rate, tok/s, RAM | 선행: LLM-05, BOARD-05 | 담당: 이현종 (#67 — Mac 정확도: Qwen3-0.6B 32.8% · Qwen3.5-2B 66.1% (데이터 v1), #86 — 25.7% · 44.5% (데이터 v2). 남음: Llama-3.2-1B(HF 승인), 보드 tok/s·RAM)
 - [x] FUS-06 규칙 파서 Baseline (LLM과 같은 Test Set) | 선행: LLM-05, FUS-02 | 담당: 이현종 (#67 — Action Acc 79.9% (데이터 v1), #86 — 82.5% (데이터 v2), `bench/llm_eval.py`)
 - [x] FUS-07 단일 조건 판단 Baseline (State F1, 위험 미탐율) | 선행: FUS-05 | 담당: 최지환 (#140 — simulator 시나리오 test 9개: 온도만 State F1 0.595 · 위험 미탐 60%(방치를 못 봄), 사람만 0.207 · 40%(과열을 못 봄). `bench/fusion_eval.py`, 분할 `data/fusion/split_v1.json`(val 17 · test 9). FUS-08도 같은 도구로 평가)
@@ -191,7 +191,7 @@
 - [x] LLM-16 새 말투 보강 v2 (v3b val 오류·페르소나 말버릇, train에만 526문장) + LoRA v4, 같은 test로 재평가 | 선행: LLM-15 | 담당: 이현종 (#107 — Mac fp16 test: v3b 83.5% / 80.6% → **v4 86.9% / 86.5%**, Action·Entity 모두 규칙 파서를 넘음. 틀린 실행 12 → 11, 규칙 위반 1 → 12)
 - [x] LLM-17 새 말투 보강 v3 (v4 val 오류, train에만 162문장) + LoRA v5, 같은 test로 마지막 재평가 | 선행: LLM-16 | 담당: 이현종 (#109 — Mac fp16 test: v5 87.3% / 86.3%로 v4(86.9% / 86.5%)와 차이 없음. val 오류도 6 → 6 (고친 곳 옆이 다시 틀림) → val 오류로 문장을 더하는 방법은 한계. 대표 모델은 v4)
 - [x] LLM-18 LoRA v4 병합 모델 → GGUF 8비트(llama.cpp) 변환 → 같은 test로 fp16 대비 정확도·속도(Mac), `llm_svc`에 llama.cpp 생성기. 보드가 오면 같은 파일로 보드 CPU tok/s·RAM | 선행: LLM-16 | 담당: 이현종 (2026-10-29, LLM-08 대체. #118 — Mac CPU 4스레드: q8_0 test 87.1% / 86.7% (HF fp16 86.9% / 86.5%, 손실 없음), + 대체 89.7% / 89.2%, 287 ms/건, 639 MB. 보드 CPU 측정은 BOARD-08)
-- [ ] LLM-19 `llm_svc`·`bench.llm_eval`에 `--cpus` (RK3588 큰 코어 고정) — 보드에서 고정 전후 LLM 시간 비교 | 선행: LLM-18 | 담당: 이현종 (#154 — 리눅스 컨테이너에서 고정·새 스레드 물려받음 확인, 맥은 무시. 보드 비교는 `board_day measure --llm-cpus`)
+- [x] LLM-19 `llm_svc`·`bench.llm_eval`에 `--cpus` (RK3588 큰 코어 고정) — 보드에서 고정 전후 LLM 시간 비교 | 선행: LLM-18 | 담당: 이현종 (#154 — 리눅스 컨테이너에서 고정·새 스레드 물려받음 확인, 맥은 무시. 보드 비교는 `board_day measure --llm-cpus`) (#162 — 보드 474문장: 고정 없음 666 ms · 4-7 고정 741 ms, 6·8스레드는 더 느림 → 4스레드 · 고정 없음)
 - [x] LLM-12 대화 문맥(last_target·State)을 구조화 context로 제공 → Context Test Acc | 선행: LLM-09, FUS-08 | 담당: 이현종 (#124 — `last_target` = 마지막 명령의 장치, 60초. 재학습 없이 v4가 사용: test의 `last_target` 문장 7/7 전체 일치(GGUF q8_0), 노트북 시연 "후드 켜 줘" → "그거 세게 해 줘" → 후드 세기 3. State는 FUS-08 뒤 같은 자리)
 - [ ] STT-10 STT 오인식 패턴 수집 → 정규화 규칙 / LLM 학습 데이터 반영 (STT 오류 섞인 입력) | 선행: STT-07 | 담당: 이현종 (#61 — spk01 val 기반 첫 사전, `services/llm_svc/stt_fixes.py`) (#128 — "세 개 해" → "세게 해" 추가. 받아쓰기가 어미를 띄어 쓰는 꼴("약하 게")에 LLM이 약하다 — 사전 규칙은 "하는 게"까지 붙여 버려 빼고, 학습 데이터에 받아쓰기식 띄어쓰기를 섞는 쪽으로) (#130 — 숫자 정규화(서비스 입력에만): spk01 val 서비스 경로 전체 일치 25/34 → 28/34)
 - [ ] STT-11 소음 대응 개선 (DSP 전처리, 마이크 게인, VAD 임계값) → 재측정 | 선행: STT-07 | 담당: 이현종 (#128 — VAD 앞여유 0.3 s: spk01 val을 서비스와 같은 경로로 받아쓰면 호출어 인식 19/34 → 31/34, 음성 → 명령 전체 일치 16/34 → 25/34 (GGUF LLM + 규칙 파서)) (#136 — 잡음 기준선: 백색 잡음 SNR 20 · 10 dB에서 호출어 34개 중 28 · 15, `bench/speech_check.py noise`. 실제 소음 녹음(STT-05)으로 다시 잰다)
