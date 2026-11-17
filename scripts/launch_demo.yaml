@@ -33,6 +33,9 @@ services:
     module: services.llm_svc
     python: .venv-llm/bin/python
     args: [--model, runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf]
+  - name: dashboard           # 화면에 겹쳐 띄울 정보 → kitchen/overlay (UI-01)
+    module: services.dashboard
+    python: .venv/bin/python
   - name: audio_svc
     module: services.audio_svc
     python: .venv/bin/python

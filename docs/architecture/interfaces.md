@@ -228,6 +228,7 @@
                               kitchen/heartbeat  ─────▶  3초 끊기면 가열 장치 OFF (L0)
  device/state     ◀─────────  kitchen/state      ◀─────  장치 상태
  vision_svc 입력  ◀────────────────────────────  kitchen/frame  (인식용 카메라, 4fps)
+ dashboard        ────────────────────────────▶  kitchen/overlay (화면에 겹쳐 띄울 정보, UI-01)
 ```
 
 - **시각은 보드가 찍는다.** 버스 메시지의 `ts`·`mono`는 `kitchen_gw`가 받은 순간의 보드 시계다. 가상 주방 PC의 시계는 쓰지 않는다 (지연 측정이 한 시계 안에서 계산된다, [overview](./overview.md) §5).
@@ -243,6 +244,7 @@
 | `kitchen/heartbeat` | 보드 → 가상 주방 | 1초에 1번 | `{"alive": true}` |
 | `kitchen/state` | 가상 주방 → 보드 | 상태가 바뀔 때 + 5초에 1번 | `{"devices": {"hood": {"on": true, "level": 2}, "burner_1": {"on": false, "level": 0}, "burner_2": {"on": false, "level": 0}}, "safe_stop": false}` |
 | `kitchen/frame` | 가상 주방 → 보드 | 1초에 4장 | JPEG 바이트 그대로 (JSON 아님). 640×360 |
+| `kitchen/overlay` | 보드 → 가상 주방 | 바뀔 때 + 1초에 1번 | 화면에 겹쳐 띄울 정보 — 아래 표 (UI-01, **제안 — Unity 쪽 합의 대기**, #170) |
 
 - 글자는 UTF-8, JSON 키는 위 이름 그대로. MQTT QoS 0, retain 없음.
 - `kitchen/cmd`의 값은 §2의 `control/command`와 같다.
@@ -280,7 +282,17 @@
 
 - 가상 주방 PC와 보드를 랜선으로 잇고, Unity가 보드의 mosquitto(포트 1883)에 접속한다.
 - mosquitto 2는 기본 설정에서 같은 기기의 접속만 받는다. 설정 예시: [`scripts/mosquitto/jarvis.conf`](../../scripts/mosquitto/jarvis.conf) (**보드 미검증**). 인터넷에 연결된 망에서는 쓰지 않는다.
-- 화면에 겹쳐 띄울 정보(상태·들은 말·판단 이유)의 전달은 UI-01에서 정한다.
+- 화면에 겹쳐 띄울 정보는 보드의 `dashboard`가 `kitchen/overlay`로 보낸다 (UI-01, #170 — **Unity 쪽 합의 대기**, 코드: [`services/dashboard`](../../services/dashboard/README.md)). 그리는 것은 Unity다 (UI-02). 문장은 음성 응답(`audio_svc`)과 같다.
+
+  | 필드 | 값 |
+  |---|---|
+  | `state` · `state_text` · `risk` | `fusion/state`의 State(`null` = 모름)와 한글 이름(`대기`·`예열 중`·`조리 중`·`자리 비움`·`과열 위험`·`안전 정지`·`상태 모름`), `none`·`warn`·`danger` |
+  | `heaters` · `person` · `absent_s` | `fusion/state`의 `evidence` 그대로 (§2.3) — 장치 이름표·온도 표시 |
+  | `heard` | 마지막 호출어 발화 (10초 유지, 그 뒤 `null`) |
+  | `reply` · `decision` · `reason` | 마지막 `guard/decision`의 음성 응답 문장·판정·이유 (10초 유지). `reason`은 거부 이유나 "자동 차단: …" 같은 판단 근거, 없으면 `null` |
+  | `warning` | `risk`가 `warn`·`danger`일 때의 경고 문장, 상태가 끊기거나 없을 때의 안내 문장, 아니면 `null` |
+  | `seen` | 마지막 화면 인식 `[{cls, conf, bbox}]` — `bbox`는 인식용 화면(640×360) 픽셀. 1초 넘으면 `[]` |
+  | `stale` | `fusion/state`가 3초 넘게 없음 (`true`면 `state`·`heaters`를 비운다) |
 
 ## 5. 남은 변경
 
@@ -315,3 +327,4 @@
 | 2026-11-11 | v0.2 | §2 `device/state` 토픽 추가 — `kitchen_gw`가 `kitchen/state`를 그대로 옮긴다 (가상 주방이 스스로 바꾼 장치 상태를 보드가 알게). §4.1 그림 (#139, FUS-08) | 최지환 |
 | 2026-11-11 | v0.2 | §2.3 `fusion/state`의 발행 시점·`prev_state`·`evidence` 필드, 근거 만료 (#139, FUS-08) | 최지환 |
 | 2026-11-11 | v0.2 | §2 `guard/decision`이 자동 차단에서도 나온다 (과열·방치, `reason` "자동 차단: …") — **필드 변경 없음** (#143, FUS-09) | 최지환 |
+| 2026-11-17 | v0.2 | §4.1·§4.2·§4.6 `kitchen/overlay` 토픽 제안 (보드 → 가상 주방, 화면에 겹쳐 띄울 정보) — **Unity 쪽 합의 대기** (#170, UI-01) | 최지환 |
