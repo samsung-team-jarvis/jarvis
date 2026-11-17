@@ -83,6 +83,9 @@ CASES = [
     ("볼륨 줄여 줘", ask("SET_LEVEL", "level")),  # 상대 조절은 되묻기
     ("환풍기 세게", {"action": "SET_LEVEL", "target": "hood", "level": 3}),  # 환풍기 = 후드
     ("전부 정지", {"action": "EMERGENCY_STOP", "target": "all"}),
+    ("기름에 불 났어", {"action": "EMERGENCY_STOP", "target": "all"}),  # #164
+    ("팬에 불 붙었어", {"action": "EMERGENCY_STOP", "target": "all"}),
+    ("불이야", {"action": "EMERGENCY_STOP", "target": "all"}),
     # 결제 — 금액은 말로 받지 않는다
     ("얼마야?", {"action": "CHECK_AMOUNT"}),
     ("결제 금액 확인해 줘", {"action": "CHECK_AMOUNT"}),
