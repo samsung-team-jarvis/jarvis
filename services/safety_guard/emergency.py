@@ -7,7 +7,8 @@ EMERGENCY_STOP으로 내지만, 그쪽은 LLM이 붙으면 수백 ms~수 초가 
   단 타이머 이야기("타이머 정지", "알람 그만")는 타이머 취소라서 제외한다.
   조명·에어컨·선풍기·음악을 멈추라는 말("음악 멈춰", "선풍기 정지")도 제외한다 — 그 장치를 끄는
   말이고(스키마 v0.2), 명령 해석이 그 장치의 TURN_OFF로 낸다. 화구까지 끄면 안 된다.
-- 호출어가 없으면 문장 전체가 짧은 긴급 표현일 때만("멈춰!", "그만 그만") 긴급 정지.
+- 불이 났다는 말("기름에 불 났어", "팬에 불 붙었어")은 호출어가 있으면 항상 긴급 정지 (#164).
+- 호출어가 없으면 문장 전체가 짧은 긴급 표현일 때만("멈춰!", "그만 그만", "불이야!") 긴급 정지.
   다급할 때 호출어를 빼고 말할 수 있어서다. 대화 속 "그만 먹을래" 같은 말은 잡지 않는다.
 """
 
@@ -16,7 +17,7 @@ from __future__ import annotations
 import re
 
 from services.audio_svc.wake import split_wake
-from services.llm_svc.rule_parser import NOT_URGENT, find_target
+from services.llm_svc.rule_parser import FIRE, NOT_URGENT, find_target
 
 # 명령 부분에 들어 있으면 긴급 정지 (호출어가 있을 때)
 # "위험해?"는 위험 확인(CHECK_RISK)이라 넣지 않는다. 규칙 파서(llm_svc)의 긴급어와 같은 목록이다.
@@ -24,7 +25,20 @@ EMERGENCY_WORDS = re.compile(r"긴급|비상|정지|멈춰|그만|스톱|스탑"
 # 이런 말이 같이 있으면 타이머 이야기다 (타이머 취소는 명령 해석이 맡는다)
 TIMER_WORDS = re.compile(r"타이머|알람|알림")
 # 호출어 없이도 긴급 정지하는 표현 (띄어쓰기·문장부호를 뺀 문장 전체가 이것들의 반복이어야 한다)
-BARE_PHRASES = ("긴급정지", "비상정지", "멈춰줘", "멈춰", "그만", "정지", "스톱", "스탑", "비상")
+BARE_PHRASES = (
+    "긴급정지",
+    "비상정지",
+    "멈춰줘",
+    "멈춰",
+    "그만",
+    "정지",
+    "스톱",
+    "스탑",
+    "비상",
+    "불이야",
+    "불났어",
+    "불났다",
+)
 _BARE = re.compile(rf"^(?:{'|'.join(BARE_PHRASES)})+$")
 
 
@@ -37,6 +51,8 @@ def is_emergency(text: str, wake: bool) -> bool:
     if wake:
         command = split_wake(text)
         command = _squash(command if command is not None else text)
+        if FIRE.search(command):  # 불이 났다는 말은 장치·타이머와 상관없이 (#164)
+            return True
         if not EMERGENCY_WORDS.search(command) or TIMER_WORDS.search(command):
             return False
         return find_target(command) not in NOT_URGENT  # 규칙 파서와 같은 장치 판단

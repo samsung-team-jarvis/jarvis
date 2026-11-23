@@ -6,7 +6,8 @@
 판단 순서 (앞에서 정해지면 끝):
   1. 빈 문장(호출어만)            → ASK_CLARIFY (의도 불명)
   2. "네"·"아니요"만 말함          → CONFIRM / DENY
-  3. 긴급어 (타이머 이야기가 아닐 때) → EMERGENCY_STOP
+  3. 불이 났다는 말 → EMERGENCY_STOP (장치·타이머와 상관없이)
+     긴급어 (타이머 이야기가 아닐 때) → EMERGENCY_STOP
      (조명·에어컨·선풍기·음악을 멈추라는 말이면 그 장치의 TURN_OFF)
   4. 결제                        → CHECK_AMOUNT (금액을 물음) / REQUEST_PAYMENT
   5. 타이머                      → CANCEL_TIMER / SET_TIMER / 시간 되묻기
@@ -27,6 +28,9 @@ from common.function_call import DEVICES, MAX_DURATION_S, TARGETS, TIMER_TARGETS
 _NOT_WORD = re.compile(r"[^0-9A-Za-z가-힣]")
 
 EMERGENCY = re.compile(r"긴급|비상|정지|멈춰|멈춰줘|그만|스톱|스탑")
+# 불이 났다는 말 ("기름에 불 났어", "팬에 불붙었어", "불이야"). 띄어쓰기를 지운 문장에서 찾는다.
+# "불 붙여줘"(붙여)·"불 꺼줘"·"불 켜줘"는 잡지 않는다 (#164)
+FIRE = re.compile(r"불이?(?:났|나써|붙었|붙어|붙음)|불이야")
 TIMER = re.compile(r"타이머|알람")
 TIMER_LATER = re.compile(
     r"뒤에|뒤|후에|후|있다가|이따가|지나면|두고"
@@ -47,7 +51,7 @@ LEVEL_NUMBER = re.compile(r"([1-3]|일|이|삼|한|두|세)단")
 LEVEL_RELATIVE = re.compile(r"더|올려|높여|줄여|낮춰|내려|키워")
 TURN_ON = re.compile(r"켜|틀어|작동|돌려|재생")
 TURN_OFF = re.compile(r"꺼|끄|중지")
-YES = re.compile(r"(네|예|응|그래|맞아|좋아|오케이|확인)+요?")
+YES = re.compile(r"(네|예|응|어|그래|맞아|좋아|오케이|확인)+요?")  # "어": 보드 실사용 (#STT-14)
 NO = re.compile(r"아니|아니요|아니오|아니야|아냐|싫어|하지마|안해|취소|취소해|취소해줘|됐어")
 # "계산"은 문장 맨 앞에 올 때만 결제로 본다 ("칼로리 계산해 줘"는 결제가 아니다)
 PAYMENT = re.compile(r"결제|^(?:손님|카드로|현금으로)?계산")
@@ -186,6 +190,8 @@ def _parse(text: str) -> dict[str, Any]:
     if NO.fullmatch(text):
         return {"action": "DENY"}
 
+    if FIRE.search(text):
+        return {"action": "EMERGENCY_STOP", "target": "all"}
     timer = bool(TIMER.search(text))
     target = find_target(text)
     if EMERGENCY.search(text) and not timer:

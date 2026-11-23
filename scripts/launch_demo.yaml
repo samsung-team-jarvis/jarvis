@@ -36,6 +36,7 @@ services:
   - name: dashboard           # 화면에 겹쳐 띄울 정보 → kitchen/overlay (UI-01)
     module: services.dashboard
     python: .venv/bin/python
-  - name: audio_svc
+  - name: audio_svc           # 발화 끝 기다림 0.3초: 보드 리허설에서 0.5초보다 0.21초 빠르고 잘린 문장 없음 (#166)
     module: services.audio_svc
     python: .venv/bin/python
+    args: [--min-silence, "0.3"]
