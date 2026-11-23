@@ -12,6 +12,7 @@ from collections.abc import Callable
 from typing import Any
 
 from services.safety_guard.auto_stop import REASON_PREFIX, UNATTENDED_GRACE_S
+from services.safety_guard.service import STATE_STALE_S
 
 DEVICE_NAMES = {
     "hood": "후드",
@@ -54,7 +55,6 @@ STATE_SENTENCES = {
     "DANGER": "과열 위험 상태예요.",
     "SAFE_STOP": "안전 정지 상태예요.",
 }
-STATUS_STALE_S = 5.0  # fusion/state는 1초마다 온다 — 이보다 오래됐으면 지금 상태로 말하지 않는다
 NO_STATUS = "상태 정보를 아직 받지 못했어요."
 STALE_STATUS = "상태 정보가 끊겨서 지금 상태를 알 수 없어요."
 HOT_C, DANGER_C, ABSENT_WARN_S = 200.0, 240.0, 10.0  # interfaces §2.3 risk 기준
@@ -205,7 +205,7 @@ class KitchenStatus:
         """믿을 수 있는 상태가 없으면 그 이유 문장."""
         if self.state is None or self.state_at is None:
             return NO_STATUS
-        if self.clock() - self.state_at > STATUS_STALE_S:
+        if self.clock() - self.state_at > STATE_STALE_S:  # Safety Guard와 같은 기준 (FUS-12)
             return STALE_STATUS
         return None
 

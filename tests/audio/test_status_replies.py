@@ -7,6 +7,7 @@ from services.audio_svc.responses import (
     RiskWatcher,
     reply_for_decision,
 )
+from services.safety_guard.service import STATE_STALE_S
 
 
 def heaters(**on: tuple[int, float | None]) -> dict:
@@ -117,7 +118,7 @@ def test_no_or_old_state_is_not_reported_as_safe() -> None:
     assert ask(None, {"action": "CHECK_RISK"}) == NO_STATUS
     assert ask(KitchenStatus(), {"action": "CHECK_STATUS"}) == NO_STATUS
     st, clock = status_with(fusion("IDLE"))
-    clock.t += 6  # fusion/state가 5초 넘게 안 옴 (fusion_svc가 멈춤 등)
+    clock.t += STATE_STALE_S + 0.1  # fusion/state가 끊김 (fusion_svc가 멈춤 등)
     assert ask(st, {"action": "CHECK_RISK"}) == STALE_STATUS
     assert ask(st, {"action": "CHECK_STATUS"}) == STALE_STATUS
 
