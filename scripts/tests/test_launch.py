@@ -84,6 +84,7 @@ def test_config_loads_modules_in_order() -> None:
         "safety_guard",
         "llm_svc",
         "dashboard",
+        "webview",
         "audio_svc",
     ]
     assert specs[0].argv[-2:] == ["-m", "services.recorder"]

@@ -14,6 +14,8 @@ services:
     module: services.llm_svc
   - name: dashboard           # 화면에 겹쳐 띄울 정보 → kitchen/overlay (UI-01)
     module: services.dashboard
+  - name: webview             # 시연 화면 (UI-03) http://<보드 IP>:8090
+    module: services.webview
   - name: audio_svc
     module: services.audio_svc
     # args: [--input, data/stt/cmds.wav, --realtime]   # 마이크 대신 wav (또는 실행 시 --arg)
