@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자비스 시연 화면</title>
+<style>
+:root {
+  --bg: #0b1424; --panel: #13213a; --panel2: #192a47; --line: #253a5c; --ink: #e8eefc; --mute: #8fa0bd;
+  --blue: #5b8cff; --green: #2fc68a; --amber: #ffb547; --red: #ff6b5e; --violet: #a78bfa;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; word-break: keep-all; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 26px 30px 22px; display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+header h1 { white-space: nowrap; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+header .badge { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { white-space: nowrap; font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: var(--panel2); color: var(--mute); border: 1px solid var(--line); }
+.pill.ok { color: var(--green); border-color: #1d5a43; background: #10291f; }
+.pill.bad { color: var(--red); border-color: #5c2420; background: #2e1513; }
+.mic { display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; min-height: 58px; }
+.mic .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--mute); flex: none; }
+.mic.live .dot { background: var(--red); box-shadow: 0 0 0 6px rgba(255,107,94,.15); }
+.mic .said { font-size: 22px; font-weight: 700; }
+.mic .said.idle { color: var(--mute); font-weight: 600; font-size: 18px; }
+.mic .wake { color: var(--amber); }
+.mic .meta { margin-left: auto; font-size: 13px; color: var(--mute); white-space: nowrap; }
+.warn { display: none; background: #2e1513; border: 1px solid #5c2420; color: #ffd2cc; border-radius: 12px; padding: 12px 16px; font-size: 17px; font-weight: 800; }
+.warn.show { display: block; }
+.pipe { display: grid; grid-template-columns: 1fr 26px 1fr 26px 1fr; align-items: stretch; }
+.pipe .arr { align-self: center; text-align: center; color: var(--mute); font-size: 20px; font-weight: 800; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; min-height: 176px; min-width: 0; }
+.card .h { font-size: 13px; font-weight: 800; color: var(--mute); }
+.card .h b { color: var(--blue); margin-right: 6px; }
+.card .big { font-size: 22px; font-weight: 800; line-height: 1.35; }
+.code { font-family: "SF Mono", Menlo, monospace; font-size: 15px; background: #0a1220; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; color: #cfe0ff; overflow-wrap: anywhere; }
+.code .t { color: var(--violet); }
+.json { font-family: "SF Mono", Menlo, monospace; font-size: 13px; color: #9fe3c2; overflow-wrap: anywhere; }
+.chip { display: inline-block; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: var(--panel2); color: var(--mute); }
+.chip.allow { background: #10291f; color: var(--green); } .chip.ask { background: #2a2414; color: var(--amber); }
+.chip.reject, .chip.stop { background: #2e1513; color: var(--red); }
+.say { font-size: 19px; font-weight: 700; color: #fff; }
+.small { font-size: 12.5px; color: var(--mute); }
+.dim { color: var(--mute); font-weight: 600; }
+.row { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+.devs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.dev { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; transition: background .3s, border-color .3s; }
+.dev .n { font-size: 15px; font-weight: 800; }
+.dev .s { font-size: 12px; font-weight: 800; color: var(--mute); }
+.dev.on { border-color: var(--amber); background: #2a2414; } .dev.on .s { color: var(--amber); }
+.dev.hot { border-color: var(--red); background: #2e1513; } .dev.hot .s { color: var(--red); }
+.state { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.state .v { font-size: 20px; font-weight: 800; }
+.state.warn-s { border-color: var(--amber); } .state.danger-s { border-color: var(--red); }
+.log { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; font-size: 13px; }
+.log .e { display: grid; grid-template-columns: 58px 1fr; gap: 6px; color: var(--mute); }
+.log .e:last-child { color: var(--ink); font-weight: 700; }
+.lat { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.lat .m { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.lat .m .k { font-size: 12.5px; color: var(--mute); font-weight: 700; }
+.lat .m .v { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.lat .m .v small { font-size: 14px; color: var(--mute); margin-left: 3px; }
+.lat .m.total { border-color: #2f4f8f; background: #142446; }
+.foot { font-size: 11.5px; color: #6f7f9c; }
+@media (max-width: 900px) {
+  .wrap { padding: 16px; }
+  header h1 { white-space: normal; font-size: 20px; } .mic .meta { display: none; }
+  .pipe { grid-template-columns: minmax(0, 1fr); gap: 8px; } .pipe .arr { transform: rotate(90deg); }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .devs, .lat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>자비스 · 1인 주방 온디바이스 어시스턴트</h1>
+    <div class="badge">
+      <span class="pill" id="device">—</span>
+      <span class="pill" id="conn">연결 중…</span>
+      <span class="pill" id="svc">서비스 —</span>
+    </div>
+  </header>
+
+  <div class="mic" id="mic"><span class="dot"></span><span class="said idle" id="said">“자비스, …” 하고 말해 보세요</span><span class="meta" id="micmeta"></span></div>
+  <div class="warn" id="warn"></div>
+
+  <div class="pipe">
+    <div class="card"><div class="h"><b>1</b>들은 말 (받아쓰기 · SenseVoice, CPU)</div>
+      <div class="big" id="cmd"><span class="dim">—</span></div><div class="small" id="sttm"></div></div>
+    <div class="arr">→</div>
+    <div class="card"><div class="h"><b>2</b>명령 해석 출력 (Qwen3 0.6B LoRA · SUDA 함수 토큰)</div>
+      <div class="code" id="tok"><span class="dim">—</span></div><div class="json" id="json"></div><div class="small" id="llmm"></div></div>
+    <div class="arr">→</div>
+    <div class="card"><div class="h"><b>3</b>Safety Guard 판정 · 음성 응답</div>
+      <div><span class="chip" id="dec">대기</span> <span class="small" id="reason"></span></div>
+      <div class="say" id="say"></div><div class="small" id="ack"></div></div>
+  </div>
+
+  <div class="row">
+    <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      <div class="small" style="font-weight:800">가상 주방 장치 8종</div>
+      <div class="devs" id="devs"></div>
+      <div class="lat" id="lat"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      <div class="state" id="statebox"><div class="small" style="font-weight:800">상황 인식 (State Machine)</div>
+        <div class="v" id="state">상태 모름</div><div class="small" id="statesub"></div></div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+  <div class="foot">시간은 실행 기기의 단조 시계 기준 · 위험 감지(자동 차단)와 긴급 정지는 LLM을 거치지 않는다</div>
+</div>
+<script>
+const DEV = [["hood","후드"],["burner_1","1번 화구"],["burner_2","2번 화구"],["fryer","튀김기"],["light","조명"],["aircon","에어컨"],["fan","선풍기"],["music","음악"]];
+const LEVEL = {1: "약", 2: "중", 3: "강"};
+const LEVEL_OF = { light: {1: "어둡게", 2: "보통", 3: "밝게"}, music: {1: "작게", 2: "보통", 3: "크게"} };
+const SERVICES = 8;  // launch_demo.yaml의 heartbeat를 내는 서비스 수 (recorder 제외 · webview 포함)
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const ms = v => v == null ? "—" : Math.round(v).toLocaleString();
+
+function tokens(raw) {
+  return esc(raw).replace(/&lt;(jarvis_\w+)&gt;/g, '<span class="t">&lt;$1&gt;</span>');
+}
+function devText(k, d, heater) {
+  if (!d || !d.on) return "꺼짐";
+  const lv = (LEVEL_OF[k] || LEVEL)[d.level];
+  const t = heater && heater.temperature_c != null ? ` · ${Math.round(heater.temperature_c)}°C` : "";
+  return "켜짐" + (lv ? " · " + lv : "") + t;
+}
+
+function render(v) {
+  const t = v.turn;
+  // 1 들은 말
+  if (t && t.said) {
+    $("said").className = "said";
+    $("said").innerHTML = t.wake && t.command !== t.said
+      ? `<span class="wake">${esc(t.said.slice(0, t.said.length - t.command.length))}</span>${esc(t.command)}`
+      : esc(t.said);
+    $("micmeta").textContent = t.audio_ms ? `음성 ${ms(t.audio_ms)} ms` : "";
+  } else if (t && t.kind === "auto") {
+    $("said").className = "said"; $("said").textContent = "(말하지 않음 — 상황 인식이 위험을 감지)";
+    $("micmeta").textContent = "자동 감지";
+  }
+  $("mic").className = "mic" + (t && t.age_s < 3 ? " live" : "");
+  $("cmd").innerHTML = t ? (t.command != null ? esc(t.command) : '<span class="dim">— 말하지 않음 —</span>') : '<span class="dim">—</span>';
+  $("sttm").textContent = t && t.stt_ms != null ? `받아쓰기 ${ms(t.stt_ms)} ms · 말 끝 → 발행 ${ms(t.publish_ms)} ms (말 끝 기다림 포함)` : "";
+  // 2 명령 해석
+  if (t && t.raw_text != null) {
+    $("tok").innerHTML = tokens(t.raw_text);
+    $("llmm").textContent = `CPU · ${ms(t.gen_ms)} ms` + (t.fallback ? " · 규칙 파서로 보강" : "") + (t.valid ? "" : " · 형식 오류");
+  } else if (t && (t.kind === "fast" || t.kind === "auto")) {
+    $("tok").innerHTML = `<span class="t">${t.kind === "fast" ? "LLM을 기다리지 않음 — 긴급 빠른 경로" : "LLM을 거치지 않음 — 상황 인식 → Safety Guard"}</span>`;
+    $("llmm").textContent = "";
+  } else {
+    $("tok").innerHTML = t && t.said ? '<span class="dim">해석 중…</span>' : '<span class="dim">—</span>';
+    $("llmm").textContent = "";
+  }
+  const call = t && (t.decided_call || t.call);
+  $("json").textContent = call ? "→ " + JSON.stringify(call) : "";
+  // 3 판정 · 응답
+  const d = $("dec");
+  if (t && t.decision) {
+    d.textContent = t.decision;
+    d.className = "chip " + (t.decision === "ASK" ? "ask" : t.decision === "REJECT" ? "reject" : t.kind === "fast" || t.kind === "auto" ? "stop" : "allow");
+  } else { d.textContent = "대기"; d.className = "chip"; }
+  $("reason").textContent = t && t.reason || "";
+  $("say").textContent = t && t.reply ? "🔊 " + t.reply : "";
+  $("ack").textContent = t && t.rtt_ms != null
+    ? `가상 주방 실행 확인 ${t.rtt_ms.toFixed(1)} ms · 재전송 ${t.retries}회` + (t.ok ? "" : " · 실패")
+    : t && t.decision === "ASK" ? "대답(“네” / “아니요”)을 기다림" : "";
+  // 장치
+  $("devs").innerHTML = DEV.map(([k, n]) => {
+    const dv = v.devices[k], h = v.heaters[k];
+    const hot = h && h.temperature_c != null && h.temperature_c >= 200;
+    return `<div class="dev ${hot ? "hot" : dv && dv.on ? "on" : ""}"><div class="n">${n}</div><div class="s">${devText(k, dv, h)}</div></div>`;
+  }).join("");
+  // 응답 시간
+  $("lat").innerHTML = t && t.kind === "voice" || t && t.kind === "reply"
+    ? [["말 끝 → 받아쓰기 발행", t.publish_ms], ["명령 해석 (LLM)", t.gen_ms], ["Guard → 가상 주방 확인", t.rtt_ms], ["말 끝 → 장치 동작 확인", t.e2e_ms]]
+        .map(([k, x], j) => `<div class="m ${j === 3 ? "total" : ""}"><div class="k">${k}</div><div class="v">${x == null ? "—" : (j === 2 ? x.toFixed(1) : ms(x))}<small>ms</small></div></div>`).join("")
+    : t && t.kind === "fast"
+      ? [["말 끝 → 받아쓰기 발행", t.publish_ms], ["Guard → 가상 주방 확인", t.rtt_ms], ["말 끝 → 장치 정지 확인", t.e2e_ms]]
+          .map(([k, x], j) => `<div class="m ${j === 2 ? "total" : ""}" ${j === 2 ? 'style="grid-column:span 2"' : ""}><div class="k">${k}</div><div class="v">${x == null ? "—" : (j === 1 ? x.toFixed(1) : ms(x))}<small>ms</small></div></div>`).join("")
+      : `<div class="m" style="grid-column:1/-1"><div class="k">응답 시간</div><div class="v" style="font-size:16px;margin-top:6px">${t && t.kind === "auto" ? "위험 감지는 LLM을 거치지 않는다 — 상황 인식 → Safety Guard → 가상 주방" : "명령을 기다리는 중"}</div></div>`;
+  // 상황 인식
+  $("state").textContent = v.state_text;
+  const sub = [];
+  if (v.stale) sub.push("상황 인식 정보가 끊김");
+  else {
+    sub.push(v.person === true ? "사람 있음" : v.person === false ? "사람 없음" : "화면 끊김");
+    if (v.absent_s >= 1) sub.push(`자리 비움 ${Math.round(v.absent_s)}초`);
+    if (v.safe_stop) sub.push("가상 주방 자체 차단");
+  }
+  $("statesub").textContent = sub.join(" · ");
+  $("statebox").className = "state" + (v.risk === "danger" ? " danger-s" : v.risk === "warn" ? " warn-s" : "");
+  $("warn").textContent = v.warning ? "⚠ " + v.warning : "";
+  $("warn").className = "warn" + (v.warning ? " show" : "");
+  // 기록
+  const label = e => e.kind === "auto" ? "자동 차단" : e.said ? `“${e.said}”` : e.kind === "fast" ? "긴급어" : "—";
+  $("log").innerHTML = '<div class="small" style="font-weight:800">최근 기록</div>' +
+    (v.log.length ? v.log.map(e => `<div class="e"><span>${esc(e.at)}</span><span>${esc(label(e))} → ${esc(e.reply || e.decision)}</span></div>`).join("")
+      : '<div class="e"><span></span><span>아직 없음</span></div>');
+  // 실행 기기 (보드가 아니면 참고값이라고 보인다)
+  $("device").textContent = v.device || "—";
+  $("device").className = "pill " + (/참고값/.test(v.device) ? "" : "ok");
+  // 서비스
+  const n = v.alive.length;
+  $("svc").textContent = `서비스 ${n}/${SERVICES} 동작`;
+  $("svc").className = "pill " + (n >= SERVICES ? "ok" : "bad");
+  $("svc").title = v.alive.join(", ");
+}
+
+function connect() {
+  const es = new EventSource("events");
+  es.onopen = () => { $("conn").textContent = "실시간"; $("conn").className = "pill ok"; };
+  es.onmessage = e => render(JSON.parse(e.data));
+  es.onerror = () => { $("conn").textContent = "연결 끊김 — 다시 연결 중"; $("conn").className = "pill bad"; };
+}
+connect();
+</script>
+</body>
+</html>
