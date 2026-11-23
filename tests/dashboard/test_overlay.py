@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from common import kitchen_link as link
 from common.bus import MemoryBus
 from common.messages import Envelope
@@ -137,3 +139,27 @@ def test_check_status_reply_reads_kitchen_status() -> None:
         "guard/decision", {"call": {"action": "CHECK_RISK"}, "decision": "ALLOW", "reason": ""}
     )
     assert rig.last["reply"] and "준비 중" not in rig.last["reply"]
+
+
+TIMES = {"pre_ms": 0, "npu_ms": 0, "post_ms": 0}
+
+
+def test_jittering_detections_do_not_flood_overlay() -> None:
+    rig = Rig()
+    rig.state()
+    obj = {"cls": "person", "conf": 0.9, "bbox": [1.0, 2.0, 3.0, 4.0]}
+
+    def frame(conf: float) -> None:
+        objects = [{**obj, "conf": conf}]
+        rig.send("vision/objects", {"objects": objects, "frame_id": 1, **TIMES})
+
+    frame(0.9)
+    rig.wait(0.1)
+    count = len(rig.sent)  # 사람이 나타나면 바로 보낸다
+    for i in range(4):  # vision_svc 1초 4장, conf만 흔들림
+        frame(0.8 + i * 0.03)
+        rig.wait(0.2)
+    assert len(rig.sent) == count  # conf만 바뀌면 바로 보내지 않는다
+    rig.wait(0.3)  # 사람이 나타난 지 1초가 넘었다
+    assert len(rig.sent) == count + 1  # 1초 주기에 최신 값으로
+    assert rig.last["seen"][0]["conf"] == pytest.approx(0.89)

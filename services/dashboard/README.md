@@ -23,6 +23,7 @@ python -m services.dashboard --print      # 바뀔 때마다 터미널에도 출
 
 - 문장은 `audio_svc.responses`를 그대로 쓴다 (`reply_for_decision`, 위험 경고, 상태 끊김 안내) — 화면 글자와 음성이 같은 말을 한다.
 - 들은 말(호출어가 있는 것만)과 응답은 10초 동안 남긴다. 화면 인식 결과는 1초 지나면 비운다.
+- 바뀜 판단에서 인식 결과는 보이는 종류(`cls`)만 본다. conf·bbox는 화면마다 흔들려서, 사람이 나타나거나 사라질 때만 바로 보내고 위치는 1초마다 보낼 때 갱신된다.
 - `fusion/state`가 3초 넘게 없으면 `stale: true`로 상태·장치 정보를 비우고 끊김 안내를 띄운다 (Safety Guard FUS-12와 같은 기준).
 
 ## Spec

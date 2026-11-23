@@ -292,10 +292,10 @@ class RiskWatcher:
         self.risk, self.state = risk, state
         if not (rising or changed_danger):
             return None
-        return self._warning(risk, state, payload)
+        return self.warning(risk, state, payload)
 
     @staticmethod
-    def _warning(risk: str, state: str | None, payload: dict[str, Any]) -> str | None:
+    def warning(risk: str, state: str | None, payload: dict[str, Any]) -> str | None:
         reasons = _risk_reasons(payload)
         if risk == "danger" and state == "UNATTENDED":
             return (

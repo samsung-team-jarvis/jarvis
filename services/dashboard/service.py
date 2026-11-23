@@ -8,7 +8,7 @@
     guard/decision  ─┤  응답 문장·판정·이유 (자동 차단 근거 포함)
     vision/objects  ─┘  AI가 본 화면 (사람 bbox)
 
-규격: docs/architecture/interfaces.md §4.2 `kitchen/overlay`. 화면에 그리는 것은 Unity(UI-02)다.
+규격: docs/architecture/interfaces.md §4.6 `kitchen/overlay`. 화면에 그리는 것은 Unity(UI-02)다.
 문장은 audio_svc.responses를 그대로 쓴다 — 화면 글자와 음성이 같은 말을 한다.
 """
 
@@ -118,7 +118,7 @@ class Overlay:
     # ── 출력 ──────────────────────────────────────────────────────────
 
     def build(self, now: float) -> dict[str, Any]:
-        """지금 화면에 띄울 정보 (interfaces §4.2 `kitchen/overlay`)."""
+        """지금 화면에 띄울 정보 (interfaces §4.6 `kitchen/overlay`)."""
         stale = self._state_at is None or now - self._state_at > STATE_STALE_S
         state = None if stale else self._state
         evidence = (state or {}).get("evidence") or {}
@@ -126,7 +126,7 @@ class Overlay:
         if stale:
             warning = NO_STATUS if self._state_at is None else STALE_STATUS
         elif risk in ("warn", "danger"):
-            warning = RiskWatcher._warning(risk, state["state"], state)  # 음성 경고와 같은 문장
+            warning = RiskWatcher.warning(risk, state["state"], state)  # 음성 경고와 같은 문장
         else:
             warning = None
 
@@ -153,14 +153,20 @@ class Overlay:
         with self._lock:
             self._tick()
 
+    @staticmethod
+    def _shape(overlay: dict[str, Any]) -> dict[str, Any]:
+        """바뀜 판단용. 인식 결과는 무엇이 보이는지만 본다 — conf·bbox는 화면마다 흔들린다."""
+        return {**overlay, "seen": sorted(o["cls"] for o in overlay["seen"])}
+
     def _tick(self) -> None:
         now = self.clock()
         overlay = self.build(now)
+        changed = self._last is None or self._shape(overlay) != self._shape(self._last)
         due = self._last_at is None or now - self._last_at >= PERIOD_S
-        if overlay == self._last and not due:
+        if not (changed or due):
             return
         self.bus.publish_raw(link.TOPIC_OVERLAY, link.encode(overlay))
-        if self.on_overlay and overlay != self._last:
+        if self.on_overlay and changed:
             self.on_overlay(overlay)
         self._last, self._last_at = overlay, now
         self.published += 1
