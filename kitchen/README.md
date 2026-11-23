@@ -15,9 +15,9 @@
 - 장면 배치 완료 (HW-15, #95): `Assets/Scenes/Kitchen.unity`에 [에셋 팩](#에셋-팩)과 외부 3D 모델로 식당 홀·주방(화구·튀김기·후드·그릴·냉장고·계산대 등)을 배치했다. 물체 이름은 아직 팩 이름 그대로(`Stoves`·`Fryer`·`hoods` 등)다.
 - 장치 위에 한글 이름표(오븐·튀김기·전자레인지·화구)를 TextMesh Pro + Pretendard Bold로 띄웠다. `Scripts/FaceCamera.cs`로 이름표가 카메라를 바라본다.
 - 홀 벽·주방 벽·주방 바닥은 `Assets/Textures`의 2K 텍스처(`Materials/Hall_wall_mtrl`·`Kitchen_wall_mtrl`·`Kitchen_floor_mtrl`)를 쓴다. 텍스처·폰트는 1MB가 넘어도 커밋한다 ([decision](../docs/decisions/2026-10-08-unity-project-in-repo.md)).
-- 아직 없는 것 (HW-25): 장치 이름(`burner_1` 등)·`Devices`·`CookingZone`·`Avatar`·인식용 카메라(`VisionCamera`·`VisionRT`). Build Profiles 장면 목록도 아직 `SampleScene`이다.
-- 작업 중 (곧 올림): 불 효과 같은 파티클, 원격 명령으로 장치를 제어하는 기능(HW-16).
-- 보드와 주고받는 코드는 아직 저장소에 없다.
+- 아직 없는 것 (HW-25): 장치 이름(`burner_1` 등)·`Devices`. Build Profiles 장면 목록도 아직 `SampleScene`이다. 아바타·조리 구역·인식용 카메라는 만들지 않는다 ([decision](../docs/decisions/2026-11-23-kitchen-no-avatar-main-camera.md)).
+- 작업 중 (HW-16, #180): `Scripts/KitchenLink.cs`(보드 브로커 접속, `kitchen/cmd` → 장치 → `kitchen/ack`·`kitchen/state`)와 `Scripts/KitchenDevice.cs`(장치에 붙인다. 켜지면 이름표 글자가 빨갛게). MQTTnet 4.3.7(MIT)은 `Assets/Plugins/MQTTnet/MQTTnet.dll`(NuGet `lib/netstandard2.1`).
+- 작업 중 (곧 올림): 불 효과 같은 파티클.
 
 ## 작업 순서
 
@@ -26,8 +26,8 @@
 | 순서 | PLAN | 할 일 | 상태 |
 |---|---|---|---|
 | 1 | HW-15 | 장면 1차: 화구 2개·후드·튀김기 배치 ([아래](#장면-1차-hw-15) 1·2) | 완료 (#95) |
-| 2 | HW-25 | 장면 2차: 장치 이름·`Devices`, 조리 구역, 인식용 카메라 ([아래](#장면-1차-hw-15) 2의 이름 규칙·3·4) | |
-| 3 | HW-16 | `kitchen/cmd`로 후드 켜고 끄기, `kitchen/ack`로 답하기 (MQTTnet 4.3.7) | 작업 중 |
+| 2 | HW-25 | 장면 2차: 장치 이름·`Devices`, Build Profiles 장면 ([아래](#장면-1차-hw-15) 2의 이름 규칙) | 작업 중 (#158) |
+| 3 | HW-16 | `kitchen/cmd`로 후드 켜고 끄기, `kitchen/ack`로 답하기 (MQTTnet 4.3.7, [아래](#보드와-연결-hw-16)) | 작업 중 (#180) |
 | 4 | HW-18 | 생존 신호가 3초 끊기면 가열 장치 OFF, `kitchen/state` 보고 | |
 | 5 | HW-19 | 가열 장치의 가상 온도 계산, `kitchen/temp` 1초에 한 번, 265°C에서 스스로 OFF | |
 | 6 | HW-20 | 인식용 카메라 화면을 `kitchen/frame`으로 전송 (JPEG 640×360, 1초에 4장) | |
@@ -58,30 +58,29 @@
 | `burner_1`, `burner_2` | Cylinder | 0.3, 0.02, 0.3 | 조리대 윗면 왼쪽에 나란히 |
 | `fryer` | Cube | 0.4, 0.3, 0.5 | 조리대 윗면 오른쪽 |
 | `hood` | Cube | 1.2, 0.4, 0.6 | 화구 위 약 1m |
-| `CookingZone` | Cube (얇게) | 3, 0.01, 1.2 | 조리대 앞 바닥 |
-| `Avatar` | Capsule | 기본 (키 약 2m) | 조리 구역 안 |
 
 - **장치 이름은 `burner_1`·`burner_2`·`fryer`·`hood` 그대로 짓는다.** 에셋 팩 프리팹을 쓸 때도 Hierarchy에서 이름을 바꾼다 (예: `cooker` → `burner_1`). `kitchen/cmd`의 `target` 값과 같아서 HW-16에서 이름으로 장치를 찾는다.
 - 장치 4개는 빈 오브젝트 `Devices` 아래에 모은다 (GameObject → Create Empty).
-- `CookingZone`은 Mesh Renderer를 끄고 Box Collider의 Is Trigger를 켠다. 보이지 않는 "사람 있음" 감지 영역이다 (감지 코드는 나중).
 - 색은 Material(Create → Material, Base Map 색)로 구분한다. YOLO가 이 화면으로 학습하므로 장치끼리 생김새가 구분돼야 한다.
 
 ### 3. 카메라
 
 - `Main Camera`: 시연 때 사람이 보는 화면. 정면에서 조리대 전체가 보이게 둔다.
-- `VisionCamera`: AI가 보는 인식용 고정 카메라.
-  1. GameObject → Camera로 만들고, 같이 생긴 Audio Listener는 지운다 (장면에 하나만).
-  2. 조리대와 조리 구역이 모두 보이게 위쪽 앞에서 비스듬히 내려다보게 둔다.
-  3. Create → Render Texture로 `Assets/RenderTextures/VisionRT`를 만들고 크기를 **640×360**으로 한다 (`common/kitchen_link.py`의 캡처 크기).
-  4. `VisionCamera`의 Output → Target Texture에 `VisionRT`를 넣는다.
-
-Render Texture는 카메라 화면을 메모리 속 그림으로 담아 둔다. HW-20에서 이것을 JPEG로 바꿔 보낸다.
+- 따로 두는 인식용 카메라는 만들지 않는다. HW-20에서 메인 카메라 화면을 코드로 640×360 Render Texture(카메라 화면을 메모리 속 그림으로 담아 두는 것)에 한 번 더 그려 JPEG로 보낸다 ([decision](../docs/decisions/2026-11-23-kitchen-no-avatar-main-camera.md)).
 
 ### 4. 확인
 
-1. ▶ Play → Project 창에서 `VisionRT`를 고르면 Inspector 미리보기에 인식용 카메라 화면이 보인다.
-2. Game 화면 스크린샷을 남긴다 (PR 첨부, VIS-01에 전달).
-3. Play를 끄고 Ctrl+S. Play 중에 바꾼 값은 끄면 사라진다.
+1. Game 화면 스크린샷을 남긴다 (PR 첨부).
+2. Play를 끄고 Ctrl+S. Play 중에 바꾼 값은 끄면 사라진다.
+
+## 보드와 연결 (HW-16)
+
+1. 장치 오브젝트(`burner_1`·`burner_2`·`fryer`·`hood`)마다 `KitchenDevice`를 붙인다. 이름표(TextMesh Pro 글자)는 장치의 자식으로 두면 자동으로 찾고, 아니면 `Label`에 넣는다. 켜지면 `On Color`(기본 빨강)로 바뀐다. 불 효과 같은 오브젝트는 `Show When On`에 넣으면 켜졌을 때만 보인다.
+2. 빈 오브젝트 `KitchenLink`를 만들어 `KitchenLink`를 붙이고 **Broker Host**에 보드 IP를 넣는다 (보드 없이는 `127.0.0.1` + 자기 PC의 mosquitto). 보드 브로커는 [`scripts/mosquitto/jarvis.conf`](../scripts/mosquitto/jarvis.conf)로 같은 망의 접속을 받게 한다.
+3. ▶ Play → Console에 `[KitchenLink] 장치 4개: …`와 `접속: <IP>:1883`이 보이면 연결된 것이다. 확인 방법은 [연결 안내](../recipes/unity-kitchen-link.md) §5.
+
+- 에디터 창이 포커스를 잃어도 명령을 처리하도록 `Application.runInBackground`를 켠다 (보드는 0.5초 안에 확인을 기다린다).
+- 지금은 명령·확인과 상태가 바뀔 때의 `kitchen/state`만 한다. 생존 신호·5초 주기 상태·`safe_stop`은 HW-18, 온도는 HW-19, 화면은 HW-20.
 
 ## 지킬 것
 
@@ -125,6 +124,6 @@ Render Texture는 카메라 화면을 메모리 속 그림으로 담아 둔다. 
 |---|---|---|
 | `model.glb` | 3dassets.dev | 콤비 오븐·6구 레인지 등 주방 장치 |
 | `AQDSEwsyLJwePed_3Sw5u.glb` | FurniMesh | 가구 1점 |
-| `wood_floor_*_2k.*` | 확인 필요 | 홀 바닥 텍스처 (`Materials/wood_floor_mtrl`) |
+| `Textures/Hall_floor_texture/wood_floor_*_2k.*` | 확인 필요 | 홀 바닥 텍스처 (`Materials/wood_floor_mtrl`) |
 
 `.glb`를 Unity에서 열려면 glTFast 패키지(`com.unity.cloud.gltfast`, `Packages/manifest.json`에 들어 있다)가 필요하다. 라이선스를 확인해 커밋하기로 하면 `.gitignore`에서 빼고 `.gitattributes`에 `*.glb binary`를 추가한다.
