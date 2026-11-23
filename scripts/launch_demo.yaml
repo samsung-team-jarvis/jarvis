@@ -33,6 +33,9 @@ services:
     module: services.llm_svc
     python: .venv-llm/bin/python
     args: [--model, runs/llm/llm_qwen3-0.6b_jarvis_v4-q8_0.gguf]
+  - name: dashboard           # 화면에 겹쳐 띄울 정보 → kitchen/overlay (UI-01)
+    module: services.dashboard
+    python: .venv/bin/python
   - name: audio_svc           # 발화 끝 기다림 0.3초: 보드 리허설에서 0.5초보다 0.21초 빠르고 잘린 문장 없음 (#166)
     module: services.audio_svc
     python: .venv/bin/python

@@ -67,6 +67,24 @@ T ← T + (목표 − T) × 0.05        목표: 꺼짐 25 · 세기 1 → 120 ·
 - 인식용 카메라(조리대와 조리 구역이 한 화면에 들어오게 고정)를 640×360으로 그려 JPEG로 압축해 `kitchen/frame`에 바이트 그대로 보낸다. 1초에 4장.
 - 사용자가 보는 화면의 카메라와 따로 둔다. 겹쳐 띄우는 글자·창은 인식용 화면에 넣지 않는다.
 
+## 4.1 화면에 겹쳐 띄울 정보 (UI-01 · UI-02, **제안 — 합의 대기 #170**)
+
+보드가 `kitchen/overlay`로 1초마다(+ 바뀔 때) 보낸다. 사용자가 보는 화면에 그리고, 인식용 카메라 화면에는 넣지 않는다.
+
+```text
+kitchen/overlay  {"state": "COOKING", "state_text": "조리 중", "risk": "warn",
+                  "heaters": {"burner_1": {"on": true, "level": 3, "temperature_c": 212.4}, ...},
+                  "person": true, "absent_s": 0.0,
+                  "heard": "자비스 1번 화구 세게 해줘", "reply": "1번 화구 세기를 강으로 바꿨습니다.",
+                  "decision": "ALLOW", "reason": null,
+                  "warning": "주의하세요. 1번 화구가 212도예요.",
+                  "seen": [{"cls": "person", "conf": 0.91, "bbox": [120, 40, 300, 350]}], "stale": false}
+```
+
+- 글자는 보드가 만든 한국어 문장을 그대로 띄우면 된다 (`state_text`·`reply`·`reason`·`warning`). 값이 `null`이면 그 칸을 비운다.
+- `seen`의 `bbox`는 인식용 화면(640×360) 픽셀이다 ("AI가 본 화면"을 그릴 때).
+- 필드 설명: [interfaces](../docs/architecture/interfaces.md) §4.6. 보드 쪽 확인: `python -m services.dashboard --print`.
+
 ## 5. 확인 방법
 
 ### 5.1 보드 없이 (자기 PC에서)

@@ -12,6 +12,8 @@ services:
     module: services.safety_guard
   - name: llm_svc
     module: services.llm_svc
+  - name: dashboard           # 화면에 겹쳐 띄울 정보 → kitchen/overlay (UI-01)
+    module: services.dashboard
   - name: audio_svc
     module: services.audio_svc
     # args: [--input, data/stt/cmds.wav, --realtime]   # 마이크 대신 wav (또는 실행 시 --arg)
