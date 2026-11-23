@@ -30,14 +30,12 @@ from services.audio_svc.responses import (
     RiskWatcher,
     reply_for_decision,
 )
+from services.safety_guard.service import STATE_STALE_S  # fusion/state 끊김 기준 (FUS-12)
 
 SOURCE = "dashboard"
 PERIOD_S = 1.0  # 바뀐 게 없어도 이 주기로 보낸다 (Unity가 중간에 붙어도 1초 안에 그린다)
 HOLD_S = 10.0  # 들은 말·응답을 화면에 남겨 두는 시간
 SEEN_S = 1.0  # 화면 인식 결과를 믿는 시간 (vision_svc는 3~5장/초)
-STATE_STALE_S = (
-    3.0  # fusion/state(1초마다)가 이보다 끊기면 상태 모름 (Safety Guard FUS-12와 같은 기준)
-)
 STATE_TEXT = {
     "IDLE": "대기",
     "PREHEAT": "예열 중",
