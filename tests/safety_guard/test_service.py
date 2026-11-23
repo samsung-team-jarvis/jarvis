@@ -1,7 +1,12 @@
 from common.bus import MemoryBus
 from common.kitchen_link import validate_command
 from common.messages import Envelope
-from services.safety_guard.service import CONFIRM_TIMEOUT_S, EMERGENCY_DEDUP_S, SafetyGuard
+from services.safety_guard.service import (
+    CONFIRM_TIMEOUT_S,
+    EMERGENCY_DEDUP_S,
+    STATE_STALE_S,
+    SafetyGuard,
+)
 
 
 class FakeClock:
@@ -64,6 +69,53 @@ def test_burner_on_follows_latest_state() -> None:
 
     assert [m.payload["decision"] for m in got["guard/decision"]] == ["REJECT", "ALLOW", "REJECT"]
     assert len(got["control/command"]) == 1  # 거부된 명령은 장치로 가지 않는다
+
+
+def test_heating_up_rejected_when_state_goes_stale() -> None:
+    """FUS-12: fusion/state가 STATE_STALE_S 넘게 끊기면 마지막 값(COOKING)을 더 믿지 않는다."""
+    bus, _, got, clock = setup()
+    bus.publish(state_msg("COOKING"))
+    bus.publish(call_msg({"action": "TURN_ON", "target": "burner_1"}))  # 아직 fresh → 허용
+
+    clock.now += STATE_STALE_S + 0.1
+    bus.publish(call_msg({"action": "SET_LEVEL", "target": "burner_1", "level": 2}))  # 끊김 → 거부
+
+    assert [m.payload["decision"] for m in got["guard/decision"]] == ["ALLOW", "REJECT"]
+    assert len(got["control/command"]) == 1
+
+
+def test_turn_off_and_emergency_allowed_even_when_state_stale() -> None:
+    bus, guard, got, clock = setup()
+    bus.publish(state_msg("COOKING"))
+    clock.now += STATE_STALE_S + 0.1
+    assert guard._state_stale()  # noqa: SLF001
+
+    bus.publish(call_msg({"action": "TURN_OFF", "target": "burner_1"}))
+    bus.publish(call_msg({"action": "EMERGENCY_STOP", "target": "all"}))
+
+    assert [m.payload["decision"] for m in got["guard/decision"]] == ["ALLOW", "ALLOW"]
+
+
+def test_state_fresh_again_after_new_fusion_state() -> None:
+    bus, _, got, clock = setup()
+    bus.publish(state_msg("COOKING"))
+    clock.now += STATE_STALE_S + 0.1
+    bus.publish(state_msg("COOKING"))  # 다시 받으면 fresh
+    bus.publish(call_msg({"action": "TURN_ON", "target": "burner_1"}))
+    assert got["guard/decision"][-1].payload["decision"] == "ALLOW"
+
+
+def test_assumed_state_does_not_expire_until_fusion_state_arrives() -> None:
+    """--assume-state는 fusion_svc 없이 개발할 때 쓴다 — 시간이 지나도 가정 상태를 쓴다."""
+    bus, _, got, clock = setup(assume_state="COOKING")
+    clock.now += STATE_STALE_S * 10
+    bus.publish(call_msg({"action": "TURN_ON", "target": "burner_1"}))
+    assert got["guard/decision"][-1].payload["decision"] == "ALLOW"
+
+    bus.publish(state_msg("COOKING"))  # 한 번 받으면 그때부터는 만료를 본다
+    clock.now += STATE_STALE_S + 0.1
+    bus.publish(call_msg({"action": "TURN_ON", "target": "burner_1"}))
+    assert got["guard/decision"][-1].payload["decision"] == "REJECT"
 
 
 def test_assume_state_for_development() -> None:

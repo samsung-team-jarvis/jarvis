@@ -8,6 +8,7 @@ from services.safety_guard.rules import (
     INVALID_REASON,
     NO_QUESTION_REASON,
     REASONS,
+    STALE_REASON,
     STATES,
     judge,
 )
@@ -61,6 +62,22 @@ def test_heating_rejected_in_risky_or_unknown_state(state: str | None, call: dic
 @pytest.mark.parametrize("call", SAFE_CALLS)
 def test_turning_off_and_non_heating_always_allowed(state: str | None, call: dict) -> None:
     assert judge(call, state).decision == "ALLOW"
+
+
+@pytest.mark.parametrize("state", [*STATES, None])
+@pytest.mark.parametrize("call", HEATING)
+def test_heating_rejected_when_stale_regardless_of_last_state(
+    state: str | None, call: dict
+) -> None:
+    """FUS-12: state가 끊겨 오래됐으면(stale) 마지막 값이 COOKING이었어도 거부한다."""
+    d = judge(call, state, stale=True)
+    assert (d.decision, d.reason) == ("REJECT", STALE_REASON)
+
+
+@pytest.mark.parametrize("state", [*STATES, None])
+@pytest.mark.parametrize("call", SAFE_CALLS)
+def test_non_heating_allowed_even_when_stale(state: str | None, call: dict) -> None:
+    assert judge(call, state, stale=True).decision == "ALLOW"
 
 
 @pytest.mark.parametrize(

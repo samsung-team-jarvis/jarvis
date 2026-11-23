@@ -199,6 +199,7 @@
 - [ ] VIS-09 부족 클래스·조명 조건 보강 촬영 → v2 학습·변환·재평가 | 선행: VIS-07 | 담당: 최석진(촬영) · 이현종(학습·변환) (2026-10-29 신지호에서 이관) — **화면 캡처가 생기면** ([decision](./decisions/2026-10-29-vision-pretrained-person.md))
 - [ ] FUS-10 통합 멀티모달 시나리오 20~30개 녹화 (recorder) → State F1·위험 미탐율 | 선행: FUS-08, INFRA-05 | 담당: 최지환
 - [ ] FUS-11 recorder 로그 재생 테스트 (녹화 세션을 다시 흘려 State Machine 회귀 테스트 — `services.recorder.store.read_session`으로 읽기) | 선행: FUS-10 | 담당: 최지환
+- [x] FUS-12 Safety Guard State 만료 (stale state): `fusion/state`가 STATE_STALE_S(3초) 넘게 끊기면 마지막 값을 믿지 않고 상태 모름과 같게 봐 가열 켜기·세기 바꾸기를 거부, 끄기·긴급 정지는 그대로 허용 — 단위 테스트 통과 | 선행: FUS-08 | 담당: 최지환 (#151 — `services/safety_guard/service.py`·`rules.py`. v1은 거부 + 로그 경고만 하고 끊긴 동안 이미 켜진 가열 장치를 자동으로 끄지는 않음(근거 없이 끄면 오탐 위험 — 과열·방치 자동 차단은 FUS-09가 센서 근거로 별도 처리, [decision](./decisions/2026-11-16-guard-state-expiry.md)). 개발용 가정 상태는 만료되지 않음. MQTT·보드·가상 주방 미검증)
 - [x] ~~HW-11 BLE 성공률·지연 개선~~ — 취소 (2026-10-05 → HW-22)
 - [x] ~~HW-12 모형 완성~~ — 취소 (2026-10-05 → HW-23)
 - [ ] HW-22 제어 성공률·지연 개선 (재시도 정책, 연결 끊김 복구) | 선행: HW-21 | 담당: 최석진
