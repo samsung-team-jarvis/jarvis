@@ -50,7 +50,8 @@ public class KitchenLink : MonoBehaviour
     readonly ConcurrentQueue<string> inbox = new ConcurrentQueue<string>();
     readonly Dictionary<int, string> acks = new Dictionary<int, string>();
     readonly Queue<int> ackOrder = new Queue<int>();
-    readonly Dictionary<string, KitchenDevice> devices = new Dictionary<string, KitchenDevice>();
+    // target 이름 → 그 이름을 가진 오브젝트들. 같은 target이 여러 개면 함께 켜고 끈다 (예: 램프 여러 개 = light)
+    readonly Dictionary<string, List<KitchenDevice>> devices = new Dictionary<string, List<KitchenDevice>>();
 
     public bool Connected => client != null && client.IsConnected;
 
@@ -60,11 +61,16 @@ public class KitchenLink : MonoBehaviour
         Application.runInBackground = true;
         foreach (KitchenDevice device in FindObjectsByType<KitchenDevice>(FindObjectsSortMode.None))
         {
-            if (devices.ContainsKey(device.Target))
-                Debug.LogWarning($"[KitchenLink] 장치 이름이 겹칩니다: {device.Target}", device);
-            devices[device.Target] = device;
+            if (!devices.TryGetValue(device.Target, out List<KitchenDevice> group))
+                devices[device.Target] = group = new List<KitchenDevice>();
+            group.Add(device);
+            if (!KnownDevices.Contains(device.Target))
+                Debug.LogWarning($"[KitchenLink] 규격에 없는 이름이라 보드가 제어할 수 없습니다: {device.Target}", device);
         }
-        Debug.Log($"[KitchenLink] 장치 {devices.Count}개: {string.Join(", ", devices.Keys)}");
+        var names = new List<string>();
+        foreach (KeyValuePair<string, List<KitchenDevice>> pair in devices)
+            names.Add(pair.Value.Count > 1 ? $"{pair.Key}×{pair.Value.Count}" : pair.Key);
+        Debug.Log($"[KitchenLink] 장치 {devices.Count}개: {string.Join(", ", names)}");
     }
 
     void OnEnable()
@@ -186,14 +192,16 @@ public class KitchenLink : MonoBehaviour
             return Ack(c.seq, false, "invalid_command");
         if (c.cmd == "OFF" && c.target == "all")
         {
-            foreach (KitchenDevice device in devices.Values)
-                changed |= device.Apply(false, 0);
+            foreach (List<KitchenDevice> all in devices.Values)
+                foreach (KitchenDevice device in all)
+                    changed |= device.Apply(false, 0);
             return Ack(c.seq, true, null);
         }
-        if (!devices.TryGetValue(c.target, out KitchenDevice target))
+        if (!devices.TryGetValue(c.target, out List<KitchenDevice> group))
             return Ack(c.seq, false, "unknown_target"); // 규격엔 있지만 아직 장면에 없는 장치
         // ON은 세기 1, LEVEL은 꺼져 있으면 켜면서 세기를 맞춘다
-        changed = c.cmd == "OFF" ? target.Apply(false, 0) : target.Apply(true, c.value);
+        foreach (KitchenDevice device in group)
+            changed |= c.cmd == "OFF" ? device.Apply(false, 0) : device.Apply(true, c.value);
         return Ack(c.seq, true, null);
     }
 
@@ -236,8 +244,11 @@ public class KitchenLink : MonoBehaviour
     void PublishState()
     {
         var parts = new List<string>();
-        foreach (KitchenDevice d in devices.Values)
-            parts.Add($"\"{d.Target}\":{{\"on\":{(d.On ? "true" : "false")},\"level\":{d.Level}}}");
+        foreach (KeyValuePair<string, List<KitchenDevice>> pair in devices)
+        {
+            KitchenDevice d = pair.Value[0]; // 같은 target끼리는 늘 같은 상태다
+            parts.Add($"\"{pair.Key}\":{{\"on\":{(d.On ? "true" : "false")},\"level\":{d.Level}}}");
+        }
         Publish(TopicState, $"{{\"devices\":{{{string.Join(",", parts)}}},\"safe_stop\":false}}");
     }
 
