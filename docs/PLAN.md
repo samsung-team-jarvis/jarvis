@@ -61,6 +61,7 @@
 - [x] HW-13 메타버스 플랫폼 선정 — 보드와 메시지 주고받기, 인식용 카메라 화면 캡처, 장치 상태를 스크립트로 바꾸기, 비용을 확인해 open-questions Q-11 답 | 선행: - | 담당: 최석진 (#75 — Unity 6.3 LTS, 공식 문서 확인. 실동작은 HW-16·20 ([decision](./decisions/2026-10-05-unity-virtual-kitchen.md)))
 - [x] HW-14 보드 ↔ 가상 주방 연결 규격 v0.1 (제어 명령·결과 확인·온도·캡처 화면·생존 신호의 전달 방식) — interfaces §4 확정 | 선행: HW-13, FUS-01 | 담당: 이현종 (#80 — 연결 토픽 `kitchen/*`, `common/kitchen_link.py`, [Unity 안내](../recipes/unity-kitchen-link.md). Unity와의 실동작은 HW-16)
 - [x] LLM-13 Function Call 스키마 v0.2 (장치 8종: 튀김기·조명·에어컨·선풍기·음악 target 추가, 세기 1~3 통일, 금액 확인·결제 요청·네·아니요 Action → 14개) — interfaces §3·§5 확정, `common/function_call.py`·규칙 파서·응답 문장·테스트 반영 | 선행: LLM-01 | 담당: 이현종 (#84, [decision](./decisions/2026-10-06-function-call-schema-v02.md) — 결제 연결·확인 흐름은 FUS-03·HW-23)
+- [ ] LLM-20 Function Call 스키마 v0.3 (오븐 2개·전자레인지 추가 — 가열 장치, 후드를 튀김기 후드·화구 후드로 분리 — "후드"만 말하면 되묻기) — 1단계 결정·합의, 2단계 interfaces·코드·Unity, 3단계 LLM 데이터·재학습·변환 | 선행: LLM-13 | 담당: 최석진 (#184, [decision](./decisions/2026-11-25-function-call-schema-v03.md) Proposed — LLM 담당 이현종·상황 인식 담당 최지환 합의 대기)
 - [ ] BOARD-01 보드 실물 확인 (모델, RAM, 저장장치, 방열판·팬 유무) — open-questions Q-01 답변 | 선행: - | 담당: 이현종 (2026-10-29 신지호에서 이관, 보드를 받으면) (#162 — Orange Pi 5 Plus 16 GB, microSD 29 GB(학교 이미지), 커널에 팬 장치 없음(방열판은 확인 필요), 측정 중 82 °C)
 
 ### BOM (2026-10-05 갱신)
