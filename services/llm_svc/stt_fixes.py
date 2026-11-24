@@ -22,6 +22,7 @@ FIXES: tuple[tuple[str, str], ...] = (
     ("허곡", "화구"),
     ("허국", "화구"),
     ("화국", "화구"),
+    ("화곡", "화구"),  # "1 번 화곡해줘" (같은 시연)
     ("일본 번", "일번"),  # "1번 화구" → "일본 번 화국"
     ("일본", "1번"),
 )
@@ -36,10 +37,20 @@ _BURNER_HAGO = re.compile(r"(\d)\s*번\s*하고(?=\s*(?:켜|꺼|끄|세|약|중|
 _FRYER_SHORT = re.compile(r"튀김(?!기)(?=\s*(?:켜|꺼|끄|틀|세|약|중|강))")
 
 
+# "화구 켜"의 '켜'가 앞 글자에 붙어 '해'로 들린다: "2번 화국 해죠", "1 번 화곡해줘", "일번 화국해죠"
+# (보드 USB 마이크 2026-11-25, #182). "화구 해 줘"는 뜻이 없는 말이라 켜기로 본다.
+_BURNER_HAE = re.compile(r"화구\s*해(?=\s*(?:줘|죠|주|$|[.?!]))")
+
+# "1번 버너"가 "1번 번호"로 나온다 (같은 시연, 4건). 숫자 + 번 바로 뒤의 "번호"만 버너로 본다.
+_BURNER_BEONHO = re.compile(r"(?<![가-힣])(\d|일|이|입)\s*번\s*번호")
+
+
 def normalize(text: str) -> str:
     for wrong, right in FIXES:
         text = text.replace(wrong, right)
     text = _FRYER_SHORT.sub("튀김기", text)
+    text = _BURNER_HAE.sub("화구 켜", text)
+    text = _BURNER_BEONHO.sub(r"\1번 버너", text)
     return _BURNER_HAGO.sub(r"\1번 화구", text)
 
 
