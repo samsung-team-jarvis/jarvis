@@ -96,6 +96,28 @@ def test_resolve_falls_back_to_rule_parser_when_llm_output_invalid(raw: str) -> 
     assert (r.raw_text, r.valid, r.fallback, r.tokens) == ("후드 켜 줘.", False, True, 7)
 
 
+@pytest.mark.parametrize("command", ["전부 꺼죠.", "장치 전부 꺼죠.", "모두 꺼 줘", "다 꺼"])
+def test_resolve_all_off_overrides_last_target(command: str) -> None:
+    # 보드 시연(#182): 튀김기를 켠 직후 "전부 꺼죠" → LLM이 직전 장치만 끔
+    ctx = {"state": "COOKING", "last_target": "fryer"}
+    r = resolve(command, ctx, FakeLLM("<jarvis_2>(target=fryer)<jarvis_end>"))
+    assert r.call == {"action": "TURN_OFF", "target": "all"}
+    assert (r.valid, r.fallback) == (True, True)
+
+
+@pytest.mark.parametrize(
+    ("command", "raw"),
+    [
+        ("튀김기 꺼 줘", "<jarvis_2>(target=fryer)<jarvis_end>"),  # 장치 하나는 그대로
+        ("전부 끄지 마", "<jarvis_2>(target=fryer)<jarvis_end>"),  # 부정은 건드리지 않는다
+        ("전부 켜 줘", "<jarvis_1>(target=fryer)<jarvis_end>"),  # 켜기는 대상 밖
+    ],
+)
+def test_resolve_all_off_override_only_for_all_off(command: str, raw: str) -> None:
+    r = resolve(command, CTX, FakeLLM(raw))
+    assert r.call.get("target") == "fryer" and not r.fallback
+
+
 def test_resolve_out_of_range_timer_falls_back_to_asking() -> None:
     r = resolve("타이머 90분 맞춰줘", CTX, FakeLLM("<jarvis_4>(min=90)<jarvis_end>"))
     assert r.fallback and r.call["action"] == "ASK_CLARIFY"  # 규칙 파서가 시간을 되묻는다

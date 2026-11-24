@@ -14,7 +14,7 @@ from typing import Any
 
 from common.function_call import FunctionCallError, parse_tokens
 from services.audio_svc.wake import split_wake
-from services.llm_svc.rule_parser import parse
+from services.llm_svc.rule_parser import compact, find_target, parse
 from services.llm_svc.stt_fixes import normalize, numerals
 
 # (명령 문장, context) → (LLM이 낸 문자열, 생성 토큰 수). Mac은 hf_engine, 보드는 LLM-08 뒤
@@ -78,4 +78,15 @@ def resolve(command: str, context: dict[str, Any], generate: Generate | None = N
             and not NEGATION.search(command)
         ):
             return Resolved(rule, raw, valid=True, fallback=True, tokens=tokens)
+    if (
+        call["action"] == "TURN_OFF"
+        and call.get("target") != "all"
+        and find_target(compact(command)) == "all"
+        and not NEGATION.search(command)
+    ):
+        # "전부 꺼 줘"인데 LLM이 직전 장치(context의 last_target)만 끈다 — 보드 시연 2026-11-25:
+        # "튀김기 켜 줘" 바로 뒤 "전부 꺼죠" → TURN_OFF fryer (6번). 말에 전부·모두·전체가 있으면
+        # 전체로 고친다. 더 많이 끄는 쪽이라 안전 쪽이다 (#182)
+        all_off = {"action": "TURN_OFF", "target": "all"}
+        return Resolved(all_off, raw, valid=True, fallback=True, tokens=tokens)
     return Resolved(call, raw, valid=True, fallback=False, tokens=tokens)
