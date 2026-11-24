@@ -18,8 +18,15 @@ WAKE_INITIAL_VARIANTS = "자다바차짜사타"
 WAKE_VOCATIVE_FORMS = ("자비야", "자비쓰야")
 # 보드 핀마이크 실사용 출력 (2026-11-17, #STT-14): "저비스 1번하고 켜줘", "잡비스 …", "자이스 …"
 WAKE_OTHER_FORMS = ("저비스", "잡비스", "자이스")
+# 보드 USB 마이크 실사용 출력 (2026-11-24, #182): "자베스 1번 허국 해줘", "자베이스 후드 캐죠",
+# "제페스 후드켜죠?", "자벳의 1번 화국회죠". "자 위스트켜죠"의 "자위스"는 넣지 않는다
+# ("자, 위스키 …"처럼 일상 말이 호출로 잡힌다).
+WAKE_BOARD_USB_FORMS = ("자베스", "자베이스", "제페스", "자벳의")
 WAKE_WORDS: tuple[str, ...] = (
-    tuple(f"{c}비스" for c in WAKE_INITIAL_VARIANTS) + WAKE_VOCATIVE_FORMS + WAKE_OTHER_FORMS
+    tuple(f"{c}비스" for c in WAKE_INITIAL_VARIANTS)
+    + WAKE_VOCATIVE_FORMS
+    + WAKE_OTHER_FORMS
+    + WAKE_BOARD_USB_FORMS
 )
 # 호출어 바로 뒤의 호격 조사 ("자비스야", "자비스아")
 _VOCATIVES = ("야", "아")

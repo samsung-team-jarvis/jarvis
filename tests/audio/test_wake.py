@@ -29,6 +29,11 @@ from services.audio_svc.wake import is_wake, split_wake
         ("저기 자비스 후드 켜 줘.", "후드 켜 줘."),
         ("저비스 1번하고 켜줘.", "1번하고 켜줘."),  # 변형
         ("잡비스 후드 켜줘", "후드 켜줘"),
+        # 보드 USB 마이크 실사용 (2026-11-24, #182)
+        ("자베스 1번 허국 해줘.", "1번 허국 해줘."),
+        ("자베이스 후드 캐죠.", "후드 캐죠."),
+        ("제페스 후드켜죠?", "후드켜죠?"),
+        ("자벳의 1번 화국회죠.", "1번 화국회죠."),
     ],
 )
 def test_wake_utterance_gives_command_part(text: str, command: str) -> None:
@@ -45,6 +50,7 @@ def test_wake_utterance_gives_command_part(text: str, command: str) -> None:
         "서비스 좋네",  # 흔한 말 — 첫 글자 모음이 ㅏ가 아님
         "바비큐 하자",
         "잡비야 후드 켜줘",  # 합성 음성 출력, 아직 허용 안 함
+        "자 위스키 한 잔 줘",  # "자위스"는 호출어 변형으로 넣지 않는다 (#182)
         "자비",
         "",
     ],
