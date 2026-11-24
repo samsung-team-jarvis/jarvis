@@ -76,6 +76,8 @@
 ## 보드와 연결 (HW-16)
 
 1. 장치 오브젝트(`burner_1`·`burner_2`·`fryer`·`hood`)마다 `KitchenDevice`를 붙인다. 이름표(TextMesh Pro 글자)는 장치의 자식으로 두면 자동으로 찾고, 아니면 `Label`에 넣는다. 켜지면 `On Color`(기본 빨강)로 바뀐다. 불 효과 같은 오브젝트는 `Show When On`에 넣으면 켜졌을 때만 보인다.
+   - 조명(램프)은 `Target`을 `light`로 둔다. 자식의 Light를 자동으로 찾고(다른 장치는 `Lights`에 직접 넣는다), 꺼지면 끄고 세기 1·2·3이면 장면에 둔 밝기의 40·70·100%로 켠다.
+   - 같은 `Target`을 여러 오브젝트에 붙이면 함께 켜지고 꺼진다 (예: 램프 여러 개, 후드 2개를 모두 `hood`로).
 2. 빈 오브젝트 `KitchenLink`를 만들어 `KitchenLink`를 붙이고 **Broker Host**에 보드 IP를 넣는다 (보드 없이는 `127.0.0.1` + 자기 PC의 mosquitto). 보드 브로커는 [`scripts/mosquitto/jarvis.conf`](../scripts/mosquitto/jarvis.conf)로 같은 망의 접속을 받게 한다.
 3. ▶ Play → Console에 `[KitchenLink] 장치 4개: …`와 `접속: <IP>:1883`이 보이면 연결된 것이다. 확인 방법은 [연결 안내](../recipes/unity-kitchen-link.md) §5.
 
