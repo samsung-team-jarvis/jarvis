@@ -27,6 +27,8 @@ TOPIC_REQUIRED_FIELDS: dict[str, frozenset[str]] = {
     "control/command": frozenset({"seq", "cmd", "target", "value"}),
     "control/result": frozenset({"seq", "ok", "retries", "rtt_ms"}),
     "system/heartbeat": frozenset({"alive"}),
+    "audio/test": frozenset({"kind"}),  # 시연 화면 테스트 버튼 (UI-04)
+    "audio/level": frozenset({"dbfs", "peak_dbfs", "remaining_s"}),  # 마이크 테스트 중에만
 }
 
 

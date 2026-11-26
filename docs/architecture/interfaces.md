@@ -43,6 +43,8 @@
 | `control/command` | safety_guard | `{seq, cmd, target, value}` |
 | `control/result` | kitchen_gw | `{seq, ok: bool, retries, rtt_ms, reason?}` |
 | `system/heartbeat` | 각 서비스 | `{alive: true}` |
+| `audio/test` | webview | `{kind: mic\|speaker}` — 시연 화면의 테스트 버튼 (UI-04) |
+| `audio/level` | audio_svc | `{dbfs, peak_dbfs, remaining_s}` — 마이크 테스트 중에만 |
 
 - `control/command`의 값 (HW-14 확정, 코드: [`common/kitchen_link.py`](../../common/kitchen_link.py) `validate_command`·`command_for`):
 
@@ -56,6 +58,7 @@
 - `sensor/reading`의 `device_id`는 가열 장치 이름(`burner_1`, `burner_2`, `fryer`)이다. 전류(`current_a`)는 가상 주방에 없어 선택 필드로 바꿨다.
 - `device/state`는 가상 주방의 실제 장치 상태다 (FUS-08, #139). 보드 명령 없이 바뀐 경우(265°C 자체 차단, 생존 신호 끊김, 실패로 처리한 명령의 늦은 실행 — §4.3·§4.4)도 여기서 안다. `fusion_svc`는 이것을 가열 장치가 켜졌는지의 기준으로 쓴다. 봉투 시각은 `kitchen_gw`가 받은 순간이다.
 - `guard/decision`은 명령 판정 말고도 **자동 차단**(FUS-09)에서 나온다: `fusion/state`가 과열·방치를 알리면 Guard가 `{call: {action: TURN_OFF, target: <가열 장치>}, decision: ALLOW, reason: "자동 차단: …"}`을 내고 `control/command`로 끈다. `session_id`는 받은 `fusion/state`의 것이다 ([decision](../decisions/2026-11-11-auto-stop.md)).
+- `audio/test`·`audio/level`은 시연 화면(webview)의 마이크·스피커 테스트다 (UI-04, #186). 마이크·스피커는 audio_svc가 쥐고 있어 webview는 요청만 보낸다. `speaker`면 audio_svc가 테스트 문장을 음성 응답과 같은 경로(재생 중 마이크 막기)로 읽는다. `mic`이면 audio_svc가 5초 동안 0.2초마다 `audio/level`을 낸다 — `dbfs`는 그 0.2초의 RMS, `peak_dbfs`는 테스트 시작부터의 최댓값(dBFS, 0이 최대), `remaining_s`가 0이면 끝. 테스트 중이 아니면 내지 않는다 (녹화에 쌓이지 않게). 장치 제어와 무관하다.
 - `llm/function_call`의 필드 의미 (LLM-09, 코드: [`services/llm_svc/interpret.py`](../../services/llm_svc/interpret.py) `resolve`). `session_id`는 원래 `stt/text`의 것을 이어 쓴다.
 
   | 경우 | `valid` | `fallback` | `raw_text` | `gen_ms` | `tokens` |
@@ -328,3 +331,4 @@
 | 2026-11-11 | v0.2 | §2.3 `fusion/state`의 발행 시점·`prev_state`·`evidence` 필드, 근거 만료 (#139, FUS-08) | 최지환 |
 | 2026-11-11 | v0.2 | §2 `guard/decision`이 자동 차단에서도 나온다 (과열·방치, `reason` "자동 차단: …") — **필드 변경 없음** (#143, FUS-09) | 최지환 |
 | 2026-11-17 | v0.2 | §4.1·§4.2·§4.6 `kitchen/overlay` 토픽 제안 (보드 → 가상 주방, 화면에 겹쳐 띄울 정보) — **Unity 쪽 합의 대기** (#170, UI-01) | 최지환 |
+| 2026-11-26 | v0.2 | §2 `audio/test`(webview → audio_svc 테스트 요청)·`audio/level`(마이크 테스트 중 음량) 토픽 추가 — 시연 화면 테스트 버튼 (#186, UI-04) | 최석진 |

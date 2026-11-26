@@ -46,6 +46,7 @@ class AudioService:
         clock: Callable[[], float] = time.monotonic,
         mute: Callable[[float], bool] | None = None,
         followup_s: float = 12.0,
+        on_chunk: Callable[[np.ndarray, float], None] | None = None,
     ) -> None:
         self.stt = stt
         self.segmenter = segmenter
@@ -58,6 +59,7 @@ class AudioService:
         # (에코가 명령이 되지 않게, STT-12). 예전에는 무음으로 바꿨는데,
         # 경고를 읽는 동안 외친 "멈춰"를 못 들었다 (보드 리허설, #STT-14)
         self.mute = mute
+        self.on_chunk = on_chunk  # 받은 소리 그대로 (마이크 테스트 음량, UI-04)
         self.published = 0  # 발행한 stt/text 수
         self.ignored = 0  # 그중 호출어가 없어 명령으로 처리하지 않을 발화 수 (wake=false)
         self.skipped = 0  # 받아쓴 결과가 비어 버린 구간 수 (잡음 등)
@@ -76,6 +78,8 @@ class AudioService:
         for samples, arrival_mono in chunks:
             if self.mute and self.mute(arrival_mono):
                 self._muted_at.append(arrival_mono)
+            if self.on_chunk:
+                self.on_chunk(samples, arrival_mono)
             self.handle(self.segmenter.feed(samples, arrival_mono))
             self.heartbeat()
         self.handle(self.segmenter.flush())
