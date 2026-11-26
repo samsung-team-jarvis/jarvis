@@ -13,7 +13,28 @@ from services.llm_svc.stt_fixes import normalize, numerals
         ("결 해 줘.", "결제해 줘."),
         ("계란 세 개 삶아.", "계란 세 개 삶아."),  # 개수는 그대로
         ("십 분 뒤에 일 번구 꺼죠.", "십 분 뒤에 일 번 화구 꺼죠."),
-        ("일본 번 화국 켜줘.", "일번 화국 켜줘."),
+        ("일본 번 화국 켜줘.", "일번 화구 켜줘."),
+        # 보드 USB 마이크 실사용 (2026-11-24, #182)
+        ("1번 허곡 해죠.", "1번 화구 켜죠."),  # '켜'가 '해'로 들림
+        ("1번 허국 해줘.", "1번 화구 켜줘."),
+        ("1번 화국 켜줘.", "1번 화구 켜줘."),
+        # 보드 USB 마이크 실사용 (2026-11-25, #182)
+        ("2번 화국 해죠.", "2번 화구 켜죠."),
+        ("1 번 화곡해줘.", "1 번 화구 켜줘."),
+        ("일번 화국해죠.", "일번 화구 켜죠."),
+        ("1번 화구 세게 해 줘.", "1번 화구 세게 해 줘."),  # 다른 말 뒤의 '해'는 그대로
+        ("1번 번호 켜줘.", "1번 버너 켜줘."),  # "버너" → "번호"
+        ("1 번 번호 켜죠.", "1번 버너 켜죠."),
+        ("일번 번호 꺼줘.", "일번 버너 꺼줘."),
+        ("전화번호 알려줘.", "전화번호 알려줘."),  # 숫자 + 번 뒤가 아니면 그대로
+        ("1번 화국회죠.", "1번 화구 켜죠."),  # '켜'가 '회'로
+        ("젖든 켜 줘.", "전등 켜 줘."),
+        ("젠등 꺼줘.", "전등 꺼줘."),
+        ("튀김이 켜죠.", "튀김기 켜죠."),  # LLM이 상태 확인으로 읽던 꼴
+        ("튀김이 맛있다.", "튀김이 맛있다."),  # 켜기·끄기 앞이 아니면 그대로
+        ("튀김기거죠.", "튀김기 꺼죠."),
+        ("후드 캐죠.", "후드 켜죠."),
+        ("이거 거죠?", "이거 거죠?"),  # 장치 이름 뒤가 아니면 그대로
         ("후드 켜줘.", "후드 켜줘."),  # 고칠 것 없음
     ],
 )
@@ -83,6 +104,28 @@ def test_resolve_falls_back_to_rule_parser_when_llm_output_invalid(raw: str) -> 
     assert (r.raw_text, r.valid, r.fallback, r.tokens) == ("후드 켜 줘.", False, True, 7)
 
 
+@pytest.mark.parametrize("command", ["전부 꺼죠.", "장치 전부 꺼죠.", "모두 꺼 줘", "다 꺼"])
+def test_resolve_all_off_overrides_last_target(command: str) -> None:
+    # 보드 시연(#182): 튀김기를 켠 직후 "전부 꺼죠" → LLM이 직전 장치만 끔
+    ctx = {"state": "COOKING", "last_target": "fryer"}
+    r = resolve(command, ctx, FakeLLM("<jarvis_2>(target=fryer)<jarvis_end>"))
+    assert r.call == {"action": "TURN_OFF", "target": "all"}
+    assert (r.valid, r.fallback) == (True, True)
+
+
+@pytest.mark.parametrize(
+    ("command", "raw"),
+    [
+        ("튀김기 꺼 줘", "<jarvis_2>(target=fryer)<jarvis_end>"),  # 장치 하나는 그대로
+        ("전부 끄지 마", "<jarvis_2>(target=fryer)<jarvis_end>"),  # 부정은 건드리지 않는다
+        ("전부 켜 줘", "<jarvis_1>(target=fryer)<jarvis_end>"),  # 켜기는 대상 밖
+    ],
+)
+def test_resolve_all_off_override_only_for_all_off(command: str, raw: str) -> None:
+    r = resolve(command, CTX, FakeLLM(raw))
+    assert r.call.get("target") == "fryer" and not r.fallback
+
+
 def test_resolve_out_of_range_timer_falls_back_to_asking() -> None:
     r = resolve("타이머 90분 맞춰줘", CTX, FakeLLM("<jarvis_4>(min=90)<jarvis_end>"))
     assert r.fallback and r.call["action"] == "ASK_CLARIFY"  # 규칙 파서가 시간을 되묻는다
@@ -112,6 +155,10 @@ def test_wake_word_only_is_not_sent_to_llm() -> None:
         ("이번에는 후드 켜 줘", "이번에는 후드 켜 줘"),  # 장치 앞의 번만 숫자
         ("일단 후드 켜", "일단 후드 켜"),  # "우선"의 일단
         ("두 번째 불", "두 번째 불"),  # 고유어 숫자는 그대로
+        # "일번"은 장치 이름이 뒤에 없어도 1번으로 (보드 USB 마이크 2026-11-25, #182)
+        ("일번 후드 켜줘.", "1번 후드 켜줘."),
+        ("일 번 전등 켜줘.", "1번 전등 켜줘."),
+        ("제일번지 가자.", "제일번지 가자."),  # 앞 글자에 붙은 것은 그대로
     ],
 )
 def test_numerals(stt: str, fixed: str) -> None:
