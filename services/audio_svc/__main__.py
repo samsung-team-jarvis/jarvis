@@ -18,6 +18,7 @@ from collections.abc import Callable
 from common.bus import connect
 from common.messages import Envelope
 from services.audio_svc.responses import KitchenStatus, RiskWatcher, reply_for_decision
+from services.audio_svc.self_test import SelfTest
 from services.audio_svc.service import AudioService
 from services.audio_svc.sources import mic_chunks, wav_chunks
 from services.audio_svc.speaker import Speaker
@@ -155,6 +156,9 @@ def main() -> int:
             services[0].expect_reply(merge)
 
     speaker = None if args.no_tts else start_speaker(args, bus, on_followup=on_followup)
+    # 시연 화면의 마이크·스피커 테스트 버튼 (UI-04)
+    self_test = SelfTest(bus, session_id, speaker, on_event=lambda t: print(f"[audio/test] {t}"))
+    self_test.start()
     service = AudioService(
         stt,
         segmenter,
@@ -162,6 +166,7 @@ def main() -> int:
         session_id,
         on_text=None if args.quiet else show,
         mute=speaker.is_muted if speaker else None,
+        on_chunk=self_test.feed,
     )
     services.append(service)
     print(f"audio_svc 시작: input={args.input} session={session_id} (Ctrl+C로 종료)")

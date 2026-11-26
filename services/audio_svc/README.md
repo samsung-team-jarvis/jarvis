@@ -98,14 +98,18 @@ VAD는 말이 시작됐다고 판단한 곳부터 자르므로 "자"처럼 약�
 
 TTS 모델이 없으면 경고만 내고 STT는 계속 동작한다.
 
+### 마이크·스피커 테스트 (UI-04)
+
+`self_test.py` — 시연 화면 버튼이 보낸 `audio/test`를 받는다. `speaker`면 "스피커 테스트입니다. …"를 음성 응답과 같은 경로로 읽는다(재생 중 마이크 막기 그대로). `mic`이면 5초 동안 0.2초마다 그 구간의 음량(RMS dBFS)과 시작부터의 최댓값을 `audio/level`로 낸다. 테스트 중이 아니면 내지 않는다. 로그: `[audio/test] 마이크 테스트 끝: 최대 -13.5 dBFS`.
+
 상태·위험 확인(STT-13)은 마지막 `fusion/state`의 `evidence`(interfaces §2.3)와 `device/state`(후드·조명 등 가열 장치가 아닌 장치)로 답한다. 상태를 받은 적이 없거나 3초 넘게 끊겼으면(Safety Guard FUS-12와 같은 `STATE_STALE_S`) "상태 정보를 아직 받지 못했어요" / "상태 정보가 끊겨서 지금 상태를 알 수 없어요" — 오래된 상태로 "위험하지 않아요"라고 하지 않는다. 온도를 모르는 장치는 "온도는 알 수 없어요"라고 말한다.
 
 ## Spec
 
 | 항목 | 내용 |
 |---|---|
-| 입력 | 마이크(`sounddevice`, 16kHz mono — 못 받으면 기본 샘플레이트로 열어 16kHz로 줄임) / wav · `guard/decision` · `fusion/state` · `device/state` |
-| 출력 | `stt/text` `{text, wake, audio_ms, stt_ms, speech_end_mono}` ([interfaces](../../docs/architecture/interfaces.md) §2), `system/heartbeat` 1초마다, 스피커 |
+| 입력 | 마이크(`sounddevice`, 16kHz mono — 못 받으면 기본 샘플레이트로 열어 16kHz로 줄임) / wav · `guard/decision` · `fusion/state` · `device/state` · `audio/test` |
+| 출력 | `stt/text` `{text, wake, audio_ms, stt_ms, speech_end_mono}` ([interfaces](../../docs/architecture/interfaces.md) §2), `system/heartbeat` 1초마다, 마이크 테스트 중 `audio/level`, 스피커 |
 | `speech_end_mono` | 발화 마지막 샘플이 들어온 시각(`time.monotonic`) — 지연 측정의 출발점. 마이크는 콜백 시각 기준이라 실제보다 수십 ms 늦다 |
 | VAD | threshold 0.5, min_silence 0.5 s, min_speech 0.25 s, max_speech 20 s (특강 p.36), 앞여유 0.3 s (#128) |
 | 실행 장치 | CPU — STT 4스레드, TTS 2스레드 (특강 p.34). NPU는 LLM·YOLO 몫 |
