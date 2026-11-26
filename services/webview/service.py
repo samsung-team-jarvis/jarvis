@@ -8,10 +8,12 @@ Unity 가상 주방(UI-02)이 없어도 보드에서 일어나는 일을 보여 
     control/result     ─┤  가상 주방 확인 시간 → 말 끝 → 장치 확인 전체 시간
     device/state       ─┤  장치 8종
     fusion/state       ─┤  상황 인식 상태 · 가열 장치 온도 · 사람
-    system/heartbeat   ─┘  살아 있는 서비스
+    system/heartbeat   ─┤  살아 있는 서비스
+    audio/level        ─┘  마이크 테스트 음량 (UI-04)
 
 한 번의 말(또는 자동 차단)을 "턴" 하나로 묶는다. 응답 문장·경고 문장은 audio_svc.responses를
-그대로 쓴다 — 화면 글자와 음성이 같은 말을 한다. 아무것도 발행하지 않는다 (heartbeat 제외).
+그대로 쓴다 — 화면 글자와 음성이 같은 말을 한다. 발행하는 것은 heartbeat와, 테스트 버튼을 눌렀을
+때의 `audio/test`(마이크·스피커 테스트 요청, UI-04)뿐이다 — 장치를 제어하지 않는다.
 """
 
 from __future__ import annotations
@@ -36,6 +38,9 @@ SOURCE = "webview"
 TURN_S = 15.0  # 말 → 명령 → 판정 → 확인을 한 턴으로 묶는 시간
 ALIVE_S = 3.0  # heartbeat(1초)가 이보다 오래 없으면 멈춘 서비스로 본다
 LOG_SIZE = 8
+TEST_KINDS = ("mic", "speaker")
+HEARD_DBFS = -35.0  # 마이크 테스트에서 이보다 큰 소리가 한 번이라도 들어오면 "소리 들어옴"
+# 근거: 보드 USB 마이크 시연(2026-11-24)에서 말소리 구간 -11~-34 dBFS, 잡음 -38~-60 dBFS (0.5초 RMS)
 STATE_TEXT = {
     "IDLE": "대기",
     "PREHEAT": "예열 중",
@@ -85,6 +90,8 @@ class Feed:
         self.changed = threading.Condition()
         self._lock = threading.RLock()
         self._last_heartbeat: float | None = None
+        self.mic: dict[str, Any] | None = None  # 마이크 테스트 (UI-04)
+        self.speaker_at: float | None = None  # 스피커 테스트를 요청한 시각
 
     def start(self) -> None:
         handlers = {
@@ -95,6 +102,7 @@ class Feed:
             "device/state": self.on_devices,
             "fusion/state": self.on_state,
             "system/heartbeat": self.on_heartbeat,
+            "audio/level": self.on_level,
         }
         for topic, handler in handlers.items():
             self.bus.subscribe(topic, handler)
@@ -198,6 +206,47 @@ class Feed:
         with self._lock:
             self.alive[msg.source] = self.clock()
 
+    def on_level(self, msg: Envelope) -> None:
+        p = msg.payload
+        with self._lock:
+            self.mic = {
+                "dbfs": p["dbfs"],
+                "peak_dbfs": p["peak_dbfs"],
+                "remaining_s": p["remaining_s"],
+                "heard": p["peak_dbfs"] >= HEARD_DBFS,
+                "waiting": False,
+            }
+            self._bump()
+
+    # ── 버튼 (UI-04) ──────────────────────────────────────────────────
+
+    def reset(self) -> None:
+        """화면의 현재 턴과 최근 기록을 비운다 (장치·상황 인식 상태는 버스에서 다시 오므로 둔다)."""
+        with self._lock:
+            self.turn = None
+            self.log.clear()
+            self.mic = None
+            self.speaker_at = None
+            self._bump()
+
+    def request_test(self, kind: str) -> None:
+        """마이크·스피커 테스트를 audio_svc에 요청한다 (audio/test)."""
+        if kind not in TEST_KINDS:
+            raise ValueError(f"테스트 종류는 {TEST_KINDS} 중 하나: {kind!r}")
+        with self._lock:  # 요청보다 먼저 표시를 바꾼다 (첫 음량이 덮어써지지 않게)
+            if kind == "mic":
+                self.mic = {
+                    "dbfs": None,
+                    "peak_dbfs": None,
+                    "remaining_s": None,
+                    "heard": False,
+                    "waiting": True,
+                }
+            else:
+                self.speaker_at = self.clock()
+            self._bump()
+        self.bus.publish(Envelope.new("audio/test", SOURCE, {"kind": kind}, self.session_id))
+
     # ── 턴 ────────────────────────────────────────────────────────────
 
     def _new_turn(self, kind: str, **fields: Any) -> dict[str, Any]:
@@ -253,6 +302,10 @@ class Feed:
                 "stale": stale,
                 "alive": sorted(s for s, at in self.alive.items() if now - at <= ALIVE_S),
                 "log": list(self.log),
+                "mic": self.mic,
+                "speaker_age_s": None
+                if self.speaker_at is None
+                else round(now - self.speaker_at, 1),
             }
 
     def wait(self, version: int, timeout_s: float) -> None:

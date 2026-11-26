@@ -1,6 +1,6 @@
 # webview — 시연 화면 (UI-03)
 
-보드에서 일어나는 일(들은 말 → 명령 해석 → Safety Guard → 가상 주방 → 응답)과 응답 시간을 브라우저에 실시간으로 보여 준다 (PLAN UI-03, #174). Unity 가상 주방 화면(UI-02)이 준비되지 않았을 때의 시연 대안이고, 함께 띄워도 된다. 아무것도 제어하지 않는다.
+보드에서 일어나는 일(들은 말 → 명령 해석 → Safety Guard → 가상 주방 → 응답)과 응답 시간을 브라우저에 실시간으로 보여 준다 (PLAN UI-03, #174). Unity 가상 주방 화면(UI-02)이 준비되지 않았을 때의 시연 대안이고, 함께 띄워도 된다. 장치는 제어하지 않는다. 화면 위의 버튼으로 마이크·스피커 테스트를 요청하고 기록을 비울 수 있다 (UI-04, #186).
 
 ```text
 stt/text · llm/function_call · guard/decision · control/result   ─┐  한 번의 말 = 턴 하나
@@ -27,13 +27,14 @@ python -m services.webview --port 9000
 - `fusion/state`가 3초 넘게 없으면 상태·온도를 비우고 "상태 모름"으로 보인다 (Safety Guard `STATE_STALE_S`와 같은 기준).
 - 화면 머리에 실행 기기를 적는다. 보드면 device tree 모델명, 아니면 "참고값 (보드 아님)".
 - `/events`는 바뀔 때 바로, 바뀐 게 없어도 1초마다 지금 정보를 보낸다.
+- **버튼 (UI-04)**: `POST /reset`은 현재 턴과 최근 기록을 비운다 (서비스를 다시 띄우지 않는다. 장치·상황 인식 상태는 버스에서 다시 오므로 둔다). `POST /test/mic`·`/test/speaker`는 `audio/test`를 낸다 — 마이크·스피커는 audio_svc가 쥐고 있어 웹 화면은 요청만 보낸다. 마이크 테스트는 audio_svc가 5초 동안 보내는 `audio/level`로 음량 막대를 그리고, 최대 음량이 -35 dBFS 이상이면 "소리 들어옴"으로 보인다 (근거: 보드 USB 마이크 말소리 -11~-34 dBFS, 잡음 -38~-60 dBFS). audio_svc가 꺼져 있으면 테스트 버튼을 막는다.
 
 ## Spec
 
 | 항목 | 내용 |
 |---|---|
-| 입력 | `stt/text`, `llm/function_call`, `guard/decision`, `control/result`, `device/state`, `fusion/state`, `system/heartbeat` |
-| 출력 | HTTP `/`·`/view.json`·`/events` (버스에는 `system/heartbeat`만) |
+| 입력 | `stt/text`, `llm/function_call`, `guard/decision`, `control/result`, `device/state`, `fusion/state`, `system/heartbeat`, `audio/level` · HTTP `POST /reset`·`/test/mic`·`/test/speaker` |
+| 출력 | HTTP `/`·`/view.json`·`/events` · 버스에는 `system/heartbeat`와 버튼을 눌렀을 때의 `audio/test` |
 | 설정 | `--bus`, `--host`(기본 0.0.0.0), `--port`(기본 8090), `--session` |
 | 자원 | CPU 무시할 수준, 모델 없음 |
 | 이 서비스가 멈추면 | 화면만 멈춘다. 판정·제어·안전에는 영향 없음 |

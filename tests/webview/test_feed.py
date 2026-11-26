@@ -1,6 +1,9 @@
 import json
 import threading
+import urllib.error
 import urllib.request
+
+import pytest
 
 from common.bus import MemoryBus
 from common.messages import Envelope
@@ -139,6 +142,80 @@ def test_alive_services_from_heartbeats() -> None:
     assert rig.view["alive"] == ["llm_svc"]
     rig.now += 5
     assert rig.view["alive"] == []
+
+
+def test_reset_clears_turn_and_log_but_keeps_devices() -> None:
+    rig = Rig()
+    rig.send("device/state", {"devices": {"hood": {"on": True, "level": 1}}, "safe_stop": False})
+    rig.speech("자비스 후드 켜 줘.")
+    rig.decision({"action": "TURN_ON", "target": "hood"})
+    assert rig.view["turn"] and rig.view["log"]
+    before = rig.view["version"]
+    rig.feed.reset()
+    v = rig.view
+    assert v["turn"] is None and v["log"] == [] and v["mic"] is None
+    assert v["devices"]["hood"]["on"]  # 장치 상태는 그대로
+    assert v["version"] > before  # 화면이 바로 다시 그려진다
+
+
+@pytest.mark.parametrize("kind", ["mic", "speaker"])
+def test_request_test_publishes_audio_test(kind: str) -> None:
+    rig = Rig()
+    sent: list[dict] = []
+    rig.bus.subscribe("audio/test", lambda m: sent.append(m.payload))
+    rig.feed.request_test(kind)
+    assert sent == [{"kind": kind}]
+    v = rig.view
+    if kind == "mic":
+        assert v["mic"]["waiting"] and v["speaker_age_s"] is None
+    else:
+        assert v["speaker_age_s"] == 0.0 and v["mic"] is None
+
+
+def test_request_test_rejects_other_kinds() -> None:
+    with pytest.raises(ValueError):
+        Rig().feed.request_test("hood")
+
+
+def test_mic_level_shows_whether_sound_came_in() -> None:
+    rig = Rig()
+    rig.feed.request_test("mic")
+    rig.send("audio/level", {"dbfs": -20.0, "peak_dbfs": -20.0, "remaining_s": 3.0})
+    assert rig.view["mic"] == {
+        "dbfs": -20.0,
+        "peak_dbfs": -20.0,
+        "remaining_s": 3.0,
+        "heard": True,
+        "waiting": False,
+    }
+    rig.send("audio/level", {"dbfs": -55.0, "peak_dbfs": -48.0, "remaining_s": 0.0})
+    assert rig.view["mic"]["heard"] is False  # 잡음뿐 (보드 USB 동글 마이크 -38~-60 dBFS)
+
+
+def test_http_buttons() -> None:
+    rig = Rig()
+    sent: list[dict] = []
+    rig.bus.subscribe("audio/test", lambda m: sent.append(m.payload))
+    rig.speech("자비스 후드 켜 줘.")
+    server = Server(("127.0.0.1", 0), rig.feed)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_port}"
+
+    def post(path: str) -> int:
+        req = urllib.request.Request(base + path, data=b"", method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=5) as r:
+                return r.status
+        except urllib.error.HTTPError as e:
+            return e.code
+
+    try:
+        assert post("/test/mic") == 200 and post("/test/speaker") == 200
+        assert sent == [{"kind": "mic"}, {"kind": "speaker"}]
+        assert post("/reset") == 200 and rig.view["turn"] is None
+        assert post("/test/hood") == 404 and post("/nothing") == 404
+    finally:
+        server.stop()
 
 
 def test_http_page_json_and_events() -> None:

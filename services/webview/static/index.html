@@ -62,6 +62,14 @@ header .badge { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 .lat .m .v small { font-size: 14px; color: var(--mute); margin-left: 3px; }
 .lat .m.total { border-color: #2f4f8f; background: #142446; }
 .foot { font-size: 11.5px; color: #6f7f9c; }
+.tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+.tools button { font: inherit; font-size: 13.5px; font-weight: 800; color: var(--ink); background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+.tools button:hover:not(:disabled) { border-color: var(--blue); }
+.tools button:disabled { opacity: .45; cursor: default; }
+.tools .meter { flex: 1 1 180px; min-width: 140px; height: 12px; background: #0a1220; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.tools .meter i { display: block; height: 100%; width: 0; background: var(--green); transition: width .15s; }
+.tools .msg { font-size: 13px; color: var(--mute); white-space: nowrap; }
+.tools .msg.ok { color: var(--green); } .tools .msg.bad { color: var(--red); }
 @media (max-width: 900px) {
   .wrap { padding: 16px; }
   header h1 { white-space: normal; font-size: 20px; } .mic .meta { display: none; }
@@ -81,6 +89,14 @@ header .badge { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
       <span class="pill" id="svc">서비스 —</span>
     </div>
   </header>
+
+  <div class="tools">
+    <button id="bmic" type="button">🎤 마이크 테스트 (5초)</button>
+    <button id="bspk" type="button">🔊 스피커 테스트</button>
+    <div class="meter" title="마이크 음량"><i id="meter"></i></div>
+    <span class="msg" id="testmsg">테스트 버튼을 누르면 결과가 여기에 나온다</span>
+    <button id="breset" type="button" style="margin-left:auto">기록 초기화</button>
+  </div>
 
   <div class="mic" id="mic"><span class="dot"></span><span class="said idle" id="said">“자비스, …” 하고 말해 보세요</span><span class="meta" id="micmeta"></span></div>
   <div class="warn" id="warn"></div>
@@ -130,7 +146,32 @@ function devText(k, d, heater) {
   return "켜짐" + (lv ? " · " + lv : "") + t;
 }
 
+// 테스트 버튼 (UI-04) — 마이크·스피커는 audio_svc가 쥐고 있어 요청만 보낸다
+const post = path => fetch(path, { method: "POST" }).catch(() => {});
+const LOW_DBFS = -60, HEARD_DBFS = -35;  // 막대 범위 / service.py의 HEARD_DBFS와 같은 값
+function renderTest(v) {
+  const audio = v.alive.includes("audio_svc");
+  $("bmic").disabled = $("bspk").disabled = !audio;
+  const m = v.mic, msg = $("testmsg");
+  const pct = x => x == null ? 0 : Math.max(0, Math.min(100, (x - LOW_DBFS) / -LOW_DBFS * 100));
+  $("meter").style.width = (m && m.remaining_s !== 0 ? pct(m.dbfs) : 0) + "%";
+  $("meter").style.background = m && m.dbfs >= HEARD_DBFS ? "var(--green)" : "var(--amber)";
+  if (!audio) { msg.textContent = "음성 서비스(audio_svc)가 꺼져 있어 테스트할 수 없음"; msg.className = "msg bad"; }
+  else if (m && m.waiting) { msg.textContent = "마이크 테스트 시작 중… 마이크에 대고 말하세요"; msg.className = "msg"; }
+  else if (m && m.remaining_s > 0) { msg.textContent = `말하세요 · ${m.remaining_s.toFixed(1)}초 남음 · 지금 ${m.dbfs} dBFS`; msg.className = "msg"; }
+  else if (m) {
+    msg.textContent = (m.heard ? "✅ 소리 들어옴" : "❌ 소리가 거의 없음 — 연결·음량 확인") + ` (최대 ${m.peak_dbfs} dBFS)`;
+    msg.className = "msg " + (m.heard ? "ok" : "bad");
+  } else if (v.speaker_age_s != null && v.speaker_age_s < 15) {
+    msg.textContent = "🔊 테스트 문장을 읽는 중 — 스피커에서 들리면 정상"; msg.className = "msg";
+  } else { msg.textContent = "테스트 버튼을 누르면 결과가 여기에 나온다"; msg.className = "msg"; }
+}
+$("bmic").onclick = () => post("test/mic");
+$("bspk").onclick = () => post("test/speaker");
+$("breset").onclick = () => post("reset");
+
 function render(v) {
+  renderTest(v);
   const t = v.turn;
   // 1 들은 말
   if (t && t.said) {
@@ -142,6 +183,9 @@ function render(v) {
   } else if (t && t.kind === "auto") {
     $("said").className = "said"; $("said").textContent = "(말하지 않음 — 상황 인식이 위험을 감지)";
     $("micmeta").textContent = "자동 감지";
+  } else if (!t) {  // 처음이거나 기록 초기화 뒤
+    $("said").className = "said idle"; $("said").textContent = "“자비스, …” 하고 말해 보세요";
+    $("micmeta").textContent = "";
   }
   $("mic").className = "mic" + (t && t.age_s < 3 ? " live" : "");
   $("cmd").innerHTML = t ? (t.command != null ? esc(t.command) : '<span class="dim">— 말하지 않음 —</span>') : '<span class="dim">—</span>';

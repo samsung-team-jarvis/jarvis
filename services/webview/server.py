@@ -1,4 +1,4 @@
-"""webview HTTP: 화면 페이지 · /view.json · /events (Server-Sent Events).
+"""webview HTTP: 화면 페이지 · /view.json · /events (Server-Sent Events) · 버튼 (POST, UI-04).
 
 SSE는 브라우저가 연결을 열어 두면 서버가 줄 단위로 계속 보내는 방식이다. 바뀔 때 바로,
 바뀐 게 없어도 1초마다 지금 정보를 보낸다 (응답 시간·서비스 생존 표시를 갱신).
@@ -13,7 +13,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
-from services.webview.service import Feed
+from services.webview.service import TEST_KINDS, Feed
 
 PAGE = pathlib.Path(__file__).with_name("static") / "index.html"
 PUSH_S = 1.0
@@ -52,6 +52,22 @@ class Handler(BaseHTTPRequestHandler):
             self._events()
         else:
             self._send(404, "text/plain; charset=utf-8", "없는 주소".encode())
+
+    def do_POST(self) -> None:  # noqa: N802 (http.server 규칙)
+        """시연 화면 버튼 (UI-04): /reset (기록 초기화), /test/mic, /test/speaker."""
+        length = int(self.headers.get("Content-Length") or 0)
+        if length:
+            self.rfile.read(length)  # 본문은 쓰지 않는다
+        path = self.path.split("?", 1)[0]
+        feed = self.server.feed
+        if path == "/reset":
+            feed.reset()
+        elif path.startswith("/test/") and path[len("/test/") :] in TEST_KINDS:
+            feed.request_test(path[len("/test/") :])
+        else:
+            self._send(404, "text/plain; charset=utf-8", "없는 주소".encode())
+            return
+        self._send(200, "application/json; charset=utf-8", _json({"ok": True}))
 
     def _send(self, code: int, kind: str, body: bytes) -> None:
         self.send_response(code)
