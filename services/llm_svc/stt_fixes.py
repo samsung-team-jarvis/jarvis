@@ -78,6 +78,9 @@ _COUNTED = re.compile(
     rf"|(분|초)(?![가-힣])|(단)(?=으로|계|\s*[.,?!]|\s*$))"
 )
 _DIGIT_SPACE = re.compile(r"(\d)\s+(번|분|초|단)")  # "1 번" → "1번"
+# "일번"은 장치 이름이 바로 뒤에 없어도 1번으로 본다 ("일번 화국해죠", 보드 USB 마이크 2026-11-25,
+# 사용자 요청 #182). "제일번"처럼 앞 글자에 붙은 것은 그대로
+_ILBEON = re.compile(r"(?<![가-힣])일\s*번(?!째)")
 
 
 def _value(word: str) -> int:
@@ -94,4 +97,5 @@ def numerals(text: str) -> str:
         return str(_value(m.group(1))) + (m.group(2) or m.group(3) or m.group(4))
 
     text = _COUNTED.sub(digits, text)
+    text = _ILBEON.sub("1번", text)
     return _DIGIT_SPACE.sub(r"\1\2", text)
